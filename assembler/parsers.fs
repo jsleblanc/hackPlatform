@@ -39,8 +39,8 @@ let allowedSymbolChar c =
     let isDigit = Char.IsDigit c
     isDigit || fc
     
-let pLabel = between (pchar '(' .>> ws) (ws >>. pchar ')') (manySatisfy2 allowedSymbolFirstChar allowedSymbolChar) |>> function l -> Label l
-let pVariable = pchar '@' >>. manySatisfy2 allowedSymbolFirstChar allowedSymbolChar |>> function v -> Variable v 
+let pLabel = between (pchar '(' .>> ws) (ws >>. pchar ')') (many1Satisfy2 allowedSymbolFirstChar allowedSymbolChar) |>> function l -> Label l
+let pVariable = pchar '@' >>. many1Satisfy2 allowedSymbolFirstChar allowedSymbolChar |> notEmpty |>> function v -> Variable v 
 
 let bBuiltInSymbol_SP = str "SP" |>> function _ -> SP
 let bBuiltInSymbol_LCL = str "LCL" |>> function _ -> LCL
