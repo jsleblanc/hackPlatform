@@ -129,6 +129,7 @@ let ``Should Parse Variable`` s exp =
     | _ -> Assert.Fail("Parse failed")
     
 [<Theory>]
+[<InlineData("@ foo")>]
 [<InlineData("@1foo")>]
 [<InlineData("i")>]
 [<InlineData("//@i")>]
@@ -137,11 +138,9 @@ let ``Should Parse Variable`` s exp =
 [<InlineData("_foo")>]
 [<InlineData("(foo)")>]
 let ``Should Not Parse Variable`` s =
-    let success =
-        match run pVariable s with
-        | Success (Variable v, a, b) -> false
-        | _ -> true
-    Assert.True(success)
+    match run pVariable s with
+    | Success (Variable v, a, b) -> Assert.Fail("Parse should have failed")
+    | _ -> Assert.True(true)
     
 [<Theory>]
 [<InlineData("(foo)", "foo")>]

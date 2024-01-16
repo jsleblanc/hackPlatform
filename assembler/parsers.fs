@@ -26,18 +26,21 @@ let pJump = choice [pJGT; pJEQ; pJGE; pJLT; pJNE; pJLE; pJMP]
 
 let pConstant = pchar '@' >>. puint16 |>> function c -> Constant c
 
-let allowedSymbolChar c =
-    let isDigit = Char.IsDigit c
+let allowedSymbolFirstChar c =
     let isLetter = Char.IsLetter c
     let isUnderscore = c = '_'
     let isColon = c = ':'
     let isDot = c = '.'
     let isDollar = c = '$'
-    isDigit || isLetter || isUnderscore || isColon || isDot || isDollar
+    isLetter || isUnderscore || isColon || isDot || isDollar
     
-let isNotDigit c = not (Char.IsDigit c)
-let pLabel = between (pchar '(' .>> ws) (ws >>. pchar ')') (manySatisfy2 isNotDigit allowedSymbolChar) |>> function l -> Label l
-let pVariable = pchar '@' >>. (manySatisfy2 isNotDigit allowedSymbolChar) |>> function v -> Variable v 
+let allowedSymbolChar c =
+    let fc = allowedSymbolFirstChar c
+    let isDigit = Char.IsDigit c
+    isDigit || fc
+    
+let pLabel = between (pchar '(' .>> ws) (ws >>. pchar ')') (manySatisfy2 allowedSymbolFirstChar allowedSymbolChar) |>> function l -> Label l
+let pVariable = pchar '@' >>. manySatisfy2 allowedSymbolFirstChar allowedSymbolChar |>> function v -> Variable v 
 
 let bBuiltInSymbol_SP = str "SP" |>> function _ -> SP
 let bBuiltInSymbol_LCL = str "LCL" |>> function _ -> LCL
