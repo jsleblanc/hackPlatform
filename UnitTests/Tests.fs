@@ -152,3 +152,11 @@ let ``Should Parse Label`` s exp =
     match run pLabel s with
     | Success(Label l, _, _) -> Assert.Equal(l, exp)
     | _ -> Assert.Fail("Parse failed")
+    
+[<Theory>]
+[<InlineData("()")>]
+[<InlineData("( )")>]
+let ``Should Not Parse Label`` s =
+    match run pLabel s with
+    | Success _ -> Assert.Fail("Parse should fail")
+    | _ -> Assert.True(true)
