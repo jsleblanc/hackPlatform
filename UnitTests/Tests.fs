@@ -105,6 +105,15 @@ let ``Should Parse Constant`` s exp =
         | Success(Constant c, _, _) -> exp = c
         | _ -> false
     Assert.True(success)
+
+[<Theory>]
+[<InlineData("1")>]
+[<InlineData(" 10")>]
+[<InlineData("  100")>]
+let ``Should Not Parse Constant`` s =
+    match run pConstant s with
+    | Success _ -> Assert.Fail("Parse should have failed")
+    | _ -> Assert.True(true)
     
 [<Theory>]
 [<InlineData("@foo", "foo")>]
@@ -113,12 +122,11 @@ let ``Should Parse Constant`` s exp =
 [<InlineData("@i:a", "i:a")>]
 [<InlineData("@$i", "$i")>]
 [<InlineData("@i", "i")>]
+[<InlineData("@i123_foo:abc$", "i123_foo:abc$")>]
 let ``Should Parse Variable`` s exp =
-    let success =
-        match run pVariable s with
-        | Success(Variable v, _, _) -> exp = v
-        | _ -> false
-    Assert.True(success)
+    match run pVariable s with
+    | Success(Variable v, _, _) -> Assert.Equal(v, exp)
+    | _ -> Assert.Fail("Parse failed")
     
 [<Theory>]
 [<InlineData("@1foo")>]
@@ -131,6 +139,17 @@ let ``Should Parse Variable`` s exp =
 let ``Should Not Parse Variable`` s =
     let success =
         match run pVariable s with
-        | Success _ -> false
+        | Success (Variable v, a, b) -> false
         | _ -> true
-    Assert.True(success)    
+    Assert.True(success)
+    
+[<Theory>]
+[<InlineData("(foo)", "foo")>]
+[<InlineData("( foo )", "foo")>]
+[<InlineData("(foo )", "foo")>]
+[<InlineData("( foo)", "foo")>]
+[<InlineData("(  foo  )", "foo")>]
+let ``Should Parse Label`` s exp =
+    match run pLabel s with
+    | Success(Label l, _, _) -> Assert.Equal(l, exp)
+    | _ -> Assert.Fail("Parse failed")

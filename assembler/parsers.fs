@@ -35,9 +35,9 @@ let allowedSymbolChar c =
     let isDollar = c = '$'
     isDigit || isLetter || isUnderscore || isColon || isDot || isDollar
     
-let pLabel = between (pchar '(') (pchar ')') (manySatisfy2 (fun c -> Char.IsDigit c = false) allowedSymbolChar) |>> function l -> Label l
-
-let pVariable = pchar '@' >>. (manySatisfy2 (fun c -> Char.IsDigit c = false) allowedSymbolChar) |>> function v -> Variable v 
+let isNotDigit c = not (Char.IsDigit c)
+let pLabel = between (pchar '(' .>> ws) (ws >>. pchar ')') (manySatisfy2 isNotDigit allowedSymbolChar) |>> function l -> Label l
+let pVariable = pchar '@' >>. (manySatisfy2 isNotDigit allowedSymbolChar) |>> function v -> Variable v 
 
 let bBuiltInSymbol_SP = str "SP" |>> function _ -> SP
 let bBuiltInSymbol_LCL = str "LCL" |>> function _ -> LCL
