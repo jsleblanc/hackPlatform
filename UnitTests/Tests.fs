@@ -308,4 +308,16 @@ let ``Should Parse as Symbol - Label``  () =
     match run pSymbol "(test)" with
     | Success(Label s, _, _) -> Assert.Equal(s, "test")
     | Failure(msg, _, _) -> Assert.Fail(msg)
-    | _ -> Assert.Fail("Parsing failed")       
+    | _ -> Assert.Fail("Parsing failed")
+    
+[<Theory>]
+[<InlineData("D;JGT", "D")>]
+[<InlineData("A;JGT", "A")>]
+[<InlineData("0;JMP", "0")>]
+[<InlineData("D=D-M", "D-M")>]
+[<InlineData("AM=M+1", "M+1")>]
+let ``Should Parse as C Instruction`` s exp =
+    match run pCInstruction s with
+    | Success(C_Instruction (d, c, j), _, _) -> Assert.Equal(c, exp)
+    | Failure(msg, _, _) -> Assert.Fail(msg)
+    | _ -> Assert.Fail("Parsing failed")
