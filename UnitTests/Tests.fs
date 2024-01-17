@@ -132,11 +132,18 @@ let ``Should Not Parse as Constant`` s =
 [<Theory>]
 [<InlineData("@foo", "foo")>]
 [<InlineData("@i", "i")>]
+[<InlineData(" @i", "i")>]
+[<InlineData("  @i", "i")>]
+[<InlineData("@i ", "i")>]
+[<InlineData("@i  ", "i")>]
+[<InlineData("  @i  ", "i")>]
 [<InlineData("@i_a", "i_a")>]
 [<InlineData("@i:a", "i:a")>]
 [<InlineData("@$i", "$i")>]
 [<InlineData("@i", "i")>]
 [<InlineData("@i123_foo:abc$", "i123_foo:abc$")>]
+[<InlineData("@ITSR0", "ITSR0")>]
+[<InlineData("@MYSCREEN", "MYSCREEN")>]
 let ``Should Parse Variable`` s exp =
     match run pVariable s with
     | Success(Variable v, _, _) -> Assert.Equal(v, exp)
@@ -162,7 +169,8 @@ let ``Should Not Parse as Variable`` s =
 [<InlineData("(foo )", "foo")>]
 [<InlineData("( foo)", "foo")>]
 [<InlineData("(  foo  )", "foo")>]
-[<InlineData("(ITSR0)", "(ITSR0)")>]
+[<InlineData("(ITSR0)", "ITSR0")>]
+[<InlineData("(MYSCREEN)", "MYSCREEN")>]
 let ``Should Parse Label`` s exp =
     match run pLabel s with
     | Success(Label l, _, _) -> Assert.Equal(l, exp)

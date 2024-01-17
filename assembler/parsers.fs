@@ -40,7 +40,7 @@ let allowedSymbolChar c =
     isDigit || fc
     
 let pLabel = between (pchar '(' .>> ws) (ws >>. pchar ')') (many1Satisfy2 allowedSymbolFirstChar allowedSymbolChar) |>> function l -> Label l
-let pVariable = pchar '@' >>. many1Satisfy2 allowedSymbolFirstChar allowedSymbolChar |> notEmpty |>> function v -> Variable v 
+let pVariable = ws >>. pchar '@' >>. many1Satisfy2 allowedSymbolFirstChar allowedSymbolChar |>> function v -> Variable v 
 
 let bBuiltInSymbol_SP = str "SP" |>> function _ -> SP
 let bBuiltInSymbol_LCL = str "LCL" |>> function _ -> LCL
