@@ -9,7 +9,7 @@ let ws = spaces // skips any whitespace
 let str s = pstring s
 let str_ws s = pstring s >>. ws
 
-let pComment = skipString "//" >>. skipRestOfLine true |>> function _ -> Option<Instruction>.None
+let pComment = str "//" >>. ws >>. restOfLine true |>> function c -> Comment c
 
 let pJGT = str "JGT" .>> ws |>> function _ -> JGT
 let pJEQ = str "JEQ" .>> ws |>> function _ -> JEQ
@@ -107,11 +107,9 @@ let pCInstruction = pipe3 (opt (attempt pDestination)) pComputation (opt pJump) 
 
 let pInstruction = choice [pAInstruction; pCInstruction]
 
-let pLine = ws >>. pInstruction
+let pLine = ws >>. choice [pInstruction; pComment]
 let pAssembly = many pLine .>> eof
 
 let parseAssemblyString str = run pAssembly str
 let parseAssemblyFile fileName encoding = runParserOnFile pAssembly () fileName encoding
 let parseAssemblyStream stream encoding = runParserOnStream pAssembly () "" stream encoding
-
-let runpcomment = run pComment

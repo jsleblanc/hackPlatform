@@ -1,5 +1,6 @@
 module Tests
 
+open System
 open Xunit
 
 open assembler.parsers
@@ -339,11 +340,17 @@ let ``Should Parse Line as C Instruction ignoring comment`` () =
     | Failure(msg, _, _) -> Assert.Fail(msg)
     | _ -> Assert.Fail("Parsing failed")
 
-[<Fact>]
-let ``Should Not Parse Line because entire line is a comment`` () =
-    match run pLine "//comment" with
-    | Success _ -> Assert.True(true)
+[<Theory>]
+[<InlineData("//comment")>]
+[<InlineData("// comment")>]
+[<InlineData("//  comment")>]
+[<InlineData("//   comment")>]
+[<InlineData(" // comment")>]
+let ``Should Parse Line as Comment`` s =
+    match run pLine s with
+    | Success (Comment c, _, _) -> Assert.True(true)
     | Failure(msg, _,_) -> Assert.Fail(msg)
+    | _ -> Assert.Fail("Parsing failed")
     
 [<Fact>]
 let ``Should Parse Multiline Input`` () =
@@ -372,3 +379,41 @@ let ``Should Parse Multiline Input`` () =
     match run pAssembly s with
     | Success(p, _, _) -> Assert.Equal(20, p.Length)
     | Failure(msg, _, _) -> Assert.Fail(msg)
+    
+[<Fact>]
+let ``Should Parse Multiline Input with Comments`` () =
+    let s = """
+// This file is part of www.nand2tetris.org
+// and the book "The Elements of Computing Systems"
+// by Nisan and Schocken, MIT Press.
+// File name: projects/06/max/Max.asm
+
+// Computes R2 = max(R0, R1)  (R0,R1,R2 refer to RAM[0],RAM[1],RAM[2])
+
+   // D = R0 - R1
+   @R0
+   D=M
+   @R1
+   D=D-M
+   // If (D > 0) goto ITSR0
+   @ITSR0
+   D;JGT
+   // Its R1
+   @R1
+   D=M
+   @R2
+   M=D
+   @END
+   0;JMP
+(ITSR0)
+   @R0             
+   D=M
+   @R2
+   M=D
+(END)
+   @END
+   0;JMP
+"""
+    match run pAssembly s with
+    | Success(p, _, _) -> Assert.Equal(28, p.Length)
+    | Failure(msg, _, _) -> Assert.Fail(msg)    

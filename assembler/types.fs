@@ -54,6 +54,7 @@ type Symbol =
 type Instruction =
     | A_Instruction of Symbol
     | C_Instruction of Destination option * Computation * Jump option
+    | Comment of string
     
 type AssemblyProgram = {
     instructions: Instruction list
