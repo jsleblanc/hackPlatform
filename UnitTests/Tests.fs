@@ -31,7 +31,7 @@ let ``Should Not Parse as Comments`` s =
 [<Fact>]
 let ``Should Parse Jump - JGT`` () =
     let success =
-        match run pJump "JGT" with
+        match run pJump ";JGT" with
         | Success(JGT, _, _) -> true
         | _ -> false
     Assert.True(success)
@@ -39,7 +39,7 @@ let ``Should Parse Jump - JGT`` () =
 [<Fact>]
 let ``Should Parse Jump - JEQ`` () =
     let success =
-        match run pJump "JEQ" with
+        match run pJump ";JEQ" with
         | Success(JEQ, _, _) -> true
         | _ -> false
     Assert.True(success)
@@ -47,7 +47,7 @@ let ``Should Parse Jump - JEQ`` () =
 [<Fact>]
 let ``Should Parse Jump - JGE`` () =
     let success =
-        match run pJump "JGE" with
+        match run pJump ";JGE" with
         | Success(JGE, _, _) -> true
         | _ -> false
     Assert.True(success)
@@ -55,7 +55,7 @@ let ``Should Parse Jump - JGE`` () =
 [<Fact>]
 let ``Should Parse Jump - JLT`` () =
     let success =
-        match run pJump "JLT" with
+        match run pJump ";JLT" with
         | Success(JLT, _, _) -> true
         | _ -> false
     Assert.True(success)
@@ -63,7 +63,7 @@ let ``Should Parse Jump - JLT`` () =
 [<Fact>]
 let ``Should Parse Jump - JNE`` () =
     let success =
-        match run pJump "JNE" with
+        match run pJump ";JNE" with
         | Success(JNE, _, _) -> true
         | _ -> false
     Assert.True(success)
@@ -71,7 +71,7 @@ let ``Should Parse Jump - JNE`` () =
 [<Fact>]
 let ``Should Parse Jump - JLE`` () =
     let success =
-        match run pJump "JLE" with
+        match run pJump ";JLE" with
         | Success(JLE, _, _) -> true
         | _ -> false
     Assert.True(success)
@@ -79,15 +79,15 @@ let ``Should Parse Jump - JLE`` () =
 [<Fact>]
 let ``Should Parse Jump - JMP`` () =
     let success =
-        match run pJump "JMP" with
+        match run pJump ";JMP" with
         | Success(JMP, _, _) -> true
         | _ -> false
     Assert.True(success)
     
 [<Theory>]
 [<InlineData("test")>]
-[<InlineData("//JMP")>]
-[<InlineData("  //   JEQ  ")>]
+[<InlineData("//;JMP")>]
+[<InlineData("  //   ;JEQ  ")>]
 let ``Should Not Parse as Jump`` s =
     let success =
         match run pJump s with

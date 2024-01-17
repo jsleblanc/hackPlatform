@@ -22,7 +22,7 @@ let pJLT = str "JLT" >>. pSpacing |>> function _ -> JLT
 let pJNE = str "JNE" >>. pSpacing |>> function _ -> JNE
 let pJLE = str "JLE" >>. pSpacing |>> function _ -> JLE
 let pJMP = str "JMP" >>. pSpacing |>> function _ -> JMP
-let pJump = choice [pJGT; pJEQ; pJGE; pJLT; pJNE; pJLE; pJMP]
+let pJump = pchar ';' >>. choice [pJGT; pJEQ; pJGE; pJLT; pJNE; pJLE; pJMP]
 
 let pConstant = pchar '@' >>. puint16 |>> function c -> Constant c
 
@@ -105,6 +105,9 @@ let charsToDestination chars =
     chars |> List.map c2d |> List.fold (fun state current -> state ||| current) Destination.None
 let pDestination = many1 (anyOf "AMD") .>> pchar '=' |>> function d -> charsToDestination d
 
+//let pComputation = many1 (anyOf "01ADM!-+&|") |>> function d -> Computation (String.Concat(d))
+
+//let pCInstruction = 
 let runpComment s = run pComment s
 let runpSymbol s = run pSymbol s
 let runpDestination s = run pDestination s
