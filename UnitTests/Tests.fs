@@ -328,6 +328,22 @@ let ``Should Parse Line as C Instruction`` () =
         Assert.Equal(Some JEQ, j)
     | Failure(msg, _, _) -> Assert.Fail(msg)
     | _ -> Assert.Fail("Parsing failed")
+
+[<Fact>]
+let ``Should Parse Line as C Instruction ignoring comment`` () =
+    match run pLine "AM=D+1;JEQ //comment" with
+    | Success(C_Instruction (d,c,j), _, _) ->
+        Assert.Equal(Some (Destination.A ||| Destination.M), d)
+        Assert.Equal("D+1", c)
+        Assert.Equal(Some JEQ, j)
+    | Failure(msg, _, _) -> Assert.Fail(msg)
+    | _ -> Assert.Fail("Parsing failed")
+
+[<Fact>]
+let ``Should Not Parse Line because entire line is a comment`` () =
+    match run pLine "//comment" with
+    | Success _ -> Assert.True(true)
+    | Failure(msg, _,_) -> Assert.Fail(msg)
     
 [<Fact>]
 let ``Should Parse Multiline Input`` () =
