@@ -38,6 +38,7 @@ type Jump =
 
 [<Flags>]
 type Destination =
+    | None = 0
     | M = 0b001
     | D = 0b010
     | A = 0b100

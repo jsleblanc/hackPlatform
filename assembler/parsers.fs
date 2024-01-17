@@ -95,5 +95,16 @@ let pBuiltInSymbol = pchar '@' >>. choice [
 let pPredefinedSymbol = pBuiltInSymbol |>> function s -> Predefined s
 let pSymbol = choice [pPredefinedSymbol; pConstant; pLabel; pVariable]
 
+let charsToDestination chars =
+    let c2d c =
+        match c with
+        | 'A' -> Destination.A
+        | 'M' -> Destination.M
+        | 'D' -> Destination.D
+        | _ -> failwith $"Invalid destination: {c}"
+    chars |> List.map c2d |> List.fold (fun state current -> state ||| current) Destination.None
+let pDestination = many1 (anyOf "AMD") .>> pchar '=' |>> function d -> charsToDestination d
+
 let runpComment s = run pComment s
 let runpSymbol s = run pSymbol s
+let runpDestination s = run pDestination s

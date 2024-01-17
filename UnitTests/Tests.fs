@@ -110,7 +110,7 @@ let ``Should Parse Constant`` s exp =
 [<InlineData("1")>]
 [<InlineData(" 10")>]
 [<InlineData("  100")>]
-let ``Should Not Parse Constant`` s =
+let ``Should Not Parse as Constant`` s =
     match run pConstant s with
     | Success _ -> Assert.Fail("Parse should have failed")
     | _ -> Assert.True(true)
@@ -137,9 +137,9 @@ let ``Should Parse Variable`` s exp =
 [<InlineData(":foo")>]
 [<InlineData("_foo")>]
 [<InlineData("(foo)")>]
-let ``Should Not Parse Variable`` s =
+let ``Should Not Parse as Variable`` s =
     match run pVariable s with
-    | Success (Variable v, a, b) -> Assert.Fail("Parse should have failed")
+    | Success _ -> Assert.Fail("Parse should have failed")
     | _ -> Assert.True(true)
     
 [<Theory>]
@@ -156,7 +156,66 @@ let ``Should Parse Label`` s exp =
 [<Theory>]
 [<InlineData("()")>]
 [<InlineData("( )")>]
-let ``Should Not Parse Label`` s =
+let ``Should Not Parse as Label`` s =
     match run pLabel s with
     | Success _ -> Assert.Fail("Parse should fail")
+    | _ -> Assert.True(true)
+    
+[<Fact>]
+let ``Should Parse Destination - M`` () =
+    match run pDestination "M=" with
+    | Success (d, _, _) -> Assert.Equal(d, Destination.M)
+    | _ -> Assert.Fail("Parsing failed")
+    
+[<Fact>]
+let ``Should Parse Destination - D`` () =
+    match run pDestination "D=" with
+    | Success (d, _, _) -> Assert.Equal(d, Destination.D)
+    | _ -> Assert.Fail("Parsing failed")
+    
+[<Fact>]
+let ``Should Parse Destination - DM`` () =
+    match run pDestination "DM=" with
+    | Success (d, _, _) -> Assert.Equal(d, Destination.D ||| Destination.M)
+    | _ -> Assert.Fail("Parsing failed")
+    
+[<Fact>]
+let ``Should Parse Destination - A`` () =
+    match run pDestination "A=" with
+    | Success (d, _, _) -> Assert.Equal(d, Destination.A)
+    | _ -> Assert.Fail("Parsing failed")
+    
+[<Fact>]
+let ``Should Parse Destination - AM`` () =
+    match run pDestination "AM=" with
+    | Success (d, _, _) -> Assert.Equal(d, Destination.A ||| Destination.M)
+    | _ -> Assert.Fail("Parsing failed")
+    
+[<Fact>]
+let ``Should Parse Destination - AD`` () =
+    match run pDestination "AD=" with
+    | Success (d, _, _) -> Assert.Equal(d, Destination.A ||| Destination.D)
+    | _ -> Assert.Fail("Parsing failed")    
+    
+[<Fact>]
+let ``Should Parse Destination - AMD`` () =
+    match run pDestination "AMD=" with
+    | Success (d, _, _) -> Assert.Equal(d, Destination.A ||| Destination.M ||| Destination.D)
+    | _ -> Assert.Fail("Parsing failed") 
+    
+[<Fact>]
+let ``Should Parse Destination, Order does not matter - AMD, DAM`` () =
+    let t s = 
+        match run pDestination s with
+        | Success (d, _, _) -> Assert.Equal(d, Destination.A ||| Destination.M ||| Destination.D)
+        | _ -> Assert.Fail("Parsing failed")
+    t "AMD="
+    t "DAM="
+    
+[<Theory>]
+[<InlineData("Q=")>]
+[<InlineData("=")>]
+let ``Should Not Parse as Destination`` s =
+    match run pDestination s with
+    | Success _ -> Assert.Fail("Parsing should fail")
     | _ -> Assert.True(true)
