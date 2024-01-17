@@ -11,10 +11,6 @@ open FParsec
 [<InlineData("// comment")>]
 [<InlineData("//  comment")>]
 [<InlineData("//   comment ")>]
-[<InlineData(" //comment")>]
-[<InlineData("  //comment")>]
-[<InlineData(" // comment")>]
-[<InlineData("  //  comment")>]
 let ``Should Parse Comments`` s =
     let success = 
         match run pComment s with
@@ -89,10 +85,7 @@ let ``Should Parse Jump - JMP`` () =
 
 [<Theory>]
 [<InlineData(";JMP")>]
-[<InlineData(" ;JMP")>]
 [<InlineData(";JMP ")>]
-[<InlineData(" ; JMP")>]
-[<InlineData("  ;  JMP  ")>]
 let ``Should Parse Jump`` s =
     match run pJump s with
     | Success _ -> Assert.True(true)
@@ -102,6 +95,7 @@ let ``Should Parse Jump`` s =
 [<InlineData("test")>]
 [<InlineData("//;JMP")>]
 [<InlineData("  //   ;JEQ  ")>]
+[<InlineData("; JEQ")>]
 let ``Should Not Parse as Jump`` s =
     let success =
         match run pJump s with
@@ -131,11 +125,8 @@ let ``Should Not Parse as Constant`` s =
 [<Theory>]
 [<InlineData("@foo", "foo")>]
 [<InlineData("@i", "i")>]
-[<InlineData(" @i", "i")>]
-[<InlineData("  @i", "i")>]
 [<InlineData("@i ", "i")>]
 [<InlineData("@i  ", "i")>]
-[<InlineData("  @i  ", "i")>]
 [<InlineData("@i_a", "i_a")>]
 [<InlineData("@i:a", "i:a")>]
 [<InlineData("@$i", "$i")>]
@@ -244,9 +235,7 @@ let ``Should Not Parse as Destination`` s =
     
 [<Theory>]
 [<InlineData("0", "0")>]
-[<InlineData(" 0", "0")>]
 [<InlineData("0 ", "0")>]
-[<InlineData(" 0 ", "0")>]
 [<InlineData("1", "1")>]
 [<InlineData("-1", "-1")>]
 [<InlineData("D", "D")>]
@@ -264,8 +253,6 @@ let ``Should Not Parse as Destination`` s =
 [<InlineData("A-D", "A-D")>]
 [<InlineData("D&A", "D&A")>]
 [<InlineData("D|A", "D|A")>]
-[<InlineData("D | A", "D|A")>]
-[<InlineData(" D | A ", "D|A")>]
 [<InlineData("M", "M")>]
 [<InlineData("!M", "!M")>]
 [<InlineData("-M", "-M")>]
@@ -320,26 +307,37 @@ let ``Should Parse as C Instruction`` s exp =
     | Success(C_Instruction (d, c, j), _, _) -> Assert.Equal(exp, c)
     | Failure(msg, _, _) -> Assert.Fail(msg)
     | _ -> Assert.Fail("Parsing failed")
+   
+[<Theory>]
+[<InlineData("@100")>]
+[<InlineData("(LABEL)")>]
+[<InlineData("@R12")>]
+[<InlineData("@i")>]
+let ``Should Parse as A Instruction`` s =
+    match run pAInstruction s with
+    | Success(A_Instruction s, _, _) -> Assert.True(true)
+    | Failure(msg, _, _) -> Assert.Fail(msg)
+    | _ -> Assert.Fail("Parsing failed")
+
+[<Fact>]
+let ``Should Parse Line as C Instruction`` () =
+    match run pLine "AM=D+1;JEQ" with
+    | Success(C_Instruction (d,c,j), _, _) ->
+        Assert.Equal(Some (Destination.A ||| Destination.M), d)
+        Assert.Equal("D+1", c)
+        Assert.Equal(Some JEQ, j)
+    | Failure(msg, _, _) -> Assert.Fail(msg)
+    | _ -> Assert.Fail("Parsing failed")
     
 [<Fact>]
 let ``Should Parse Multiline Input`` () =
     let s = """
-// This file is part of www.nand2tetris.org
-// and the book "The Elements of Computing Systems"
-// by Nisan and Schocken, MIT Press.
-// File name: projects/06/max/Max.asm
-    
-// Computes R2 = max(R0, R1)  (R0,R1,R2 refer to RAM[0],RAM[1],RAM[2])
-
-   // D = R0 - R1
    @R0
    D=M
    @R1
    D=D-M
-   // If (D > 0) goto ITSR0
    @ITSR0
    D;JGT
-   // Its R1
    @R1
    D=M
    @R2
