@@ -112,7 +112,7 @@ let pCInstruction = pipe3 (opt pDestination) pComputation (opt pJump) (fun d c j
 
 let pInstruction = ws >>. choice [pAInstruction; pCInstruction]
 
-let pAssembly = ws >>. skipMany pComment >>. ws >>. many (opt pInstruction <|> pComment) .>> ws .>> eof
+let pAssembly = many (attempt pComment <|> opt pInstruction) .>> eof
 
 let parseAssemblyString str = run pAssembly str
 let parseAssemblyFile fileName encoding = runParserOnFile pAssembly () fileName encoding

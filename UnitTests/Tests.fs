@@ -162,6 +162,7 @@ let ``Should Not Parse as Variable`` s =
 [<InlineData("(foo )", "foo")>]
 [<InlineData("( foo)", "foo")>]
 [<InlineData("(  foo  )", "foo")>]
+[<InlineData("(ITSR0)", "(ITSR0)")>]
 let ``Should Parse Label`` s exp =
     match run pLabel s with
     | Success(Label l, _, _) -> Assert.Equal(l, exp)
