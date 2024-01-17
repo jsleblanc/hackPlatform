@@ -113,7 +113,7 @@ let ``Should Not Parse as Jump`` s =
 [<Theory>]
 [<InlineData("@1234", 1234)>]
 [<InlineData("@1", 1)>]
-let ``Should Parse Constant`` s exp =
+let ``Should Parse as Constant`` s exp =
     let success =
         match run pConstant s with
         | Success(Constant c, _, _) -> exp = c
@@ -144,7 +144,7 @@ let ``Should Not Parse as Constant`` s =
 [<InlineData("@i123_foo:abc$", "i123_foo:abc$")>]
 [<InlineData("@ITSR0", "ITSR0")>]
 [<InlineData("@MYSCREEN", "MYSCREEN")>]
-let ``Should Parse Variable`` s exp =
+let ``Should Parse as Variable`` s exp =
     match run pVariable s with
     | Success(Variable v, _, _) -> Assert.Equal(v, exp)
     | _ -> Assert.Fail("Parse failed")
@@ -171,7 +171,7 @@ let ``Should Not Parse as Variable`` s =
 [<InlineData("(  foo  )", "foo")>]
 [<InlineData("(ITSR0)", "ITSR0")>]
 [<InlineData("(MYSCREEN)", "MYSCREEN")>]
-let ``Should Parse Label`` s exp =
+let ``Should Parse as Label`` s exp =
     match run pLabel s with
     | Success(Label l, _, _) -> Assert.Equal(l, exp)
     | _ -> Assert.Fail("Parse failed")
@@ -185,49 +185,49 @@ let ``Should Not Parse as Label`` s =
     | _ -> Assert.True(true)
     
 [<Fact>]
-let ``Should Parse Destination - M`` () =
+let ``Should Parse as Destination - M`` () =
     match run pDestination "M=" with
     | Success (d, _, _) -> Assert.Equal(d, Destination.M)
     | _ -> Assert.Fail("Parsing failed")
     
 [<Fact>]
-let ``Should Parse Destination - D`` () =
+let ``Should Parse as Destination - D`` () =
     match run pDestination "D=" with
     | Success (d, _, _) -> Assert.Equal(d, Destination.D)
     | _ -> Assert.Fail("Parsing failed")
     
 [<Fact>]
-let ``Should Parse Destination - DM`` () =
+let ``Should Parse as Destination - DM`` () =
     match run pDestination "DM=" with
     | Success (d, _, _) -> Assert.Equal(d, Destination.D ||| Destination.M)
     | _ -> Assert.Fail("Parsing failed")
     
 [<Fact>]
-let ``Should Parse Destination - A`` () =
+let ``Should Parse as Destination - A`` () =
     match run pDestination "A=" with
     | Success (d, _, _) -> Assert.Equal(d, Destination.A)
     | _ -> Assert.Fail("Parsing failed")
     
 [<Fact>]
-let ``Should Parse Destination - AM`` () =
+let ``Should Parse as Destination - AM`` () =
     match run pDestination "AM=" with
     | Success (d, _, _) -> Assert.Equal(d, Destination.A ||| Destination.M)
     | _ -> Assert.Fail("Parsing failed")
     
 [<Fact>]
-let ``Should Parse Destination - AD`` () =
+let ``Should Parse as Destination - AD`` () =
     match run pDestination "AD=" with
     | Success (d, _, _) -> Assert.Equal(d, Destination.A ||| Destination.D)
     | _ -> Assert.Fail("Parsing failed")    
     
 [<Fact>]
-let ``Should Parse Destination - AMD`` () =
+let ``Should Parse as Destination - AMD`` () =
     match run pDestination "AMD=" with
     | Success (d, _, _) -> Assert.Equal(d, Destination.A ||| Destination.M ||| Destination.D)
     | _ -> Assert.Fail("Parsing failed") 
     
 [<Fact>]
-let ``Should Parse Destination, Order does not matter - AMD, DAM`` () =
+let ``Should Parse as Destination, Order does not matter - AMD, DAM`` () =
     let t s = 
         match run pDestination s with
         | Success (d, _, _) -> Assert.Equal(d, Destination.A ||| Destination.M ||| Destination.D)
@@ -277,9 +277,35 @@ let ``Should Not Parse as Destination`` s =
 [<InlineData("M-D", "M-D")>]
 [<InlineData("D&M", "D&M")>]
 [<InlineData("D|M", "D|M")>]
-let ``Should Parse Computation`` s exp =
+let ``Should Parse as Computation`` s exp =
     match run pComputation s with
     | Success(c, _, _) -> Assert.Equal(c, exp)
     | _ -> Assert.Fail("Parsing failed")
     
+[<Fact>]
+let ``Should Parse as Symbol - Variable``  () =
+    match run pSymbol "@ITSR0" with
+    | Success(Variable s, _, _) -> Assert.Equal(s, "ITSR0")
+    | Failure(msg, _, _) -> Assert.Fail(msg)
+    | _ -> Assert.Fail("Parsing failed")
     
+[<Fact>]
+let ``Should Parse as Symbol - Predefined Symbol``  () =
+    match run pSymbol "@R0" with
+    | Success(Predefined s, _, _) -> Assert.Equal(s, R0)
+    | Failure(msg, _, _) -> Assert.Fail(msg)
+    | _ -> Assert.Fail("Parsing failed")    
+    
+[<Fact>]
+let ``Should Parse as Symbol - Constant``  () =
+    match run pSymbol "@100" with
+    | Success(Constant s, _, _) -> Assert.Equal(s, uint16 100)
+    | Failure(msg, _, _) -> Assert.Fail(msg)
+    | _ -> Assert.Fail("Parsing failed")
+    
+[<Fact>]
+let ``Should Parse as Symbol - Label``  () =
+    match run pSymbol "(test)" with
+    | Success(Label s, _, _) -> Assert.Equal(s, "test")
+    | Failure(msg, _, _) -> Assert.Fail(msg)
+    | _ -> Assert.Fail("Parsing failed")       

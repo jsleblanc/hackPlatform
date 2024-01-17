@@ -93,7 +93,7 @@ let pBuiltInSymbol = pchar '@' >>. choice [
 ]
 
 let pPredefinedSymbol = pBuiltInSymbol |>> function s -> Predefined s
-let pSymbol = choice [pPredefinedSymbol; pConstant; pLabel; pVariable]
+let pSymbol = attempt pLabel <|> attempt pConstant <|> attempt pPredefinedSymbol <|> pVariable
 
 let charsToDestination chars =
     let c2d c =
