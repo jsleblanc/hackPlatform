@@ -1,6 +1,5 @@
 module Tests
 
-open System
 open Xunit
 
 open assembler.parsers
@@ -12,6 +11,10 @@ open FParsec
 [<InlineData("// comment")>]
 [<InlineData("//  comment")>]
 [<InlineData("//   comment ")>]
+[<InlineData(" //comment")>]
+[<InlineData("  //comment")>]
+[<InlineData(" // comment")>]
+[<InlineData("  //  comment")>]
 let ``Should Parse Comments`` s =
     let success = 
         match run pComment s with

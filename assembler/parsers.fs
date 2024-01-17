@@ -9,7 +9,7 @@ let ws = spaces // skips any whitespace
 let str s = pstring s
 let str_ws s = pstring s >>. ws
 
-let pComment = str_ws "//" >>. skipRestOfLine true
+let pComment = ws >>. str_ws "//" >>. skipRestOfLine true |>> function _ -> Option<Instruction>.None
 
 let pSpacing   = // literal translation:
                  //  skipManyChars (pSpace <|> pComment)
@@ -110,9 +110,9 @@ let pComputation = ws >>. many1 (anyOf "01ADM!-+&|" .>> ws) |>> function d -> Co
 let pAInstruction = pSymbol |>> function s -> A_Instruction s
 let pCInstruction = pipe3 (opt pDestination) pComputation (opt pJump) (fun d c j -> C_Instruction (d,c,j))
 
-let pInstruction = choice [pAInstruction; pCInstruction]
+let pInstruction = ws >>. choice [pAInstruction; pCInstruction]
 
-let pAssembly = ws >>. skipMany pComment >>. many pInstruction .>> ws .>> eof
+let pAssembly = ws >>. skipMany pComment >>. ws >>. many (opt pInstruction <|> pComment) .>> ws .>> eof
 
 let parseAssemblyString str = run pAssembly str
 let parseAssemblyFile fileName encoding = runParserOnFile pAssembly () fileName encoding
