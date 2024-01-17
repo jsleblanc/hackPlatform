@@ -104,11 +104,10 @@ let charsToDestination chars =
         | _ -> failwith $"Invalid destination: {c}"
     chars |> List.map c2d |> List.fold (fun state current -> state ||| current) Destination.None
 let pDestination = many1 (anyOf "AMD") .>> pchar '=' |>> function d -> charsToDestination d
-
 let pComputation = ws >>. many1 (anyOf "01ADM!-+&|" .>> ws) |>> function d -> Computation (String.Concat(d))
 
 let pAInstruction = pSymbol |>> function s -> A_Instruction s
-let pCInstruction = pipe3 (opt pDestination) pComputation (opt pJump) (fun d c j -> C_Instruction (d,c,j))
+let pCInstruction = pipe3 (opt (attempt pDestination)) pComputation (opt pJump) (fun d c j -> C_Instruction (d,c,j))
 
 let pInstruction = ws >>. choice [pAInstruction; pCInstruction]
 
