@@ -83,6 +83,17 @@ let ``Should Parse Jump - JMP`` () =
         | Success(JMP, _, _) -> true
         | _ -> false
     Assert.True(success)
+
+[<Theory>]
+[<InlineData(";JMP")>]
+[<InlineData(" ;JMP")>]
+[<InlineData(";JMP ")>]
+[<InlineData(" ; JMP")>]
+[<InlineData("  ;  JMP  ")>]
+let ``Should Parse Jump`` s =
+    match run pJump s with
+    | Success _ -> Assert.True(true)
+    | _ -> Assert.Fail("Parsing failed")
     
 [<Theory>]
 [<InlineData("test")>]
@@ -219,3 +230,44 @@ let ``Should Not Parse as Destination`` s =
     match run pDestination s with
     | Success _ -> Assert.Fail("Parsing should fail")
     | _ -> Assert.True(true)
+    
+[<Theory>]
+[<InlineData("0", "0")>]
+[<InlineData(" 0", "0")>]
+[<InlineData("0 ", "0")>]
+[<InlineData(" 0 ", "0")>]
+[<InlineData("1", "1")>]
+[<InlineData("-1", "-1")>]
+[<InlineData("D", "D")>]
+[<InlineData("A", "A")>]
+[<InlineData("!D", "!D")>]
+[<InlineData("!A", "!A")>]
+[<InlineData("-D", "-D")>]
+[<InlineData("-A", "-A")>]
+[<InlineData("D+1", "D+1")>]
+[<InlineData("A+1", "A+1")>]
+[<InlineData("D-1", "D-1")>]
+[<InlineData("A-1", "A-1")>]
+[<InlineData("D+A", "D+A")>]
+[<InlineData("D-A", "D-A")>]
+[<InlineData("A-D", "A-D")>]
+[<InlineData("D&A", "D&A")>]
+[<InlineData("D|A", "D|A")>]
+[<InlineData("D | A", "D|A")>]
+[<InlineData(" D | A ", "D|A")>]
+[<InlineData("M", "M")>]
+[<InlineData("!M", "!M")>]
+[<InlineData("-M", "-M")>]
+[<InlineData("M+1", "M+1")>]
+[<InlineData("M-1", "M-1")>]
+[<InlineData("D+M", "D+M")>]
+[<InlineData("D-M", "D-M")>]
+[<InlineData("M-D", "M-D")>]
+[<InlineData("D&M", "D&M")>]
+[<InlineData("D|M", "D|M")>]
+let ``Should Parse Computation`` s exp =
+    match run pComputation s with
+    | Success(c, _, _) -> Assert.Equal(c, exp)
+    | _ -> Assert.Fail("Parsing failed")
+    
+    
