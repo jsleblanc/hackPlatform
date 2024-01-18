@@ -4,10 +4,13 @@ open System
 open FParsec
 open assembler.types
 
+type ParseResult =
+    | Code of Instruction
+    | Comment of string
+
 let ws = spaces // skips any whitespace
 
 let str s = pstring s
-let str_ws s = pstring s >>. ws
 
 let pComment = str "//" >>. ws >>. restOfLine true |>> function c -> Comment c
 
@@ -107,7 +110,8 @@ let pCInstruction = pipe3 (opt (attempt pDestination)) pComputation (opt pJump) 
 
 let pInstruction = choice [pAInstruction; pCInstruction]
 
-let pLine = ws >>. choice [pInstruction; pComment]
+let internal pCode = pInstruction |>> function i -> Code i
+let pLine = ws >>. choice [pCode; pComment]
 let pAssembly = many pLine .>> eof
 
 let parseAssemblyString str = run pAssembly str

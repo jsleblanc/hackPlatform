@@ -328,7 +328,7 @@ let ``Should Parse as A Instruction`` s =
 [<Fact>]
 let ``Should Parse Line as C Instruction`` () =
     match run pLine "AM=D+1;JEQ" with
-    | Success(C_Instruction (d,c,j), _, _) ->
+    | Success(Code (C_Instruction (d,c,j)), _, _) ->
         Assert.Equal(Some (Destination.A ||| Destination.M), d)
         Assert.Equal("D+1", c)
         Assert.Equal(Some JEQ, j)
@@ -338,7 +338,7 @@ let ``Should Parse Line as C Instruction`` () =
 [<Fact>]
 let ``Should Parse Line as C Instruction ignoring comment`` () =
     match run pLine "AM=D+1;JEQ //comment" with
-    | Success(C_Instruction (d,c,j), _, _) ->
+    | Success(Code (C_Instruction (d,c,j)), _, _) ->
         Assert.Equal(Some (Destination.A ||| Destination.M), d)
         Assert.Equal("D+1", c)
         Assert.Equal(Some JEQ, j)
