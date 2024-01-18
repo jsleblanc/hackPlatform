@@ -1,7 +1,10 @@
 ﻿
 open System
 open Argu
+open FParsec.CharParsers
 open assembler.parsers
+open assembler.translator
+open assembler.util
 
 open System.IO
 type Arguments =
@@ -31,8 +34,29 @@ let main argv =
         printfn $"Error: specified file \"{fileName}\" does not exist"
         exit -1
     
-    let a = parseAssemblyFile @"/Users/josephleblanc/Documents/Code/nand2tetris/projects/06/max/Max.asm" System.Text.Encoding.UTF8
-    let b = parseAssemblyFile @"/Users/josephleblanc/Documents/Code/nand2tetris/projects/06/pong/Pong.asm" System.Text.Encoding.UTF8
-// For more information see https://aka.ms/fsharp-console-apps
-    printfn "Hello from F#"
-    0
+    let filterInstructions pr =
+        match pr with
+        | Code i -> Some i
+        | Comment _ -> None
+    
+    let parsedAssemblyFileResult = parseAssemblyStream (file.OpenRead()) System.Text.Encoding.Default
+    let retCode =
+        match parsedAssemblyFileResult with
+        | Success (results, _, _) ->
+            let code = results |> List.map filterInstructions |> List.choose id
+            let translated = translate code
+            let outputFileName = Path.ChangeExtension(file.FullName, ".hack")
+            File.WriteAllLines(outputFileName, translated.instructions)
+            printfn $"Assembled program written to \"{outputFileName}\""
+            match dumpSymbolTable with
+            | Some(true) -> 
+                let symbolOutputFileName = Path.ChangeExtension(file.FullName, ".hack.csv")
+                dumpSymbolsToDisk translated.symbolTable symbolOutputFileName
+                printfn $"Symbol table written to \"{symbolOutputFileName}\""
+            | _ -> ()
+            0
+        | Failure(msg, error, _) ->
+            printfn $"Error parsing assembly program: {msg}"
+            -1
+    
+    retCode

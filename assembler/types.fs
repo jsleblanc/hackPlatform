@@ -55,7 +55,7 @@ type Instruction =
     | A_Instruction of Symbol
     | C_Instruction of Destination option * Computation * Jump option
     
-type AssemblyProgram = {
-    instructions: Instruction list
+type AssembledProgram = {
+    instructions: string list
     symbolTable: Map<string, uint16>
 }
