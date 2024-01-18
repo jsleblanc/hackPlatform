@@ -47,13 +47,13 @@ type Computation = string
 
 type Symbol =
     | Predefined of BuiltInSymbol
-    | Label of string
     | Variable of string
     | Constant of uint16
     
 type Instruction =
     | A_Instruction of Symbol
     | C_Instruction of Destination option * Computation * Jump option
+    | Label of string //not an instruction but a marker to track a ROM address to be referenced later
     
 type AssembledProgram = {
     instructions: string list

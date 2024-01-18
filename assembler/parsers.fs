@@ -92,7 +92,7 @@ let pBuiltInSymbol = pchar '@' >>. choice [
 ]
 
 let pPredefinedSymbol = pBuiltInSymbol |>> function s -> Predefined s
-let pSymbol = attempt pLabel <|> attempt pConstant <|> attempt pPredefinedSymbol <|> pVariable .>> ws
+let pSymbol = attempt pConstant <|> attempt pPredefinedSymbol <|> pVariable .>> ws
 
 let charsToDestination chars =
     let c2d c =
@@ -108,7 +108,7 @@ let pComputation = many1 (anyOf "01ADM!-+&|") .>> ws |>> function d -> Computati
 let pAInstruction = pSymbol |>> function s -> A_Instruction s
 let pCInstruction = pipe3 (opt (attempt pDestination)) pComputation (opt pJump) (fun d c j -> C_Instruction (d,c,j))
 
-let pInstruction = choice [pAInstruction; pCInstruction]
+let pInstruction = choice [pAInstruction; pCInstruction; pLabel]
 
 let internal pCode = pInstruction |>> function i -> Code i
 let pLine = ws >>. choice [pCode; pComment]

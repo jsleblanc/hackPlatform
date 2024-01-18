@@ -291,8 +291,8 @@ let ``Should Parse as Symbol - Constant``  () =
     | _ -> Assert.Fail("Parsing failed")
     
 [<Fact>]
-let ``Should Parse as Symbol - Label``  () =
-    match run pSymbol "(test)" with
+let ``Should Parse as Instruction - Label``  () =
+    match run pInstruction "(test)" with
     | Success(Label s, _, _) -> Assert.Equal("test", s)
     | Failure(msg, _, _) -> Assert.Fail(msg)
     | _ -> Assert.Fail("Parsing failed")
@@ -311,7 +311,6 @@ let ``Should Parse as C Instruction`` s exp =
    
 [<Theory>]
 [<InlineData("@100")>]
-[<InlineData("(LABEL)")>]
 [<InlineData("@R9")>]
 [<InlineData("@R10")>]
 [<InlineData("@R12")>]
@@ -342,6 +341,16 @@ let ``Should Parse Line as C Instruction ignoring comment`` () =
         Assert.Equal(Some (Destination.A ||| Destination.M), d)
         Assert.Equal("D+1", c)
         Assert.Equal(Some JEQ, j)
+    | Failure(msg, _, _) -> Assert.Fail(msg)
+    | _ -> Assert.Fail("Parsing failed")
+
+[<Theory>]
+[<InlineData("(FOO)", "FOO")>]
+[<InlineData("(foo)", "foo")>]
+[<InlineData(" (FOO)", "FOO")>]
+let ``Should Parse Line as Label`` s exp =
+    match run pLine s with
+    | Success(Code (Label l), _, _) -> Assert.Equal(exp, l)
     | Failure(msg, _, _) -> Assert.Fail(msg)
     | _ -> Assert.Fail("Parsing failed")
 
