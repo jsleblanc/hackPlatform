@@ -312,7 +312,12 @@ let ``Should Parse as C Instruction`` s exp =
 [<Theory>]
 [<InlineData("@100")>]
 [<InlineData("(LABEL)")>]
+[<InlineData("@R9")>]
+[<InlineData("@R10")>]
 [<InlineData("@R12")>]
+[<InlineData("@R13")>]
+[<InlineData("@R14")>]
+[<InlineData("@R15")>]
 [<InlineData("@i")>]
 let ``Should Parse as A Instruction`` s =
     match run pAInstruction s with
@@ -350,6 +355,28 @@ let ``Should Parse Line as Comment`` s =
     match run pLine s with
     | Success (Comment c, _, _) -> Assert.True(true)
     | Failure(msg, _,_) -> Assert.Fail(msg)
+    | _ -> Assert.Fail("Parsing failed")
+
+[<Theory>]
+[<InlineData("@R1")>]
+[<InlineData("@R2")>]
+[<InlineData("@R3")>]
+[<InlineData("@R4")>]
+[<InlineData("@R5")>]
+[<InlineData("@R6")>]
+[<InlineData("@R7")>]
+[<InlineData("@R8")>]
+[<InlineData("@R9")>]
+[<InlineData("@R10")>]
+[<InlineData("@R11")>]
+[<InlineData("@R12")>]
+[<InlineData("@R13")>]
+[<InlineData("@R14")>]
+[<InlineData("@R15")>]
+let ``Should Parse Built In Registers when parsing whole assembly`` s =
+    match run pAssembly s with
+    | Success(i, _, _) -> Assert.True(true)
+    | Failure(msg, _, _) -> Assert.Fail(msg)
     | _ -> Assert.Fail("Parsing failed")
     
 [<Fact>]

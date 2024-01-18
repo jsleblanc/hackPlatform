@@ -68,6 +68,12 @@ let pBuiltInSymbol = pchar '@' >>. choice [
     bBuiltInSymbol_ARG
     bBuiltInSymbol_THIS
     bBuiltInSymbol_THAT
+    bBuiltInSymbol_R10 
+    bBuiltInSymbol_R11 
+    bBuiltInSymbol_R12
+    bBuiltInSymbol_R13
+    bBuiltInSymbol_R14
+    bBuiltInSymbol_R15
     bBuiltInSymbol_R0 
     bBuiltInSymbol_R1
     bBuiltInSymbol_R2
@@ -78,12 +84,6 @@ let pBuiltInSymbol = pchar '@' >>. choice [
     bBuiltInSymbol_R7 
     bBuiltInSymbol_R8 
     bBuiltInSymbol_R9 
-    bBuiltInSymbol_R10 
-    bBuiltInSymbol_R11 
-    bBuiltInSymbol_R12
-    bBuiltInSymbol_R13
-    bBuiltInSymbol_R14
-    bBuiltInSymbol_R15
     bBuiltInSymbol_SCREEN
     bBuiltInSymbol_KBD
 ]
