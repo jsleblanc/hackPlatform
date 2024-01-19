@@ -10,11 +10,13 @@ open System.IO
 type Arguments =
     | [<MainCommand; ExactlyOnce>] AssemblyFile of file:string
     | [<Unique; AltCommandLine("-d")>] DumpSymbolTable
+    | [<Unique; AltCommandLine("-o")>] OutputFile of outputFile:string
     interface IArgParserTemplate with
         member s.Usage =
             match s with
             | AssemblyFile _ -> "Assembly file to process"
             | DumpSymbolTable -> "Writes out the symbol address table to a file to assist debugging"
+            | OutputFile _ -> "Specify the name of the output file instead of the default <inputFile>.hack"
 
 [<EntryPoint>]
 let main argv =
@@ -27,7 +29,8 @@ let main argv =
         exit 0
     
     let fileName = results.GetResult AssemblyFile
-    let dumpSymbolTable = results.TryGetResult DumpSymbolTable
+    let dumpSymbolTableArg = results.TryGetResult DumpSymbolTable
+    let outputFileNameArg = results.TryGetResult OutputFile
     
     let file = FileInfo(fileName)
     if file.Exists = false then
@@ -39,16 +42,20 @@ let main argv =
         | Code i -> Some i
         | Comment _ -> None
     
+    let outputFileName =
+        match outputFileNameArg with
+        | Some name -> Path.Combine(file.Directory.FullName, name)
+        | None -> Path.ChangeExtension(file.FullName, ".hack")
+    
     let parsedAssemblyFileResult = parseAssemblyStream (file.OpenRead()) System.Text.Encoding.Default
     let retCode =
         match parsedAssemblyFileResult with
         | Success (results, _, _) ->
             let code = results |> List.map filterInstructions |> List.choose id
             let translated = translate code
-            let outputFileName = Path.ChangeExtension(file.FullName, ".hack")
             File.WriteAllLines(outputFileName, translated.instructions)
             printfn $"Assembled program written to \"{outputFileName}\""
-            match dumpSymbolTable with
+            match dumpSymbolTableArg with
             | Some _ -> 
                 let symbolOutputFileName = Path.ChangeExtension(file.FullName, ".hack.csv")
                 dumpSymbolsToDisk translated.symbolTable symbolOutputFileName
