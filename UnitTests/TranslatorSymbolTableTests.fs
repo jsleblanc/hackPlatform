@@ -1,4 +1,4 @@
-module UnitTests.TranslatorTests
+module UnitTests.TranslatorTests.SymbolTableTests
 
 open Xunit
 open assembler.types
@@ -78,3 +78,32 @@ let ``Should Build Symbol Table Only Variables repeated variable should use same
     Assert.Equal(u VARIABLE_BASE_ADDRESS, table.Item("a"))
     Assert.Equal(u (VARIABLE_BASE_ADDRESS+1), table.Item("b"))
     Assert.Equal(u (VARIABLE_BASE_ADDRESS+2), table.Item("c"))
+
+[<Fact>]
+let ``Labels Should Capture Instruction Addresses single label first instruction`` () =
+    let instructions = [
+        Label "a"
+        C_Instruction (None, "1", None) //0
+    ]
+    let table = buildSymbolTable instructions
+    Assert.Equal(u 0x0, table.Item("a"))
+
+[<Fact>]
+let ``Labels Should Capture Instruction Addresses multiple labels multiple instructions`` () =
+    let instructions = [
+        C_Instruction (None, "1", None) //0
+        Label "a"
+        C_Instruction (None, "1", None) //1
+        C_Instruction (None, "1", None) //2
+        C_Instruction (None, "1", None) //3
+        C_Instruction (None, "1", None) //4
+        Label "b"
+        C_Instruction (None, "1", None) //5
+        C_Instruction (None, "1", None) //6
+        Label "c"
+        C_Instruction (None, "1", None) //7
+    ]
+    let table = buildSymbolTable instructions
+    Assert.Equal(u 0x1, table.Item("a"))
+    Assert.Equal(u 0x5, table.Item("b"))
+    Assert.Equal(u 0x7, table.Item("c"))
