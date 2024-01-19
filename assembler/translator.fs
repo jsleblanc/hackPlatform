@@ -1,6 +1,11 @@
 module assembler.translator
 
+open System.Collections.Generic
 open assembler.types
+
+[<Literal>]
+let VARIABLE_BASE_ADDRESS = 0x10
+let internal u = uint16
 
 let builtInSymbolToString s =
     match s with
@@ -30,7 +35,6 @@ let builtInSymbolToString s =
 
 let seedSymbolMap =
     let f = builtInSymbolToString
-    let u = uint16
     Map [
         (f SP), u 0
         (f LCL), u 1
@@ -56,27 +60,34 @@ let seedSymbolMap =
         (f SCREEN), u 0x4000
         (f KBD), u 0x6000
     ]
-
-let extractLabel i =
-    match i with
-    | A_Instruction (Label l) -> Some l
-    | _ -> None
     
-let extractVariable i =
-    match i with
-    | A_Instruction (Variable v) -> Some v
-    | _ -> None
+let addIfNotExist (dict:Dictionary<string,uint16>) k v =
+    if dict.ContainsKey(k) = false then
+        dict.Add(k, v)
+        true
+    else
+        false
 
 let buildSymbolTable instructions =
-    let f (x, y) =
-        match (x, y) with
-        | Some x, y -> Some (x,y)
-        | _ -> None
-    //labels shouldn't increment the program counter, so this code isn't correct
-    let mappedLabelSymbols = instructions |> List.indexed |> List.map (fun (i,v) -> f (extractLabel v, uint16 i)) |> List.choose id
-    let mappedVariables = instructions |> List.map extractVariable |> List.choose id |> List.indexed |> List.map (fun (i, v) -> (v, uint16 (i+16)))
+    let mutable pc = u 0
+    let mutable vc = u 0x10
+    let table = Dictionary<string, uint16>()
+    let processInstruction i =
+        match i with
+        | Label l ->
+            if table.ContainsKey(l) = false then
+                table.Add(l, pc)
+        | _ -> pc <- pc + (u 1)
+        match i with
+        | A_Instruction (Variable v) ->
+            if table.ContainsKey(v) = false then
+                table.Add(v, vc)
+                vc <- vc + (u 1)
+        | _ -> ()
+    instructions |> List.iter processInstruction
     let seedItems = seedSymbolMap |> Map.toList
-    seedItems @ mappedLabelSymbols @ mappedVariables |> Map.ofList
+    let mappedSymbols = table |> Seq.map (|KeyValue|) |> Seq.toList
+    seedItems @ mappedSymbols |> Map.ofList
 
 let translate (instructions: Instruction list) =
     let symbolTable = buildSymbolTable instructions

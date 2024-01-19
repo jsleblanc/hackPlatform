@@ -1,6 +1,5 @@
-module Tests
+module UnitTests.ParserTests
 
-open System
 open Xunit
 
 open assembler.parsers
