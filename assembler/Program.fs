@@ -8,13 +8,13 @@ open assembler.util
 
 open System.IO
 type Arguments =
-    | [<MainCommand; ExactlyOnce; Last>] AssemblyFile of file:string
-    | [<Unique>] DumpSymbolTable of dumpSymbols:bool
+    | [<MainCommand; ExactlyOnce>] AssemblyFile of file:string
+    | [<Unique; AltCommandLine("-d")>] DumpSymbolTable
     interface IArgParserTemplate with
         member s.Usage =
             match s with
             | AssemblyFile _ -> "Assembly file to process"
-            | DumpSymbolTable _ -> "If true, writes out the symbol address table to a file to assist debugging"
+            | DumpSymbolTable -> "Writes out the symbol address table to a file to assist debugging"
 
 [<EntryPoint>]
 let main argv =
@@ -49,7 +49,7 @@ let main argv =
             File.WriteAllLines(outputFileName, translated.instructions)
             printfn $"Assembled program written to \"{outputFileName}\""
             match dumpSymbolTable with
-            | Some(true) -> 
+            | Some _ -> 
                 let symbolOutputFileName = Path.ChangeExtension(file.FullName, ".hack.csv")
                 dumpSymbolsToDisk translated.symbolTable symbolOutputFileName
                 printfn $"Symbol table written to \"{symbolOutputFileName}\""
