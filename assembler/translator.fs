@@ -65,19 +65,21 @@ let buildSymbolTable instructions =
     let mutable pc = u 0
     let mutable vc = u 0x10
     let table = Dictionary<string, uint16>()
-    let processInstruction i =
+    let processLabels i =
         match i with
         | Label l ->
             if table.ContainsKey(l) = false then
                 table.Add(l, pc)
         | _ -> pc <- pc + (u 1)
+    let processVariables i =
         match i with
         | A_Instruction (Variable v) ->
             if table.ContainsKey(v) = false then
                 table.Add(v, vc)
                 vc <- vc + (u 1)
         | _ -> ()
-    instructions |> List.iter processInstruction
+    instructions |> List.iter processLabels
+    instructions |> List.iter processVariables
     let seedItems = seedSymbolMap |> Map.toList
     let mappedSymbols = table |> Seq.map (|KeyValue|) |> Seq.toList
     seedItems @ mappedSymbols |> Map.ofList

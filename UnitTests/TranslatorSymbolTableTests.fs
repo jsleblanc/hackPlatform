@@ -107,3 +107,22 @@ let ``Labels Should Capture Instruction Addresses multiple labels multiple instr
     Assert.Equal(u 0x1, table.Item("a"))
     Assert.Equal(u 0x5, table.Item("b"))
     Assert.Equal(u 0x7, table.Item("c"))
+
+[<Fact>]
+let ``Labels used before defined should not be treated as variables`` () =
+    let instructions = [
+        C_Instruction (None, "1", None) //0
+        C_Instruction (None, "1", None) //1
+        C_Instruction (None, "1", None) //2
+        C_Instruction (None, "1", None) //3
+        A_Instruction (Variable "i") //4 -- this is really a reference to a label (rom address) defined later
+        C_Instruction (None, "1", None) //5
+        C_Instruction (None, "1", None) //6
+        C_Instruction (None, "1", None) //7
+        C_Instruction (None, "1", None) //8
+        Label "i"
+        C_Instruction (None, "1", None) //9
+    ]
+    let table = buildSymbolTable instructions
+    Assert.Equal(u 0x9, table.Item("i"))
+    Assert.NotEqual(u VARIABLE_BASE_ADDRESS, table.Item("i"))
