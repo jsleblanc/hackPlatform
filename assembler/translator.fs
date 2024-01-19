@@ -111,7 +111,7 @@ let seedSymbolMap =
     
 let buildSymbolTable instructions =
     let mutable pc = u 0
-    let mutable vc = u 0x10
+    let mutable vc = u VARIABLE_BASE_ADDRESS
     let table = Dictionary<string, uint16>()
     let processLabels i =
         match i with
