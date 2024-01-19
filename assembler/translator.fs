@@ -61,13 +61,6 @@ let seedSymbolMap =
         (f KBD), u 0x6000
     ]
     
-let addIfNotExist (dict:Dictionary<string,uint16>) k v =
-    if dict.ContainsKey(k) = false then
-        dict.Add(k, v)
-        true
-    else
-        false
-
 let buildSymbolTable instructions =
     let mutable pc = u 0
     let mutable vc = u 0x10
