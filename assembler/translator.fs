@@ -1,5 +1,6 @@
 module assembler.translator
 
+open System
 open System.Collections.Generic
 open assembler.types
 
@@ -33,6 +34,53 @@ let builtInSymbolToString s =
     | SCREEN -> "SCREEN"
     | KBD -> "KBD"
 
+let jump2Bin j =
+    let x = 
+        match j with
+        | JGT -> 0b001
+        | JEQ -> 0b010
+        | JGE -> 0b011
+        | JLT -> 0b100
+        | JNE -> 0b101
+        | JLE -> 0b110
+        | JMP -> 0b111
+    u x
+
+let comp2bin c =
+    //a,c1,c2,c3,c4,c5,c6
+    let x = 
+        match c with
+        | "0"  -> 0b0_101010
+        | "1"  -> 0b0_111111
+        | "-1" -> 0b0_111010
+        | "D"  -> 0b0_001100
+        | "A"  -> 0b0_110000
+        | "M"  -> 0b1_110000
+        | "!D" -> 0b0_001101
+        | "!A" -> 0b0_110001
+        | "!M" -> 0b1_110001
+        | "-D" -> 0b0_001111
+        | "-A" -> 0b0_110011    
+        | "-M" -> 0b1_110011
+        | "D+1" -> 0b0_011111
+        | "A+1" -> 0b0_110111
+        | "M+1" -> 0b1_110111
+        | "D-1" -> 0b0_001110
+        | "A-1" -> 0b0_110010
+        | "M-1" -> 0b1_110010
+        | "D+A" -> 0b0_000010
+        | "D+M" -> 0b1_000010
+        | "D-A" -> 0b0_010011
+        | "D-M" -> 0b1_010011
+        | "A-D" -> 0b0_000111
+        | "M-D" -> 0b1_000111
+        | "D&A" -> 0b0_000000
+        | "D&M" -> 0b1_000000
+        | "D|A" -> 0b0_010101
+        | "D|M" -> 0b1_010101
+        | _ -> failwith $"Unrecognized instruction: \"{c}\""
+    u x
+    
 let seedSymbolMap =
     let f = builtInSymbolToString
     Map [
@@ -84,9 +132,36 @@ let buildSymbolTable instructions =
     let mappedSymbols = table |> Seq.map (|KeyValue|) |> Seq.toList
     seedItems @ mappedSymbols |> Map.ofList
 
+let i2b (i:uint16) = Convert.ToString(int i, 2).PadLeft(16, '0')
+
+let jmpOrZero j =
+    match j with
+    | Some jmp -> jump2Bin jmp
+    | None -> u 0
+
+let destOrZero (d:Destination option) =
+    match d with
+    | Some dst -> u (int dst)
+    | None -> u 0
+
+let translateInstruction (t:Map<string, uint16>) i =
+    match i with
+    | A_Instruction a ->
+        match a with
+        | Predefined p -> Some (i2b t[builtInSymbolToString p])
+        | Variable v -> Some (i2b t[v])
+        | Constant c -> Some (i2b c)
+    | C_Instruction (d, comp, j) ->
+        let compBin = (comp2bin comp) <<< 6
+        let dstBin = (destOrZero d) <<< 3
+        let jumpBin = jmpOrZero j
+        let bin = (u 0b111_0000000000000) ||| compBin ||| dstBin ||| jumpBin
+        Some (i2b bin)
+    | Label _ -> None
+
 let translate (instructions: Instruction list) =
     let symbolTable = buildSymbolTable instructions
     {
-        instructions = ["todo"]
+        instructions = instructions |> List.map (translateInstruction symbolTable) |> List.choose id
         symbolTable = symbolTable
     }
