@@ -2,6 +2,7 @@ module AssemblerTests.ParserTests
 
 open Xunit
 
+open AssemblerTests.util
 open assembler.parsers
 open assembler.types
 open FParsec
@@ -232,38 +233,42 @@ let ``Should Not Parse as Destination`` s =
     match run pDestination s with
     | Success _ -> Assert.Fail("Parsing should fail")
     | _ -> Assert.True(true)
+
+type OpCodeTestCases() =
+    inherit ClassDataBase([
+        [| "0"; OP_ZERO |]
+        [| "1"; OP_ONE |]
+        [| "-1"; OP_NEG_ONE |]
+        [| "D"; OP_D |]
+        [| "A"; OP_A |]
+        [| "M"; OP_M |]
+        [| "!D"; OP_NOT_D |]
+        [| "!A"; OP_NOT_A |]
+        [| "!M"; OP_NOT_M |]
+        [| "-D"; OP_NEG_D |]
+        [| "-A"; OP_NEG_A |]
+        [| "-M"; OP_NEG_M |]
+        [| "D+1"; OP_D_PLUS_ONE |]
+        [| "A+1"; OP_A_PLUS_ONE |]
+        [| "M+1"; OP_M_PLUS_ONE |]
+        [| "D-1"; OP_D_MINUS_ONE |]
+        [| "A-1"; OP_A_MINUS_ONE |]
+        [| "M-1"; OP_M_MINUS_ONE |]
+        [| "D+A"; OP_D_PLUS_A |]
+        [| "D+M"; OP_D_PLUS_M |]
+        [| "D-A"; OP_D_MINUS_A |]
+        [| "D-M"; OP_D_MINUS_M |]
+        [| "A-D"; OP_A_MINUS_D |]
+        [| "M-D"; OP_M_MINUS_D |]
+        [| "D&A"; OP_D_AND_A |]
+        [| "D&M"; OP_D_AND_M |]
+        [| "D|A"; OP_D_OR_A |]
+        [| "D|M"; OP_D_OR_M |]
+    ])
     
 [<Theory>]
-[<InlineData("0", "0")>]
-[<InlineData("0 ", "0")>]
-[<InlineData("1", "1")>]
-[<InlineData("-1", "-1")>]
-[<InlineData("D", "D")>]
-[<InlineData("A", "A")>]
-[<InlineData("!D", "!D")>]
-[<InlineData("!A", "!A")>]
-[<InlineData("-D", "-D")>]
-[<InlineData("-A", "-A")>]
-[<InlineData("D+1", "D+1")>]
-[<InlineData("A+1", "A+1")>]
-[<InlineData("D-1", "D-1")>]
-[<InlineData("A-1", "A-1")>]
-[<InlineData("D+A", "D+A")>]
-[<InlineData("D-A", "D-A")>]
-[<InlineData("A-D", "A-D")>]
-[<InlineData("D&A", "D&A")>]
-[<InlineData("D|A", "D|A")>]
-[<InlineData("M", "M")>]
-[<InlineData("!M", "!M")>]
-[<InlineData("-M", "-M")>]
-[<InlineData("M+1", "M+1")>]
-[<InlineData("M-1", "M-1")>]
-[<InlineData("D+M", "D+M")>]
-[<InlineData("D-M", "D-M")>]
-[<InlineData("M-D", "M-D")>]
-[<InlineData("D&M", "D&M")>]
-[<InlineData("D|M", "D|M")>]
-let ``Should Parse as Computation`` s exp =
+[<ClassData(typeof<OpCodeTestCases>)>]
+let ``Should Parse as OP Code`` s exp =
     match run pComputation s with
     | Success(c, _, _) -> Assert.Equal(exp, c)
     | _ -> Assert.Fail("Parsing failed")
@@ -297,13 +302,9 @@ let ``Should Parse as Instruction - Label``  () =
     | _ -> Assert.Fail("Parsing failed")
     
 [<Theory>]
-[<InlineData("D;JGT", "D")>]
-[<InlineData("A;JGT", "A")>]
-[<InlineData("0;JMP", "0")>]
-[<InlineData("D=D-M", "D-M")>]
-[<InlineData("AM=M+1", "M+1")>]
-let ``Should Parse as C Instruction`` s exp =
-    match run pCInstruction s with
+[<ClassData(typeof<OpCodeTestCases>)>]
+let ``Should Parse OP Code when a destination and a jump are added`` s exp =
+    match run pCInstruction $"AM={s};JMP" with
     | Success(C_Instruction (d, c, j), _, _) -> Assert.Equal(exp, c)
     | Failure(msg, _, _) -> Assert.Fail(msg)
     | _ -> Assert.Fail("Parsing failed")
@@ -328,7 +329,7 @@ let ``Should Parse Line as C Instruction`` () =
     match run pLine "AM=D+1;JEQ" with
     | Success(Code (C_Instruction (d,c,j)), _, _) ->
         Assert.Equal(Some (Destination.A ||| Destination.M), d)
-        Assert.Equal("D+1", c)
+        Assert.Equal(OP_D_PLUS_ONE, c)
         Assert.Equal(Some JEQ, j)
     | Failure(msg, _, _) -> Assert.Fail(msg)
     | _ -> Assert.Fail("Parsing failed")
@@ -338,7 +339,7 @@ let ``Should Parse Line as C Instruction ignoring comment`` () =
     match run pLine "AM=D+1;JEQ //comment" with
     | Success(Code (C_Instruction (d,c,j)), _, _) ->
         Assert.Equal(Some (Destination.A ||| Destination.M), d)
-        Assert.Equal("D+1", c)
+        Assert.Equal(OP_D_PLUS_ONE, c)
         Assert.Equal(Some JEQ, j)
     | Failure(msg, _, _) -> Assert.Fail(msg)
     | _ -> Assert.Fail("Parsing failed")
@@ -385,7 +386,6 @@ let ``Should Parse Built In Registers when parsing whole assembly`` s =
     match run pAssembly s with
     | Success(i, _, _) -> Assert.True(true)
     | Failure(msg, _, _) -> Assert.Fail(msg)
-    | _ -> Assert.Fail("Parsing failed")
     
 [<Fact>]
 let ``Should Parse Multiline Input`` () =

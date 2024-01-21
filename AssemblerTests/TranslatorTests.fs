@@ -8,7 +8,7 @@ open assembler.translator
 
 [<Fact>]
 let ``Should Translate Instruction to correct Binary`` () =
-    let i = C_Instruction (Some (Destination.A ||| Destination.M), "M-1", Some JNE)
+    let i = C_Instruction (Some (Destination.A ||| Destination.M), OP_M_MINUS_ONE, Some JNE)
     let result = translateInstructionBuiltinSymbolTable i
     match result with
     | Some binary -> Assert.Equal("1111110010101101", binary)
@@ -24,7 +24,7 @@ let ``Should skip labels`` () =
     
 [<Property>]
 let ``Jumps should always use the lowest 3 bits`` (j:Jump) =
-    let i = C_Instruction (None, "D&A", Some j) //D&A instruction encodes to 0
+    let i = C_Instruction (None, OP_D_AND_A, Some j) //D&A instruction encodes to 0
     let result = translateInstructionBuiltinSymbolTable i
     match result with
     | Some binary -> binary.StartsWith("1110000000000") && binary.Length = 16
@@ -32,7 +32,7 @@ let ``Jumps should always use the lowest 3 bits`` (j:Jump) =
     
 [<Property>]
 let ``Destination should always use bits 3,4,5`` (d:Destination) =
-    let i = C_Instruction (Some d, "D&A", None)
+    let i = C_Instruction (Some d, OP_D_AND_A, None)
     let result = translateInstructionBuiltinSymbolTable i
     match result with
     | Some binary -> binary.StartsWith("1110000000") && binary.Length = 16 && binary.EndsWith("000")

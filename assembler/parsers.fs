@@ -103,7 +103,38 @@ let charsToDestination chars =
         | _ -> failwith $"Invalid destination: {c}" //parser should make this unreachable by only allowing A,M,D chars
     chars |> List.map c2d |> List.fold (fun state current -> state ||| current) Destination.None
 let pDestination = many1 (anyOf "AMD") .>> pchar '=' .>> ws |>> function d -> charsToDestination d
-let pComputation = many1 (anyOf "01ADM!-+&|") .>> ws |>> function d -> Computation (String.Concat(d))
+
+let pComputation =
+    choiceL [
+        str "!D" .>> ws |>> function _ -> OP_NOT_D
+        str "!A" .>> ws |>> function _ -> OP_NOT_A
+        str "!M" .>> ws |>> function _ -> OP_NOT_M
+        str "-D" .>> ws |>> function _ -> OP_NEG_D
+        str "-A" .>> ws |>> function _ -> OP_NEG_A
+        str "-M" .>> ws |>> function _ -> OP_NEG_M
+        str "D+1" .>> ws |>> function _ -> OP_D_PLUS_ONE 
+        str "A+1" .>> ws |>> function _ -> OP_A_PLUS_ONE
+        str "M+1" .>> ws |>> function _ -> OP_M_PLUS_ONE
+        str "D-1" .>> ws |>> function _ -> OP_D_MINUS_ONE
+        str "A-1" .>> ws |>> function _ -> OP_A_MINUS_ONE
+        str "M-1" .>> ws |>> function _ -> OP_M_MINUS_ONE
+        str "D+A" .>> ws |>> function _ -> OP_D_PLUS_A
+        str "D+M" .>> ws |>> function _ -> OP_D_PLUS_M
+        str "D-A" .>> ws |>> function _ -> OP_D_MINUS_A
+        str "D-M" .>> ws |>> function _ -> OP_D_MINUS_M
+        str "A-D" .>> ws |>> function _ -> OP_A_MINUS_D
+        str "M-D" .>> ws |>> function _ -> OP_M_MINUS_D
+        str "D&A" .>> ws |>> function _ -> OP_D_AND_A
+        str "D&M" .>> ws |>> function _ -> OP_D_AND_M
+        str "D|A" .>> ws |>> function _ -> OP_D_OR_A
+        str "D|M" .>> ws |>> function _ -> OP_D_OR_M
+        str "0" .>> ws |>> function _ -> OP_ZERO
+        str "1" .>> ws |>> function _ -> OP_ONE
+        str "-1" .>> ws |>> function _ -> OP_NEG_ONE
+        str "D" .>> ws |>> function _ -> OP_D
+        str "A" .>> ws |>> function _ -> OP_A 
+        str "M" .>> ws |>> function _ -> OP_M        
+    ] "OP Code"
 
 let pAInstruction = pSymbol |>> function s -> A_Instruction s
 let pCInstruction = pipe3 (opt (attempt pDestination)) pComputation (opt pJump) (fun d c j -> C_Instruction (d,c,j))

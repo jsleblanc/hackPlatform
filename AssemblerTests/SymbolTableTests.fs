@@ -83,7 +83,7 @@ let ``Should Build Symbol Table Only Variables repeated variable should use same
 let ``Labels Should Capture Instruction Addresses single label first instruction`` () =
     let instructions = [
         Label "a"
-        C_Instruction (None, "1", None) //0
+        C_Instruction (None, OP_ONE, None) //0
     ]
     let table = buildSymbolTable instructions
     Assert.Equal(u 0x0, table.Item("a"))
@@ -91,17 +91,17 @@ let ``Labels Should Capture Instruction Addresses single label first instruction
 [<Fact>]
 let ``Labels Should Capture Instruction Addresses multiple labels multiple instructions`` () =
     let instructions = [
-        C_Instruction (None, "1", None) //0
+        C_Instruction (None, OP_ONE, None) //0
         Label "a"
-        C_Instruction (None, "1", None) //1
-        C_Instruction (None, "1", None) //2
-        C_Instruction (None, "1", None) //3
-        C_Instruction (None, "1", None) //4
+        C_Instruction (None, OP_ONE, None) //1
+        C_Instruction (None, OP_ONE, None) //2
+        C_Instruction (None, OP_ONE, None) //3
+        C_Instruction (None, OP_ONE, None) //4
         Label "b"
-        C_Instruction (None, "1", None) //5
-        C_Instruction (None, "1", None) //6
+        C_Instruction (None, OP_ONE, None) //5
+        C_Instruction (None, OP_ONE, None) //6
         Label "c"
-        C_Instruction (None, "1", None) //7
+        C_Instruction (None, OP_ONE, None) //7
     ]
     let table = buildSymbolTable instructions
     Assert.Equal(u 0x1, table.Item("a"))
@@ -111,17 +111,17 @@ let ``Labels Should Capture Instruction Addresses multiple labels multiple instr
 [<Fact>]
 let ``Labels used before defined should not be treated as variables`` () =
     let instructions = [
-        C_Instruction (None, "1", None) //0
-        C_Instruction (None, "1", None) //1
-        C_Instruction (None, "1", None) //2
-        C_Instruction (None, "1", None) //3
+        C_Instruction (None, OP_ONE, None) //0
+        C_Instruction (None, OP_ONE, None) //1
+        C_Instruction (None, OP_ONE, None) //2
+        C_Instruction (None, OP_ONE, None) //3
         A_Instruction (Variable "i") //4 -- this is really a reference to a label (rom address) defined later
-        C_Instruction (None, "1", None) //5
-        C_Instruction (None, "1", None) //6
-        C_Instruction (None, "1", None) //7
-        C_Instruction (None, "1", None) //8
+        C_Instruction (None, OP_ONE, None) //5
+        C_Instruction (None, OP_ONE, None) //6
+        C_Instruction (None, OP_ONE, None) //7
+        C_Instruction (None, OP_ONE, None) //8
         Label "i"
-        C_Instruction (None, "1", None) //9
+        C_Instruction (None, OP_ONE, None) //9
     ]
     let table = buildSymbolTable instructions
     Assert.Equal(u 0x9, table.Item("i"))
