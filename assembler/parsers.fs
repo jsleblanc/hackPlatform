@@ -104,7 +104,7 @@ let charsToDestination chars =
     chars |> List.map c2d |> List.fold (fun state current -> state ||| current) Destination.None
 let pDestination = many1 (anyOf "AMD") .>> pchar '=' .>> ws |>> function d -> charsToDestination d
 
-let pComputation =
+let pOpCode =
     choiceL [
         str "!D" .>> ws |>> function _ -> OP_NOT_D
         str "!A" .>> ws |>> function _ -> OP_NOT_A
@@ -132,12 +132,12 @@ let pComputation =
         str "1" .>> ws |>> function _ -> OP_ONE
         str "-1" .>> ws |>> function _ -> OP_NEG_ONE
         str "D" .>> ws |>> function _ -> OP_D
-        str "A" .>> ws |>> function _ -> OP_A 
-        str "M" .>> ws |>> function _ -> OP_M        
+        str "A" .>> ws |>> function _ -> OP_A
+        str "M" .>> ws |>> function _ -> OP_M
     ] "OP Code"
 
 let pAInstruction = pSymbol |>> function s -> A_Instruction s
-let pCInstruction = pipe3 (opt (attempt pDestination)) pComputation (opt pJump) (fun d c j -> C_Instruction (d,c,j))
+let pCInstruction = pipe3 (opt (attempt pDestination)) pOpCode (opt pJump) (fun d c j -> C_Instruction (d,c,j))
 
 let pInstruction = choice [pAInstruction; pCInstruction; pLabel]
 

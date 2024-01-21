@@ -269,7 +269,7 @@ type OpCodeTestCases() =
 [<Theory>]
 [<ClassData(typeof<OpCodeTestCases>)>]
 let ``Should Parse as OP Code`` s exp =
-    match run pComputation s with
+    match run pOpCode s with
     | Success(c, _, _) -> Assert.Equal(exp, c)
     | _ -> Assert.Fail("Parsing failed")
     
