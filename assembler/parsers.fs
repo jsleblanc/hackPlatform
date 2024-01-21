@@ -100,7 +100,7 @@ let charsToDestination chars =
         | 'A' -> Destination.A
         | 'M' -> Destination.M
         | 'D' -> Destination.D
-        | _ -> failwith $"Invalid destination: {c}"
+        | _ -> failwith $"Invalid destination: {c}" //parser should make this unreachable by only allowing A,M,D chars
     chars |> List.map c2d |> List.fold (fun state current -> state ||| current) Destination.None
 let pDestination = many1 (anyOf "AMD") .>> pchar '=' .>> ws |>> function d -> charsToDestination d
 let pComputation = many1 (anyOf "01ADM!-+&|") .>> ws |>> function d -> Computation (String.Concat(d))
