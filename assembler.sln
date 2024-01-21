@@ -4,6 +4,10 @@ Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "assembler", "assembler\asse
 EndProject
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "AssemblerTests", "AssemblerTests\AssemblerTests.fsproj", "{A03E99FA-B84B-47B7-B15D-0C217C55762A}"
 EndProject
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "vmil2asm", "vmil2asm\vmil2asm.fsproj", "{9D0A1D9A-ED01-4BAA-8F79-DE59B05720C6}"
+EndProject
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "vmil2asmTests", "vmil2asmTests\vmil2asmTests.fsproj", "{8B19905D-8778-42A1-9D79-C8CF6F2458FE}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -18,5 +22,13 @@ Global
 		{A03E99FA-B84B-47B7-B15D-0C217C55762A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{A03E99FA-B84B-47B7-B15D-0C217C55762A}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{A03E99FA-B84B-47B7-B15D-0C217C55762A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9D0A1D9A-ED01-4BAA-8F79-DE59B05720C6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9D0A1D9A-ED01-4BAA-8F79-DE59B05720C6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9D0A1D9A-ED01-4BAA-8F79-DE59B05720C6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9D0A1D9A-ED01-4BAA-8F79-DE59B05720C6}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8B19905D-8778-42A1-9D79-C8CF6F2458FE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8B19905D-8778-42A1-9D79-C8CF6F2458FE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8B19905D-8778-42A1-9D79-C8CF6F2458FE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8B19905D-8778-42A1-9D79-C8CF6F2458FE}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
