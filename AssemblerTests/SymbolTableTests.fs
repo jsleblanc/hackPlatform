@@ -1,4 +1,4 @@
-module UnitTests.TranslatorTests.SymbolTableTests
+module AssemblerTests.SymbolTableTests
 
 open Xunit
 open assembler.types

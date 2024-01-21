@@ -2,7 +2,7 @@
 Microsoft Visual Studio Solution File, Format Version 12.00
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "assembler", "assembler\assembler.fsproj", "{2D39C0A7-53E0-4F1B-A12C-375B8819637D}"
 EndProject
-Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "UnitTests", "UnitTests\UnitTests.fsproj", "{A03E99FA-B84B-47B7-B15D-0C217C55762A}"
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "AssemblerTests", "AssemblerTests\AssemblerTests.fsproj", "{A03E99FA-B84B-47B7-B15D-0C217C55762A}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

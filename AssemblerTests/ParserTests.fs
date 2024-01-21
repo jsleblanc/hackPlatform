@@ -1,4 +1,4 @@
-module UnitTests.ParserTests
+module AssemblerTests.ParserTests
 
 open Xunit
 
