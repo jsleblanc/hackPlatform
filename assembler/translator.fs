@@ -159,6 +159,9 @@ let translateInstruction (t:Map<string, uint16>) i =
         Some (i2b bin)
     | Label _ -> None
 
+let translateInstructionBuiltinSymbolTable i =
+    translateInstruction seedSymbolMap i
+
 let translate (instructions: Instruction list) =
     let symbolTable = buildSymbolTable instructions
     {
