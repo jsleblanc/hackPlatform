@@ -113,6 +113,7 @@ let pInstruction = choice [pAInstruction; pCInstruction; pLabel]
 let internal pCode = pInstruction |>> function i -> Code i
 let pLine = ws >>. choice [pCode; pComment]
 let pAssembly = many pLine .>> eof
+let pAssemblyP = many (getPosition .>>. pLine) .>> eof //tracks the position of every parsed item
 
 let parseAssemblyString str = run pAssembly str
 let parseAssemblyFile fileName encoding = runParserOnFile pAssembly () fileName encoding
