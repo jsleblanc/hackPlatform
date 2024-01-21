@@ -43,5 +43,14 @@ let ``Should translate constant value to correct binary`` (c:uint16) =
     let i = A_Instruction (Constant c)
     let result = translateInstructionBuiltinSymbolTable i
     match result with
-    | Some binary -> binary = Convert.ToString(int c, 2).PadLeft(16, '0')
+    | Some binary -> binary = i2b c 
+    | None -> false
+    
+[<Property>]
+let ``Should translate built in symbol to address from symbol table`` (s:BuiltInSymbol) =
+    let i = A_Instruction (Predefined s)
+    let symbolTable = seedSymbolMap
+    let result = translateInstructionBuiltinSymbolTable i
+    match result with
+    | Some binary -> binary = i2b symbolTable[builtInSymbolToString s]
     | None -> false
