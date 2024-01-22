@@ -47,7 +47,7 @@ let segmentToSegmentPointer s =
     | Temp -> failwith "todo"
 
 
-let add =
+let aAdd =
     [aComment "ADD"]
     @ decrementStackPointer
     @ loadCurrentStackValueInto_D_Reg
@@ -60,9 +60,80 @@ let add =
     ] @ write_D_RegToCurrentStackPointer
     @ incrementStackPointer
 
+let aSub =
+    [aComment "SUB"]
+    @ decrementStackPointer
+    @ loadCurrentStackValueInto_D_Reg
+    @ decrementStackPointer
+    @ [
+        bComment "SUB LOGIC"
+        ai "@SP"
+        ai "A=M"
+        ai "D=D-M"
+    ] @ write_D_RegToCurrentStackPointer
+    @ incrementStackPointer
+
+let aAnd =
+    [aComment "AND"]
+    @ decrementStackPointer
+    @ loadCurrentStackValueInto_D_Reg
+    @ decrementStackPointer
+    @ [
+        bComment "AND LOGIC"
+        ai "@SP"
+        ai "A=M"
+        ai "D=D&M"
+    ] @ write_D_RegToCurrentStackPointer
+    @ incrementStackPointer
+    
+let aOr =
+    [aComment "OR"]
+    @ decrementStackPointer
+    @ loadCurrentStackValueInto_D_Reg
+    @ decrementStackPointer
+    @ [
+        bComment "OR LOGIC"
+        ai "@SP"
+        ai "A=M"
+        ai "D=D|M"
+    ] @ write_D_RegToCurrentStackPointer
+    @ incrementStackPointer
+
+let aNot =
+    [aComment "NOT"]
+    @ decrementStackPointer
+    @ [
+        bComment "NOT LOGIC"
+        ai "@SP"
+        ai "A=M"
+        ai "M=!M"
+    ] @ incrementStackPointer
+
+let aNeg =
+    [aComment "NEG"]
+    @ decrementStackPointer
+    @ loadCurrentStackValueInto_D_Reg
+    @ [
+        bComment "NEG LOGIC"
+        ai "D=-D"
+    ] @ write_D_RegToCurrentStackPointer
+    @ incrementStackPointer
+
+let aEq =
+    [aComment "EQ"]
+    
+
 let codeGenArithmetic cmd =
     match cmd with
-    | ADD -> add
+    | ADD -> aAdd
+    | SUB -> aSub
+    | NEG -> aNeg
+    | EQ -> aEq
+    | GT -> failwith "todo"
+    | LT -> failwith "todo"
+    | AND -> aAnd
+    | OR -> aOr
+    | NOT -> aNot
     
 let codeGenInstruction cmd =
     match cmd with
