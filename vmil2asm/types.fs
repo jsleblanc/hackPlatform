@@ -1,5 +1,7 @@
 module vmil2asm.types
 
+open System.IO
+
 type SegmentIndex = SegmentIndex of uint16
 
 type Segment =
@@ -35,3 +37,10 @@ type Command =
     | Function of Symbol * nLocals: int
     | Call of Symbol * nArgs: int
     | Return
+    
+    
+type ProcessRequest = {
+    inputFiles: FileInfo list
+    outputName: string
+}
+

@@ -1,11 +1,7 @@
 module vmil2asm.util
 
 open System.IO
-
-type ProcessRequest = {
-    inputFiles: FileInfo list
-    outputName: string
-}
+open vmil2asm.types
 
 let findInputFiles inputPath =
     let file = FileInfo(inputPath)

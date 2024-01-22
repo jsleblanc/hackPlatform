@@ -33,7 +33,7 @@ let main argv =
     | Some req ->
         let outputFileName = overrideOutputName req.outputName outputFileNameArg
         printfn $"TODO --- Generate assembly code and write to \"{outputFileName}\" ---"
-        0
+        -1
     | None ->
         printfn $"Error: specified path \"{inputPath}\" is not a file or a directory containing .vm files"
         -1
