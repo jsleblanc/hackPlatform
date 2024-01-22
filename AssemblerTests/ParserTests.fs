@@ -383,7 +383,7 @@ let ``Should Parse Line as Comment`` s =
 [<InlineData("@R14")>]
 [<InlineData("@R15")>]
 let ``Should Parse Built In Registers when parsing whole assembly`` s =
-    match run pAssembly s with
+    match run pInput s with
     | Success(i, _, _) -> Assert.True(true)
     | Failure(msg, _, _) -> Assert.Fail(msg)
     
@@ -411,7 +411,7 @@ let ``Should Parse Multiline Input`` () =
    @END
    0;JMP
 """
-    match run pAssembly s with
+    match run pInput s with
     | Success(p, _, _) -> Assert.Equal(20, p.Length)
     | Failure(msg, _, _) -> Assert.Fail(msg)
     
@@ -449,6 +449,6 @@ let ``Should Parse Multiline Input with Comments`` () =
    @END
    0;JMP
 """
-    match run pAssembly s with
+    match run pInput s with
     | Success(p, _, _) -> Assert.Equal(28, p.Length)
     | Failure(msg, _, _) -> Assert.Fail(msg)    

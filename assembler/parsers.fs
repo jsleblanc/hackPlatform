@@ -143,9 +143,9 @@ let pInstruction = choice [pAInstruction; pCInstruction; pLabel]
 
 let internal pCode = pInstruction |>> function i -> Code i
 let pLine = ws >>. choice [pCode; pComment]
-let pAssembly = many pLine .>> eof
-let pAssemblyP = many (getPosition .>>. pLine) .>> eof //tracks the position of every parsed item
+let pInput = many pLine .>> eof
+let pInputP = many (getPosition .>>. pLine) .>> eof //tracks the position of every parsed item
 
-let parseAssemblyString str = run pAssembly str
-let parseAssemblyFile fileName encoding = runParserOnFile pAssembly () fileName encoding
-let parseAssemblyStream stream encoding = runParserOnStream pAssembly () "" stream encoding
+let parseString str = run pInput str
+let parseFile fileName encoding = runParserOnFile pInput () fileName encoding
+let parseStream stream encoding = runParserOnStream pInput () "" stream encoding

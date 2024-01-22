@@ -47,7 +47,7 @@ let main argv =
         | Some name -> name
         | None -> Path.ChangeExtension(file.FullName, ".hack")
     
-    let parsedAssemblyFileResult = parseAssemblyStream (file.OpenRead()) System.Text.Encoding.Default
+    let parsedAssemblyFileResult = parseStream (file.OpenRead()) System.Text.Encoding.Default
     let retCode =
         match parsedAssemblyFileResult with
         | Success (results, _, _) ->
