@@ -69,7 +69,7 @@ type PopTestCases() =
         [|"pop argument 1"; POP (Argument, SegmentIndex (uint16 1)) |]
         [|"pop local 1"; POP (Local, SegmentIndex (uint16 1)) |]
         [|"pop static 1"; POP (Static, SegmentIndex (uint16 1)) |]
-        [|"pop constant 1"; POP (Constant, SegmentIndex (uint16 1)) |]
+        [|"pop constant 1"; POP (Constant, SegmentIndex (uint16 1)) |] //not valid but allowed by syntax
         [|"pop this 1"; POP (This, SegmentIndex (uint16 1)) |]
         [|"pop that 1"; POP (That, SegmentIndex (uint16 1)) |]
         [|"pop pointer 1"; POP (Pointer, SegmentIndex (uint16 1)) |]

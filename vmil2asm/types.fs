@@ -37,7 +37,8 @@ type Command =
     | Function of Symbol * nLocals: int
     | Call of Symbol * nArgs: int
     | Return
-    
+
+type AssemblyInstruction = AssemblyInstruction of string    
     
 type ProcessRequest = {
     inputFiles: FileInfo list
