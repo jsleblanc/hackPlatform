@@ -10,6 +10,7 @@
         <Compile Include="parser.fs" />
         <Compile Include="codeGen.fs" />
         <Compile Include="util.fs" />
+        <Compile Include="vmil2asm.fs" />
         <Compile Include="Program.fs"/>
     </ItemGroup>
 

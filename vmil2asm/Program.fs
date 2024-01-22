@@ -1,10 +1,9 @@
 ﻿
 open System
-open System.IO
 open Argu
 
+open vmil2asm.main
 open vmil2asm.util
-open vmil2asm.parser
 
 type Arguments =
     | [<MainCommand; ExactlyOnce>] InputPath of path:string
@@ -32,8 +31,8 @@ let main argv =
     match requestOpt with
     | Some req ->
         let outputFileName = overrideOutputName req.outputName outputFileNameArg
-        printfn $"TODO --- Generate assembly code and write to \"{outputFileName}\" ---"
-        -1
+        processRequest { req with outputName = outputFileName }
+        0
     | None ->
         printfn $"Error: specified path \"{inputPath}\" is not a file or a directory containing .vm files"
         -1
