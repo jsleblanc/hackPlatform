@@ -121,7 +121,26 @@ let aNeg =
 
 let aEq =
     [aComment "EQ"]
-    
+    @ decrementStackPointer
+    @ loadCurrentStackValueInto_D_Reg
+    @ decrementStackPointer
+    @ [
+        bComment "EQ LOGIC"
+        ai "@SP"
+        ai "A=M"
+        ai "D=D-M"
+        ai "@EQUAL"
+        ai "D;JEQ"
+        ai "D=0" //false
+        ai "@DONE"
+        ai "0;JMP"
+        ai "(EQUAL)"
+        ai "D=-1" //true
+        ai "@DONE"
+        ai "0;JMP"
+        ai "(DONE)"
+    ] @ write_D_RegToCurrentStackPointer
+    @ incrementStackPointer
 
 let codeGenArithmetic cmd =
     match cmd with
