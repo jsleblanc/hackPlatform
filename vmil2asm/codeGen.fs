@@ -129,12 +129,58 @@ let aEq =
         ai "@SP"
         ai "A=M"
         ai "D=D-M"
-        ai "@EQUAL"
+        ai "@TRUE"
         ai "D;JEQ"
         ai "D=0" //false
         ai "@DONE"
         ai "0;JMP"
-        ai "(EQUAL)"
+        ai "(TRUE)"
+        ai "D=-1" //true
+        ai "@DONE"
+        ai "0;JMP"
+        ai "(DONE)"
+    ] @ write_D_RegToCurrentStackPointer
+    @ incrementStackPointer
+
+let aLt =
+    [aComment "LT"]
+    @ decrementStackPointer
+    @ loadCurrentStackValueInto_D_Reg
+    @ decrementStackPointer
+    @ [
+        bComment "LT LOGIC"
+        ai "@SP"
+        ai "A=M"
+        ai "D=D-M"
+        ai "@TRUE"
+        ai "D;JLT"
+        ai "D=0" //false
+        ai "@DONE"
+        ai "0;JMP"
+        ai "(TRUE)"
+        ai "D=-1" //true
+        ai "@DONE"
+        ai "0;JMP"
+        ai "(DONE)"
+    ] @ write_D_RegToCurrentStackPointer
+    @ incrementStackPointer
+
+let aGt =
+    [aComment "GT"]
+    @ decrementStackPointer
+    @ loadCurrentStackValueInto_D_Reg
+    @ decrementStackPointer
+    @ [
+        bComment "LT LOGIC"
+        ai "@SP"
+        ai "A=M"
+        ai "D=D-M"
+        ai "@TRUE"
+        ai "D;JGT"
+        ai "D=0" //false
+        ai "@DONE"
+        ai "0;JMP"
+        ai "(TRUE)"
         ai "D=-1" //true
         ai "@DONE"
         ai "0;JMP"
@@ -148,8 +194,8 @@ let codeGenArithmetic cmd =
     | SUB -> aSub
     | NEG -> aNeg
     | EQ -> aEq
-    | GT -> failwith "todo"
-    | LT -> failwith "todo"
+    | GT -> aGt
+    | LT -> aLt
     | AND -> aAnd
     | OR -> aOr
     | NOT -> aNot
