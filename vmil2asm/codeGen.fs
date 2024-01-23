@@ -26,15 +26,15 @@ let pushDIntoStack =
         ai "M=M+1"
     ]
 
-let popStackIntoR2 =
+let popStackIntoReg reg =
     [
-        bComment "POP STACK INTO @R2 (via D-Reg)"
+        bComment $"POP STACK INTO {reg} (via D-Reg)"
         ai "@SP"
         ai "M=M-1"
         ai "@SP"
         ai "A=M"
         ai "D=M"
-        ai "@R2"
+        ai reg
         ai "M=D"
     ]
 
@@ -52,7 +52,7 @@ let segmentToSegmentPointer s =
 
 let aAdd =
     [aComment "ADD"]
-    @ popStackIntoR2 //y
+    @ popStackIntoReg "@R2" //y
     @ popStackIntoD //x
     @ [
         bComment "ADD LOGIC"
@@ -62,7 +62,7 @@ let aAdd =
 
 let aSub =
     [aComment "SUB"]
-    @ popStackIntoR2 //y
+    @ popStackIntoReg "@R2" //y
     @ popStackIntoD //x    
     @ [
         bComment "SUB LOGIC"
@@ -72,7 +72,7 @@ let aSub =
 
 let aAnd =
     [aComment "AND"]
-    @ popStackIntoR2 //y
+    @ popStackIntoReg "@R2" //y
     @ popStackIntoD //x        
     @ [
         bComment "AND LOGIC"
@@ -82,7 +82,7 @@ let aAnd =
     
 let aOr =
     [aComment "OR"]
-    @ popStackIntoR2 //y
+    @ popStackIntoReg "@R2" //y
     @ popStackIntoD //x        
     @ [
         bComment "OR LOGIC"
@@ -92,7 +92,7 @@ let aOr =
 
 let aNot =
     [aComment "NOT"]
-    @ popStackIntoR2 
+    @ popStackIntoReg "@R2"
     @ [
         bComment "NOT LOGIC"
         ai "@R2"
@@ -107,36 +107,15 @@ let aNeg =
         ai "D=-D"
     ] @ pushDIntoStack
 
-let aEq i =
-    [aComment "EQ"]
-    @ popStackIntoR2 //y
+//logic is all the same, only the jump conditions change for eq, lt, gt
+let equalityTesting jmp i =
+    popStackIntoReg "@R2" //y
     @ popStackIntoD //x
     @ [
-        bComment "EQ LOGIC"
         ai "@R2"
         ai "D=D-M"
         ai $"@TRUE{i}"
-        ai "D;JEQ"
-        ai "D=0" //false
-        ai $"@DONE{i}"
-        ai "0;JMP"
-        ai $"(TRUE{i})"
-        ai "D=-1" //true
-        ai $"@DONE{i}"
-        ai "0;JMP"
-        ai $"(DONE{i})"
-    ] @ pushDIntoStack
-    
-let aLt i =
-    [aComment "LT"]
-    @ popStackIntoR2 //y
-    @ popStackIntoD //x
-    @ [
-        bComment "LT LOGIC"
-        ai "@R2"
-        ai "D=D-M"
-        ai $"@TRUE{i}"
-        ai "D;JLT"
+        ai $"D;{jmp}"
         ai "D=0" //false
         ai $"@DONE{i}"
         ai "0;JMP"
@@ -147,25 +126,17 @@ let aLt i =
         ai $"(DONE{i})"
     ] @ pushDIntoStack
 
+let aEq i =
+    [aComment "EQ"]
+    @ equalityTesting "JEQ" i
+    
+let aLt i =
+    [aComment "LT"]
+    @ equalityTesting "JLT" i
+
 let aGt i =
     [aComment "GT"]
-    @ popStackIntoR2 //y
-    @ popStackIntoD //x
-    @ [
-        bComment "LT LOGIC"
-        ai "@R2"
-        ai "D=D-M"
-        ai $"@TRUE{i}"
-        ai "D;JGT"
-        ai "D=0" //false
-        ai $"@DONE{i}"
-        ai "0;JMP"
-        ai $"(TRUE{i})"
-        ai "D=-1" //true
-        ai $"@DONE{i}"
-        ai "0;JMP"
-        ai $"(DONE{i})"
-    ] @ pushDIntoStack
+    @ equalityTesting "JGT" i
 
 let codeGenArithmetic cmd i =
     match cmd with
