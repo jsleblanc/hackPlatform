@@ -87,18 +87,6 @@ let pushFixedSegmentOntoStack (addr:uint16) (idx:uint16) =
         ai "D=M"
     ] @ pushDIntoStack
 
-let segmentToSegmentPointer s =
-    match s with
-    | Argument -> ai "@ARG"
-    | Local -> ai "@LCL"
-    | Static -> failwith "todo"
-    | Constant -> failwith "no segment pointer for \"constant\""
-    | This -> ai "@THIS"
-    | That -> ai "@THAT"
-    | Pointer -> failwith "todo"
-    | Temp -> failwith "todo"
-
-
 let aAdd =
     [aComment "ADD"]
     @ popStackIntoAddress "@R13" //y
