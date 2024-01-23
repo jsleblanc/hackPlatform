@@ -1,6 +1,10 @@
 module vmil2asm.codeGen
 
+open Microsoft.FSharp.Core
 open vmil2asm.types
+
+let SEGMENT_POINTER_BASE = uint16 0x3
+let SEGMENT_TEMP_BASE = uint16 0x5
 
 let ai = AssemblyInstruction
 let aComment s = ai $"// --- {s} ---"
@@ -26,8 +30,8 @@ let pushDIntoStack =
         ai "M=M+1"
     ]
 
-//can be used with fake "registers" R0 through R15
-let popStackIntoReg reg =
+//can be used with fake "registers" R0 through R15, or any direct memory address
+let popStackIntoAddress reg =
     [
         bComment $"POP STACK INTO {reg} (via D-Reg)"
         ai "@SP"
@@ -38,6 +42,50 @@ let popStackIntoReg reg =
         ai reg
         ai "M=D"
     ]
+
+//to be used with segment base registers LCL, ARG, THIS, THAT
+let popStackIntoRelativeSegment seg idx =
+    [aComment $"POP STACK INTO ({seg} + {idx})"]
+    @ popStackIntoAddress "@R13"
+    @ [
+        ai $"@{idx}" //load offset constant into D
+        ai "D=A"
+        ai seg
+        ai "A=M" //load segment base into A
+        ai "D=D+A" //compute segment address
+        ai "@R14"
+        ai "M=D" //store segment address in R14
+        ai "@R13"
+        ai "D=M" //load value we popped from R13 into D
+        ai "@R14" 
+        ai "A=M" //load segment address from R14 into A
+        ai "M=D"
+    ]
+
+let pushRelativeSegmentOntoStack seg idx =
+    [aComment $"PUSH SEGMENT ({seg} + {idx}) ONTO STACK"]
+    @ [
+        ai $"@{idx}"
+        ai "D=A"
+        ai seg
+        ai "A=M"
+        ai "A=D+A"
+        ai "D=M" //load from memory into D
+    ] @ pushDIntoStack
+
+//for temp and pointer segments that do not use a relative base address but a fixed one
+let popStackIntoFixedSegment (addr:uint16) (idx:uint16) =
+    let segAddr = addr + idx
+    [aComment $"POP STACK INTO ({addr} + {idx})"]
+    @ popStackIntoAddress $"@{segAddr}"
+
+let pushFixedSegmentOntoStack (addr:uint16) (idx:uint16) =
+    let segAddr = addr + idx
+    [aComment $"PUSH ({addr} + {idx}) ONTO STACK"]
+    @ [
+        ai $"@{segAddr}"
+        ai "D=M"
+    ] @ pushDIntoStack
 
 let segmentToSegmentPointer s =
     match s with
@@ -53,50 +101,50 @@ let segmentToSegmentPointer s =
 
 let aAdd =
     [aComment "ADD"]
-    @ popStackIntoReg "@R2" //y
+    @ popStackIntoAddress "@R13" //y
     @ popStackIntoD //x
     @ [
         bComment "ADD LOGIC"
-        ai "@R2"
+        ai "@R13"
         ai "D=D+M"
     ] @ pushDIntoStack
 
 let aSub =
     [aComment "SUB"]
-    @ popStackIntoReg "@R2" //y
+    @ popStackIntoAddress "@R13" //y
     @ popStackIntoD //x    
     @ [
         bComment "SUB LOGIC"
-        ai "@R2"
+        ai "@R13"
         ai "D=D-M"
     ] @ pushDIntoStack
 
 let aAnd =
     [aComment "AND"]
-    @ popStackIntoReg "@R2" //y
+    @ popStackIntoAddress "@R13" //y
     @ popStackIntoD //x        
     @ [
         bComment "AND LOGIC"
-        ai "@R2"
+        ai "@R13"
         ai "D=D&M"
     ] @ pushDIntoStack
     
 let aOr =
     [aComment "OR"]
-    @ popStackIntoReg "@R2" //y
+    @ popStackIntoAddress "@R13" //y
     @ popStackIntoD //x        
     @ [
         bComment "OR LOGIC"
-        ai "@R2"
+        ai "@R13"
         ai "D=D|M"
     ] @ pushDIntoStack
 
 let aNot =
     [aComment "NOT"]
-    @ popStackIntoReg "@R2"
+    @ popStackIntoAddress "@R13"
     @ [
         bComment "NOT LOGIC"
-        ai "@R2"
+        ai "@R13"
         ai "D=!M"
     ] @ pushDIntoStack
 
@@ -110,10 +158,10 @@ let aNeg =
 
 //logic is all the same, only the jump conditions change for eq, lt, gt
 let equalityTesting jmp i =
-    popStackIntoReg "@R2" //y
+    popStackIntoAddress "@R13" //y
     @ popStackIntoD //x
     @ [
-        ai "@R2"
+        ai "@R13"
         ai "D=D-M"
         ai $"@TRUE{i}"
         ai $"D;{jmp}"
@@ -148,12 +196,25 @@ let codeGenArithmetic cmd i =
 let codeGenInstruction cmd i =
     match cmd with
     | Arithmetic a -> codeGenArithmetic a i
-    | PUSH (Constant, SegmentIndex value) ->
+    | PUSH (Constant, SegmentIndex idx) ->
         [
             aComment "PUSH CONSTANT"
-            ai $"@{value}" //load constant into A-reg
+            ai $"@{idx}" //load constant into A-reg
             ai "D=A" //Copy A-reg into D-reg
         ] @ pushDIntoStack
+    | PUSH (Argument, SegmentIndex idx) -> pushRelativeSegmentOntoStack "@ARG" idx
+    | PUSH (Local, SegmentIndex idx) -> pushRelativeSegmentOntoStack "@LCL" idx
+    | PUSH (This, SegmentIndex idx) -> pushRelativeSegmentOntoStack "@THIS" idx
+    | PUSH (That, SegmentIndex idx) -> pushRelativeSegmentOntoStack "@THAT" idx
+    | PUSH (Pointer, SegmentIndex idx) -> pushFixedSegmentOntoStack SEGMENT_POINTER_BASE idx
+    | PUSH (Temp, SegmentIndex idx) -> pushFixedSegmentOntoStack SEGMENT_TEMP_BASE idx
+    | POP (Local, SegmentIndex idx) -> popStackIntoRelativeSegment "@LCL" idx
+    | POP (Argument, SegmentIndex idx) -> popStackIntoRelativeSegment "@ARG" idx
+    | POP (This, SegmentIndex idx) -> popStackIntoRelativeSegment "@THIS" idx
+    | POP (That, SegmentIndex idx) -> popStackIntoRelativeSegment "@THAT" idx
+    | POP (Pointer, SegmentIndex idx) -> popStackIntoFixedSegment SEGMENT_POINTER_BASE idx
+    | POP (Temp, SegmentIndex idx) -> popStackIntoFixedSegment SEGMENT_TEMP_BASE idx
+    | _ -> failwith $"{cmd} not supported yet"
        
 let codeGenInstructions cmds =
     cmds
