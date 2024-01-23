@@ -35,6 +35,28 @@ let write_D_RegToCurrentStackPointer =
         ai "M=D"
     ]
 
+let popStackIntoD =
+    [
+        bComment "POP STACK INTO D-Reg"
+        ai "@SP"
+        ai "M=M-1"
+        ai "@SP"
+        ai "A=M"
+        ai "D=M"
+    ]
+
+let popStackIntoR2 =
+    [
+        bComment "POP STACK INTO @R2 (via D-Reg)"
+        ai "@SP"
+        ai "M=M-1"
+        ai "@SP"
+        ai "A=M"
+        ai "D=M"
+        ai "@R2"
+        ai "M=D"
+    ]
+
 let segmentToSegmentPointer s =
     match s with
     | Argument -> ai "@ARG"
@@ -119,7 +141,7 @@ let aNeg =
     ] @ write_D_RegToCurrentStackPointer
     @ incrementStackPointer
 
-let aEq =
+let aEq i =
     [aComment "EQ"]
     @ decrementStackPointer
     @ loadCurrentStackValueInto_D_Reg
@@ -129,20 +151,20 @@ let aEq =
         ai "@SP"
         ai "A=M"
         ai "D=D-M"
-        ai "@TRUE"
+        ai $"@TRUE{i}"
         ai "D;JEQ"
         ai "D=0" //false
-        ai "@DONE"
+        ai $"@DONE{i}"
         ai "0;JMP"
-        ai "(TRUE)"
+        ai $"(TRUE{i})"
         ai "D=-1" //true
-        ai "@DONE"
+        ai $"@DONE{i}"
         ai "0;JMP"
-        ai "(DONE)"
+        ai $"(DONE{i})"
     ] @ write_D_RegToCurrentStackPointer
     @ incrementStackPointer
 
-let aLt =
+let aLt i =
     [aComment "LT"]
     @ decrementStackPointer
     @ loadCurrentStackValueInto_D_Reg
@@ -152,20 +174,20 @@ let aLt =
         ai "@SP"
         ai "A=M"
         ai "D=D-M"
-        ai "@TRUE"
+        ai $"@TRUE{i}"
         ai "D;JLT"
         ai "D=0" //false
-        ai "@DONE"
+        ai $"@DONE{i}"
         ai "0;JMP"
-        ai "(TRUE)"
+        ai $"(TRUE{i})"
         ai "D=-1" //true
-        ai "@DONE"
+        ai $"@DONE{i}"
         ai "0;JMP"
-        ai "(DONE)"
+        ai $"(DONE{i})"
     ] @ write_D_RegToCurrentStackPointer
     @ incrementStackPointer
 
-let aGt =
+let aGt i =
     [aComment "GT"]
     @ decrementStackPointer
     @ loadCurrentStackValueInto_D_Reg
@@ -175,34 +197,34 @@ let aGt =
         ai "@SP"
         ai "A=M"
         ai "D=D-M"
-        ai "@TRUE"
+        ai $"@TRUE{i}"
         ai "D;JGT"
         ai "D=0" //false
-        ai "@DONE"
+        ai $"@DONE{i}"
         ai "0;JMP"
-        ai "(TRUE)"
+        ai $"(TRUE{i})"
         ai "D=-1" //true
-        ai "@DONE"
+        ai $"@DONE{i}"
         ai "0;JMP"
-        ai "(DONE)"
+        ai $"(DONE{i})"
     ] @ write_D_RegToCurrentStackPointer
     @ incrementStackPointer
 
-let codeGenArithmetic cmd =
+let codeGenArithmetic cmd i =
     match cmd with
     | ADD -> aAdd
     | SUB -> aSub
     | NEG -> aNeg
-    | EQ -> aEq
-    | GT -> aGt
-    | LT -> aLt
+    | EQ -> aEq i
+    | GT -> aGt i
+    | LT -> aLt i
     | AND -> aAnd
     | OR -> aOr
     | NOT -> aNot
     
-let codeGenInstruction cmd =
+let codeGenInstruction cmd i =
     match cmd with
-    | Arithmetic a -> codeGenArithmetic a
+    | Arithmetic a -> codeGenArithmetic a i
     | PUSH (Constant, SegmentIndex value) ->
         [
             aComment "PUSH CONSTANT"
@@ -215,5 +237,6 @@ let codeGenInstruction cmd =
        
 let codeGenInstructions cmds =
     cmds
-    |> List.map codeGenInstruction
+    |> List.indexed
+    |> List.map (fun (i, c) -> codeGenInstruction c i)
     |> List.collect id
