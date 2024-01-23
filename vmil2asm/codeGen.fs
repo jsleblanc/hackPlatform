@@ -87,6 +87,19 @@ let pushFixedSegmentOntoStack (addr:uint16) (idx:uint16) =
         ai "D=M"
     ] @ pushDIntoStack
 
+let pushStaticSegmentOntoStack name idx =
+    let var = $"@{name}.{idx}"
+    [aComment $"PUSH STATIC {var} ONTO STACK"]
+    @ [
+        ai var
+        ai "D=M"
+    ] @ pushDIntoStack
+
+let popStackIntoStaticSegment name idx =
+    let var = $"@{name}.{idx}"
+    [aComment $"POP STACK INTO STATIC {var}"]
+    @ popStackIntoAddress var
+
 let aAdd =
     [aComment "ADD"]
     @ popStackIntoAddress "@R13" //y
@@ -196,12 +209,14 @@ let codeGenInstruction cmd i =
     | PUSH (That, SegmentIndex idx) -> pushRelativeSegmentOntoStack "@THAT" idx
     | PUSH (Pointer, SegmentIndex idx) -> pushFixedSegmentOntoStack SEGMENT_POINTER_BASE idx
     | PUSH (Temp, SegmentIndex idx) -> pushFixedSegmentOntoStack SEGMENT_TEMP_BASE idx
+    | PUSH (Static, SegmentIndex idx) -> pushStaticSegmentOntoStack "foo" idx
     | POP (Local, SegmentIndex idx) -> popStackIntoRelativeSegment "@LCL" idx
     | POP (Argument, SegmentIndex idx) -> popStackIntoRelativeSegment "@ARG" idx
     | POP (This, SegmentIndex idx) -> popStackIntoRelativeSegment "@THIS" idx
     | POP (That, SegmentIndex idx) -> popStackIntoRelativeSegment "@THAT" idx
     | POP (Pointer, SegmentIndex idx) -> popStackIntoFixedSegment SEGMENT_POINTER_BASE idx
     | POP (Temp, SegmentIndex idx) -> popStackIntoFixedSegment SEGMENT_TEMP_BASE idx
+    | POP (Static, SegmentIndex idx) -> popStackIntoStaticSegment "foo" idx
     | _ -> failwith $"{cmd} not supported yet"
        
 let codeGenInstructions cmds =
