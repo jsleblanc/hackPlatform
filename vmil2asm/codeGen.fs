@@ -11,29 +11,6 @@ let incrementStackPointer =
         ai "@SP"
         ai "M=M+1"
     ]
-    
-let decrementStackPointer =
-    [
-        bComment "DEC SP"
-        ai "@SP"
-        ai "M=M-1"
-    ]
-
-let loadCurrentStackValueInto_D_Reg =
-    [
-        bComment "LOAD @SP INTO D-REG"
-        ai "@SP" //address of stack pointer into A-reg
-        ai "A=M" //read current stack pointer value, store in A-reg
-        ai "D=M" //read memory at address in A-reg, store in D-reg
-    ]
-
-let write_D_RegToCurrentStackPointer =
-    [
-        bComment "WRITE D-REG INTO @SP"
-        ai "@SP"
-        ai "A=M"
-        ai "M=D"
-    ]
 
 let popStackIntoD =
     [
@@ -57,6 +34,16 @@ let popStackIntoR2 =
         ai "M=D"
     ]
 
+let pushDIntoStack =
+    [
+        bComment "PUSH D-Reg ONTO STACK"
+        ai "@SP"
+        ai "A=M"
+        ai "M=D"
+        ai "@SP"
+        ai "M=M+1"
+    ]
+
 let segmentToSegmentPointer s =
     match s with
     | Argument -> ai "@ARG"
@@ -71,85 +58,68 @@ let segmentToSegmentPointer s =
 
 let aAdd =
     [aComment "ADD"]
-    @ decrementStackPointer
-    @ loadCurrentStackValueInto_D_Reg
-    @ decrementStackPointer
+    @ popStackIntoR2 //y
+    @ popStackIntoD //x
     @ [
         bComment "ADD LOGIC"
-        ai "@SP"
-        ai "A=M"
+        ai "@R2"
         ai "D=D+M"
-    ] @ write_D_RegToCurrentStackPointer
-    @ incrementStackPointer
+    ] @ pushDIntoStack
 
 let aSub =
     [aComment "SUB"]
-    @ decrementStackPointer
-    @ loadCurrentStackValueInto_D_Reg
-    @ decrementStackPointer
+    @ popStackIntoR2 //y
+    @ popStackIntoD //x    
     @ [
         bComment "SUB LOGIC"
-        ai "@SP"
-        ai "A=M"
+        ai "@R2"
         ai "D=D-M"
-    ] @ write_D_RegToCurrentStackPointer
-    @ incrementStackPointer
+    ] @ pushDIntoStack
 
 let aAnd =
     [aComment "AND"]
-    @ decrementStackPointer
-    @ loadCurrentStackValueInto_D_Reg
-    @ decrementStackPointer
+    @ popStackIntoR2 //y
+    @ popStackIntoD //x        
     @ [
         bComment "AND LOGIC"
-        ai "@SP"
-        ai "A=M"
+        ai "@R2"
         ai "D=D&M"
-    ] @ write_D_RegToCurrentStackPointer
-    @ incrementStackPointer
+    ] @ pushDIntoStack
     
 let aOr =
     [aComment "OR"]
-    @ decrementStackPointer
-    @ loadCurrentStackValueInto_D_Reg
-    @ decrementStackPointer
+    @ popStackIntoR2 //y
+    @ popStackIntoD //x        
     @ [
         bComment "OR LOGIC"
-        ai "@SP"
-        ai "A=M"
+        ai "@R2"
         ai "D=D|M"
-    ] @ write_D_RegToCurrentStackPointer
-    @ incrementStackPointer
+    ] @ pushDIntoStack
 
 let aNot =
     [aComment "NOT"]
-    @ decrementStackPointer
+    @ popStackIntoR2 
     @ [
         bComment "NOT LOGIC"
-        ai "@SP"
-        ai "A=M"
-        ai "M=!M"
-    ] @ incrementStackPointer
+        ai "@R2"
+        ai "D=!M"
+    ] @ pushDIntoStack
 
 let aNeg =
     [aComment "NEG"]
-    @ decrementStackPointer
-    @ loadCurrentStackValueInto_D_Reg
+    @ popStackIntoD
     @ [
         bComment "NEG LOGIC"
         ai "D=-D"
-    ] @ write_D_RegToCurrentStackPointer
-    @ incrementStackPointer
+    ] @ pushDIntoStack
 
 let aEq i =
     [aComment "EQ"]
-    @ decrementStackPointer
-    @ loadCurrentStackValueInto_D_Reg
-    @ decrementStackPointer
+    @ popStackIntoR2 //y
+    @ popStackIntoD //x
     @ [
         bComment "EQ LOGIC"
-        ai "@SP"
-        ai "A=M"
+        ai "@R2"
         ai "D=D-M"
         ai $"@TRUE{i}"
         ai "D;JEQ"
@@ -161,18 +131,15 @@ let aEq i =
         ai $"@DONE{i}"
         ai "0;JMP"
         ai $"(DONE{i})"
-    ] @ write_D_RegToCurrentStackPointer
-    @ incrementStackPointer
-
+    ] @ pushDIntoStack
+    
 let aLt i =
     [aComment "LT"]
-    @ decrementStackPointer
-    @ loadCurrentStackValueInto_D_Reg
-    @ decrementStackPointer
+    @ popStackIntoR2 //y
+    @ popStackIntoD //x
     @ [
         bComment "LT LOGIC"
-        ai "@SP"
-        ai "A=M"
+        ai "@R2"
         ai "D=D-M"
         ai $"@TRUE{i}"
         ai "D;JLT"
@@ -184,18 +151,15 @@ let aLt i =
         ai $"@DONE{i}"
         ai "0;JMP"
         ai $"(DONE{i})"
-    ] @ write_D_RegToCurrentStackPointer
-    @ incrementStackPointer
+    ] @ pushDIntoStack
 
 let aGt i =
     [aComment "GT"]
-    @ decrementStackPointer
-    @ loadCurrentStackValueInto_D_Reg
-    @ decrementStackPointer
+    @ popStackIntoR2 //y
+    @ popStackIntoD //x
     @ [
         bComment "LT LOGIC"
-        ai "@SP"
-        ai "A=M"
+        ai "@R2"
         ai "D=D-M"
         ai $"@TRUE{i}"
         ai "D;JGT"
@@ -207,8 +171,7 @@ let aGt i =
         ai $"@DONE{i}"
         ai "0;JMP"
         ai $"(DONE{i})"
-    ] @ write_D_RegToCurrentStackPointer
-    @ incrementStackPointer
+    ] @ pushDIntoStack
 
 let codeGenArithmetic cmd i =
     match cmd with
