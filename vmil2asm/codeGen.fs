@@ -26,6 +26,7 @@ let pushDIntoStack =
         ai "M=M+1"
     ]
 
+//can be used with fake "registers" R0 through R15
 let popStackIntoReg reg =
     [
         bComment $"POP STACK INTO {reg} (via D-Reg)"
@@ -126,17 +127,11 @@ let equalityTesting jmp i =
         ai $"(DONE{i})"
     ] @ pushDIntoStack
 
-let aEq i =
-    [aComment "EQ"]
-    @ equalityTesting "JEQ" i
+let aEq i = [aComment "EQ"] @ equalityTesting "JEQ" i
     
-let aLt i =
-    [aComment "LT"]
-    @ equalityTesting "JLT" i
+let aLt i = [aComment "LT"] @ equalityTesting "JLT" i
 
-let aGt i =
-    [aComment "GT"]
-    @ equalityTesting "JGT" i
+let aGt i = [aComment "GT"] @ equalityTesting "JGT" i
 
 let codeGenArithmetic cmd i =
     match cmd with
