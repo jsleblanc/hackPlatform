@@ -5,12 +5,6 @@ open vmil2asm.types
 let ai = AssemblyInstruction
 let aComment s = ai $"// --- {s} ---"
 let bComment s = ai $"//  {s}"
-let incrementStackPointer =
-    [
-        bComment "INC SP"
-        ai "@SP"
-        ai "M=M+1"
-    ]
 
 let popStackIntoD =
     [
@@ -20,6 +14,16 @@ let popStackIntoD =
         ai "@SP"
         ai "A=M"
         ai "D=M"
+    ]
+
+let pushDIntoStack =
+    [
+        bComment "PUSH D-Reg ONTO STACK"
+        ai "@SP"
+        ai "A=M"
+        ai "M=D"
+        ai "@SP"
+        ai "M=M+1"
     ]
 
 let popStackIntoR2 =
@@ -32,16 +36,6 @@ let popStackIntoR2 =
         ai "D=M"
         ai "@R2"
         ai "M=D"
-    ]
-
-let pushDIntoStack =
-    [
-        bComment "PUSH D-Reg ONTO STACK"
-        ai "@SP"
-        ai "A=M"
-        ai "M=D"
-        ai "@SP"
-        ai "M=M+1"
     ]
 
 let segmentToSegmentPointer s =
@@ -193,10 +187,7 @@ let codeGenInstruction cmd i =
             aComment "PUSH CONSTANT"
             ai $"@{value}" //load constant into A-reg
             ai "D=A" //Copy A-reg into D-reg
-            ai "@SP" //load stack-pointer address into A-reg
-            ai "A=M" //read stack pointer from memory address in A-reg and store in A-reg
-            ai "M=D" //write value in D-reg into memory addressed by A-reg
-        ] @ incrementStackPointer
+        ] @ pushDIntoStack
        
 let codeGenInstructions cmds =
     cmds
