@@ -17,7 +17,7 @@ let processFile (file:FileInfo) =
     match parseFile file.FullName with
     | Success(results, _, _) ->
         let code = filterOutComments results
-        codeGenInstructions code
+        codeGenInstructions file.Name code
     | Failure(msg, _, _) -> failwith msg
 
 let assemblyInstructionToString ai =

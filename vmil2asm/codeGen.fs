@@ -241,8 +241,23 @@ let codeGenInstruction cmd i =
     | Goto l -> gotoInstruction "foo" l
     | If_Goto l -> ifGotoInstruction "foo" l
     | _ -> failwith $"{cmd} not supported yet"
-       
-let codeGenInstructions cmds =
+
+//need to process the list of instructions and group them by function
+let groupCodeIntoFunctions (cmds:Command list) =
+    let mutable i = ""
+    let f c =
+        match c with
+        | Function (name, _) ->
+            i <- name
+            (i,c)
+        | _ -> (i,c)        
+    cmds
+    |> List.map f
+    |> List.groupBy (fun (k,_) -> k)
+    |> List.map (fun (k, grp) -> (k, List.map (fun (_, c) -> c) grp))
+    
+let codeGenInstructions context cmds =
+    let foo = groupCodeIntoFunctions cmds
     cmds
     |> List.indexed
     |> List.map (fun (i, c) -> codeGenInstruction c i)
