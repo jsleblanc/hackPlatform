@@ -3,6 +3,18 @@ module vmil2asm.codeGen
 open Microsoft.FSharp.Core
 open vmil2asm.types
 
+[<Literal>]
+let S_ARG = "@ARG"
+
+[<Literal>]
+let S_LCL = "@LCL"
+
+[<Literal>]
+let S_THIS = "@THIS"
+
+[<Literal>]
+let S_THAT = "@THAT"
+
 let SEGMENT_POINTER_BASE = uint16 0x3
 let SEGMENT_TEMP_BASE = uint16 0x5
 
@@ -223,17 +235,17 @@ let codeGenInstruction context fn i cmd  =
     match cmd with
     | Arithmetic a -> codeGenArithmetic a fn i
     | PUSH (Constant, SegmentIndex idx) -> pushConstantOntoStack idx
-    | PUSH (Argument, SegmentIndex idx) -> pushRelativeSegmentOntoStack "@ARG" idx
-    | PUSH (Local, SegmentIndex idx) -> pushRelativeSegmentOntoStack "@LCL" idx
-    | PUSH (This, SegmentIndex idx) -> pushRelativeSegmentOntoStack "@THIS" idx
-    | PUSH (That, SegmentIndex idx) -> pushRelativeSegmentOntoStack "@THAT" idx
+    | PUSH (Argument, SegmentIndex idx) -> pushRelativeSegmentOntoStack S_ARG idx
+    | PUSH (Local, SegmentIndex idx) -> pushRelativeSegmentOntoStack S_LCL idx
+    | PUSH (This, SegmentIndex idx) -> pushRelativeSegmentOntoStack S_THIS idx
+    | PUSH (That, SegmentIndex idx) -> pushRelativeSegmentOntoStack S_THAT idx
     | PUSH (Pointer, SegmentIndex idx) -> pushFixedSegmentOntoStack SEGMENT_POINTER_BASE idx
     | PUSH (Temp, SegmentIndex idx) -> pushFixedSegmentOntoStack SEGMENT_TEMP_BASE idx
     | PUSH (Static, SegmentIndex idx) -> pushStaticSegmentOntoStack context idx
-    | POP (Local, SegmentIndex idx) -> popStackIntoRelativeSegment "@LCL" idx
-    | POP (Argument, SegmentIndex idx) -> popStackIntoRelativeSegment "@ARG" idx
-    | POP (This, SegmentIndex idx) -> popStackIntoRelativeSegment "@THIS" idx
-    | POP (That, SegmentIndex idx) -> popStackIntoRelativeSegment "@THAT" idx
+    | POP (Local, SegmentIndex idx) -> popStackIntoRelativeSegment S_LCL idx
+    | POP (Argument, SegmentIndex idx) -> popStackIntoRelativeSegment S_ARG idx
+    | POP (This, SegmentIndex idx) -> popStackIntoRelativeSegment S_THIS idx
+    | POP (That, SegmentIndex idx) -> popStackIntoRelativeSegment S_THAT idx
     | POP (Pointer, SegmentIndex idx) -> popStackIntoFixedSegment SEGMENT_POINTER_BASE idx
     | POP (Temp, SegmentIndex idx) -> popStackIntoFixedSegment SEGMENT_TEMP_BASE idx
     | POP (Static, SegmentIndex idx) -> popStackIntoStaticSegment context idx
