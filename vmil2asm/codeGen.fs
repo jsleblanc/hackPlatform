@@ -243,7 +243,7 @@ let codeGenInstruction cmd i =
     | _ -> failwith $"{cmd} not supported yet"
 
 //need to process the list of instructions and group them by function
-let groupCodeIntoFunctions (cmds:Command list) =
+let groupCodeIntoFunctions cmds =
     let mutable i = ""
     let f c =
         match c with
@@ -253,8 +253,8 @@ let groupCodeIntoFunctions (cmds:Command list) =
         | _ -> (i,c)        
     cmds
     |> List.map f
-    |> List.groupBy (fun (k,_) -> k)
-    |> List.map (fun (k, grp) -> (k, List.map (fun (_, c) -> c) grp))
+    |> List.groupBy fst
+    |> List.map (fun (k, grp) -> (k, List.map snd grp))
     
 let codeGenInstructions context cmds =
     let foo = groupCodeIntoFunctions cmds
