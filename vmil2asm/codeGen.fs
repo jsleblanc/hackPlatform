@@ -165,29 +165,29 @@ let aNeg =
     ] @ pushDIntoStack
 
 //logic is all the same, only the jump conditions change for eq, lt, gt
-let equalityTesting jmp i =
+let equalityTesting jmp fn i =
     popStackIntoAddress "@R13" //y
     @ popStackIntoD //x
     @ [
         ai "@R13"
         ai "D=D-M"
-        ai $"@TRUE{i}"
+        ai $"@{fn}$TRUE_{i}"
         ai $"D;{jmp}"
         ai "D=0" //false
-        ai $"@DONE{i}"
+        ai $"@{fn}$DONE_{i}"
         ai "0;JMP"
-        ai $"(TRUE{i})"
+        ai $"({fn}$TRUE_{i})"
         ai "D=-1" //true
-        ai $"@DONE{i}"
+        ai $"@{fn}$DONE_{i}"
         ai "0;JMP"
-        ai $"(DONE{i})"
+        ai $"({fn}$DONE_{i})"
     ] @ pushDIntoStack
 
-let aEq i = [aComment "EQ"] @ equalityTesting "JEQ" i
+let aEq fn i = [aComment "EQ"] @ equalityTesting "JEQ" fn i
     
-let aLt i = [aComment "LT"] @ equalityTesting "JLT" i
+let aLt fn i = [aComment "LT"] @ equalityTesting "JLT" fn i
 
-let aGt i = [aComment "GT"] @ equalityTesting "JGT" i
+let aGt fn i = [aComment "GT"] @ equalityTesting "JGT" fn i
 
 let labelInstruction context name = [ai $"({context}${name})"]
 
@@ -207,21 +207,21 @@ let ifGotoInstruction context name =
     ]
 
 
-let codeGenArithmetic cmd i =
+let codeGenArithmetic cmd fn i =
     match cmd with
     | ADD -> aAdd
     | SUB -> aSub
     | NEG -> aNeg
-    | EQ -> aEq i
-    | GT -> aGt i
-    | LT -> aLt i
+    | EQ -> aEq fn i
+    | GT -> aGt fn i
+    | LT -> aLt fn i
     | AND -> aAnd
     | OR -> aOr
     | NOT -> aNot
     
-let codeGenInstruction cmd i =
+let codeGenInstruction context fn i cmd  =
     match cmd with
-    | Arithmetic a -> codeGenArithmetic a i
+    | Arithmetic a -> codeGenArithmetic a fn i
     | PUSH (Constant, SegmentIndex idx) -> pushConstantOntoStack idx
     | PUSH (Argument, SegmentIndex idx) -> pushRelativeSegmentOntoStack "@ARG" idx
     | PUSH (Local, SegmentIndex idx) -> pushRelativeSegmentOntoStack "@LCL" idx
@@ -229,21 +229,21 @@ let codeGenInstruction cmd i =
     | PUSH (That, SegmentIndex idx) -> pushRelativeSegmentOntoStack "@THAT" idx
     | PUSH (Pointer, SegmentIndex idx) -> pushFixedSegmentOntoStack SEGMENT_POINTER_BASE idx
     | PUSH (Temp, SegmentIndex idx) -> pushFixedSegmentOntoStack SEGMENT_TEMP_BASE idx
-    | PUSH (Static, SegmentIndex idx) -> pushStaticSegmentOntoStack "foo" idx
+    | PUSH (Static, SegmentIndex idx) -> pushStaticSegmentOntoStack context idx
     | POP (Local, SegmentIndex idx) -> popStackIntoRelativeSegment "@LCL" idx
     | POP (Argument, SegmentIndex idx) -> popStackIntoRelativeSegment "@ARG" idx
     | POP (This, SegmentIndex idx) -> popStackIntoRelativeSegment "@THIS" idx
     | POP (That, SegmentIndex idx) -> popStackIntoRelativeSegment "@THAT" idx
     | POP (Pointer, SegmentIndex idx) -> popStackIntoFixedSegment SEGMENT_POINTER_BASE idx
     | POP (Temp, SegmentIndex idx) -> popStackIntoFixedSegment SEGMENT_TEMP_BASE idx
-    | POP (Static, SegmentIndex idx) -> popStackIntoStaticSegment "foo" idx
-    | Label l -> labelInstruction "foo" l
-    | Goto l -> gotoInstruction "foo" l
-    | If_Goto l -> ifGotoInstruction "foo" l
+    | POP (Static, SegmentIndex idx) -> popStackIntoStaticSegment context idx
+    | Label l -> labelInstruction fn l
+    | Goto l -> gotoInstruction fn l
+    | If_Goto l -> ifGotoInstruction fn l
     | _ -> failwith $"{cmd} not supported yet"
 
 //need to process the list of instructions and group them by function
-let groupCodeIntoFunctions cmds =
+let groupCodeIntoFunctions commands =
     let mutable i = ""
     let f c =
         match c with
@@ -251,14 +251,20 @@ let groupCodeIntoFunctions cmds =
             i <- name
             (i,c)
         | _ -> (i,c)        
-    cmds
+    commands
     |> List.map f
     |> List.groupBy fst
     |> List.map (fun (k, grp) -> (k, List.map snd grp))
-    
-let codeGenInstructions context cmds =
-    let foo = groupCodeIntoFunctions cmds
-    cmds
+
+let codeGenInstructionsForFunction context fn commands =
+    commands
     |> List.indexed
-    |> List.map (fun (i, c) -> codeGenInstruction c i)
+    |> List.map (fun (idx, cmd) -> codeGenInstruction context fn idx cmd)
     |> List.collect id
+    
+let codeGenInstructions context commands =
+    groupCodeIntoFunctions commands
+    |> List.map (fun (fn, c) -> codeGenInstructionsForFunction context fn c)
+    |> List.collect id
+    
+    
