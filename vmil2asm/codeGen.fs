@@ -43,6 +43,13 @@ let popStackIntoAddress reg =
         ai "M=D"
     ]
 
+let pushConstantOntoStack c =
+    [
+        aComment "PUSH CONSTANT"
+        ai $"@{c}" //load constant into A-reg
+        ai "D=A" //Copy A-reg into D-reg
+    ] @ pushDIntoStack
+
 //to be used with segment base registers LCL, ARG, THIS, THAT
 let popStackIntoRelativeSegment seg idx =
     [aComment $"POP STACK INTO ({seg} + {idx})"]
@@ -197,12 +204,7 @@ let codeGenArithmetic cmd i =
 let codeGenInstruction cmd i =
     match cmd with
     | Arithmetic a -> codeGenArithmetic a i
-    | PUSH (Constant, SegmentIndex idx) ->
-        [
-            aComment "PUSH CONSTANT"
-            ai $"@{idx}" //load constant into A-reg
-            ai "D=A" //Copy A-reg into D-reg
-        ] @ pushDIntoStack
+    | PUSH (Constant, SegmentIndex idx) -> pushConstantOntoStack idx
     | PUSH (Argument, SegmentIndex idx) -> pushRelativeSegmentOntoStack "@ARG" idx
     | PUSH (Local, SegmentIndex idx) -> pushRelativeSegmentOntoStack "@LCL" idx
     | PUSH (This, SegmentIndex idx) -> pushRelativeSegmentOntoStack "@THIS" idx
