@@ -15,6 +15,7 @@ type Segment =
     | Temp
 
 type Symbol = string
+type ArgumentCount = int
 
 type ArithmeticCommand =
     | ADD
@@ -34,8 +35,8 @@ type Command =
     | Label of Symbol
     | Goto of Symbol
     | If_Goto of Symbol
-    | Function of Symbol * nLocals: int
-    | Call of Symbol * nArgs: int
+    | Function of Symbol * ArgumentCount
+    | Call of Symbol * ArgumentCount
     | Return
 
 type AssemblyInstruction = AssemblyInstruction of string    

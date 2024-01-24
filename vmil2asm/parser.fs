@@ -1,5 +1,6 @@
 module vmil2asm.parser
 
+open System
 open FParsec
 open vmil2asm.types
 
@@ -65,12 +66,40 @@ let pSegmentIndex = puint16 .>> ws |>> function i -> SegmentIndex i
 let pC_Push = str "push" .>> ws >>. pSegment .>>. pSegmentIndex |>> function s, si -> PUSH (s,si)
 let pC_Pop = str "pop" .>> ws >>. pSegment .>>. pSegmentIndex |>> function s, si -> POP (s,si)
 
+let allowedSymbolFirstChar c =
+    let isLetter = Char.IsLetter c
+    let isUnderscore = c = '_'
+    let isColon = c = ':'
+    let isDot = c = '.'
+    let isDollar = c = '$'
+    isLetter || isUnderscore || isColon || isDot || isDollar
+    
+let allowedSymbolChar c =
+    let fc = allowedSymbolFirstChar c
+    let isDigit = Char.IsDigit c
+    isDigit || fc
+
+let pLabelName = many1Satisfy2L allowedSymbolFirstChar allowedSymbolChar "label"   
+let pLabel = str "label" >>. ws >>. pLabelName .>> ws |>> function l -> Label l
+let pGoto = str "goto" >>. ws >>. pLabelName .>> ws |>> function l -> Goto l
+let pIfGoto = str "if-goto" >>. ws >>. pLabelName .>> ws |>> function l -> If_Goto l
+let pBranching = choice [ pLabel; pGoto; pIfGoto ]    
+
+let pFunctionName = many1Satisfy2L allowedSymbolFirstChar allowedSymbolChar "function"
+let pFunction = str "function" >>. ws >>. pipe2 (pFunctionName .>> ws) (pint32 .>> ws) (fun n a -> Function (n, a))
+let pCall = str "call" >>. ws >>. pipe2 (pFunctionName .>> ws) (pint32 .>> ws) (fun n a -> Call (n, a))
+let pReturn = str "return" .>> ws |>> function _ -> Return
+
+let pFunctions = choice [pFunction; pCall; pReturn;]
+
 let pCommand =
     choiceL [
         pC_Push
         pC_Pop
+        pBranching
+        pFunctions
     ] "command"
-    
+
 let pCode =
     choice [
         pArithmeticCommand

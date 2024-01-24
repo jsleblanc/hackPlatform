@@ -123,3 +123,67 @@ add
     | Success(p, _, _) -> Assert.Equal(21, p.Length)
     | Failure(msg, _, _) -> Assert.Fail(msg)
     
+    
+[<Theory>]
+[<InlineData("label foo", "foo")>]
+[<InlineData("label foo1", "foo1")>]
+[<InlineData("label     foo     ", "foo")>]
+let ``Should parse label`` s exp =
+    match run pCommand s with
+    | Success(Label l, _, _) -> Assert.Equal(exp, l)
+    | Success _ -> Assert.Fail("Should have parsed as a label")
+    | Failure(msg, _, _) -> Assert.Fail(msg)
+    
+[<Theory>]
+[<InlineData("goto foo", "foo")>]
+[<InlineData("goto foo1", "foo1")>]
+[<InlineData("goto     foo     ", "foo")>]
+let ``Should parse goto`` s exp =
+    match run pCommand s with
+    | Success(Goto l, _, _) -> Assert.Equal(exp, l)
+    | Success _ -> Assert.Fail("Should have parsed as a goto")
+    | Failure(msg, _, _) -> Assert.Fail(msg)
+    
+[<Theory>]
+[<InlineData("if-goto foo", "foo")>]
+[<InlineData("if-goto foo1", "foo1")>]
+[<InlineData("if-goto     foo     ", "foo")>]
+let ``Should parse if-goto`` s exp =
+    match run pCommand s with
+    | Success(If_Goto l, _, _) -> Assert.Equal(exp, l)
+    | Success _ -> Assert.Fail("Should have parsed as a if-goto")
+    | Failure(msg, _, _) -> Assert.Fail(msg)
+    
+[<Theory>]
+[<InlineData("function foo 0", "foo", 0)>]
+[<InlineData("function foo1 1", "foo1", 1)>]
+[<InlineData("function     foo    2 ", "foo", 2)>]
+let ``Should parse function definition`` s exp c =
+    match run pCommand s with
+    | Success(Function (name, argCount), _, _) ->
+        Assert.Equal(exp, name)
+        Assert.Equal(c, argCount)
+    | Success _ -> Assert.Fail("Should have parsed as a function definition")
+    | Failure(msg, _, _) -> Assert.Fail(msg)
+      
+[<Theory>]
+[<InlineData("call foo 0", "foo", 0)>]
+[<InlineData("call foo1 1", "foo1", 1)>]
+[<InlineData("call     foo    2 ", "foo", 2)>]
+let ``Should parse function call`` s exp c =
+    match run pCommand s with
+    | Success(Call (name, argCount), _, _) ->
+        Assert.Equal(exp, name)
+        Assert.Equal(c, argCount)
+    | Success _ -> Assert.Fail("Should have parsed as a function call")
+    | Failure(msg, _, _) -> Assert.Fail(msg)
+            
+[<Theory>]
+[<InlineData("return")>]
+[<InlineData("return ")>]
+[<InlineData("return   ")>]
+let ``Should parse return`` s =
+    match run pCommand s with
+    | Success(Return, _, _) -> Assert.True(true)
+    | Success _ -> Assert.Fail("Should have parsed return")
+    | Failure(msg, _, _) -> Assert.Fail(msg)
