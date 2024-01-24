@@ -187,3 +187,25 @@ let ``Should parse return`` s =
     | Success(Return, _, _) -> Assert.True(true)
     | Success _ -> Assert.Fail("Should have parsed return")
     | Failure(msg, _, _) -> Assert.Fail(msg)
+    
+    
+[<Fact>]
+let ``Should parse multiline input with function, labels`` () =
+    let s = """
+function Sys.init 0
+	push constant 6
+	push constant 8
+	call Class1.set 2
+	pop temp 0 // dumps the return value
+	push constant 23
+	push constant 15
+	call Class2.set 2
+	pop temp 0 // dumps the return value
+	call Class1.get 0
+	call Class2.get 0
+label END
+	goto END
+"""
+    match run pInput s with
+    | Success (cmds, _, _) -> Assert.Equal(15, cmds.Length)
+    | Failure(msg, _, _) -> Assert.Fail(msg)
