@@ -189,6 +189,24 @@ let aLt i = [aComment "LT"] @ equalityTesting "JLT" i
 
 let aGt i = [aComment "GT"] @ equalityTesting "JGT" i
 
+let labelInstruction context name = [ai $"({context}${name})"]
+
+let gotoInstruction context name =
+    [aComment $"GOTO {context}${name}"]
+    @ [
+        ai $"@{context}${name}"
+        ai "0;JMP"
+    ]
+
+let ifGotoInstruction context name =
+    [aComment $"IF-GOTO {context}${name}"]
+    @ popStackIntoD
+    @ [
+        ai $"@{context}${name}"
+        ai "D=D;JNE"
+    ]
+
+
 let codeGenArithmetic cmd i =
     match cmd with
     | ADD -> aAdd
@@ -219,6 +237,9 @@ let codeGenInstruction cmd i =
     | POP (Pointer, SegmentIndex idx) -> popStackIntoFixedSegment SEGMENT_POINTER_BASE idx
     | POP (Temp, SegmentIndex idx) -> popStackIntoFixedSegment SEGMENT_TEMP_BASE idx
     | POP (Static, SegmentIndex idx) -> popStackIntoStaticSegment "foo" idx
+    | Label l -> labelInstruction "foo" l
+    | Goto l -> gotoInstruction "foo" l
+    | If_Goto l -> ifGotoInstruction "foo" l
     | _ -> failwith $"{cmd} not supported yet"
        
 let codeGenInstructions cmds =
