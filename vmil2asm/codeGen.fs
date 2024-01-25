@@ -350,6 +350,14 @@ let returnFunction =
         ai "0;JMP"
     ]
 
+let initVm =
+    [aComment "INIT"]
+    @ [
+        ai "@256" //init SP
+        ai "D=A"
+        ai "@SP"
+        ai "M=D"
+    ] @ callFunction "" "Bootstrap" "Sys.init" 0
 
 let codeGenArithmetic cmd fn i =
     match cmd with
@@ -413,5 +421,6 @@ let codeGenInstructions context commands =
     groupCodeIntoFunctions commands
     |> List.map (fun (fn, c) -> codeGenInstructionsForFunction context fn c)
     |> List.collect id
+    |> List.insertManyAt 0 initVm
     
     
