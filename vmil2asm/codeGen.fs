@@ -218,6 +218,136 @@ let ifGotoInstruction context name =
         ai "D=D;JNE"
     ]
 
+let callFunction context fn f args =
+    [aComment $"FUNCTION CALL {f} ARGS {args}"]
+    @ [
+        ai $"@{fn}.RETURN" 
+        ai "D=A"
+    ] @ pushDIntoStack //push return address onto stack
+    @ [
+        ai "@LCL"
+        ai "D=M"
+    ] @ pushDIntoStack //push LCL onto stack
+    @ [
+        ai "@ARG"
+        ai "D=M"
+    ] @ pushDIntoStack //push ARG onto stack
+    @ [
+        ai "@THIS"
+        ai "D=M"
+    ] @ pushDIntoStack //push THIS onto stack
+    @ [
+        ai "@THAT"
+        ai "D=M"
+    ] @ pushDIntoStack //push THAT onto stack
+    @ [
+        //ARG = @SP-n-5
+        ai "@SP"
+        ai "D=A"
+        ai $"@{args}"
+        ai "D=D-A"
+        ai "@5"
+        ai "D=D-A"
+        ai "@ARG"
+        ai "M=D"
+    ] @ [
+        //LCL = SP
+        ai "@SP"
+        ai "D=A"
+        ai "@LCL"
+        ai "M=D"
+    ] @ [
+        //GOTO f
+        ai $"@{f}"
+        ai "0;JMP"
+    ] @ [
+        ai $"({fn}.RETURN)"
+    ]
+
+let defineFunction context fn args =
+    [aComment $"DEFINE FUNCTION {fn} ARGS {args}"]
+    @ [
+        ai $"({fn})"
+        ai "D=0"
+    ] @ (List.init args (fun _ -> pushDIntoStack) |> List.collect id)
+    
+let returnFunction =
+    [aComment "RETURN"]
+    @ [
+        //FRAME = LCL
+        ai "@LCL"
+        ai "D=M"
+        ai "@FRAME"
+        ai "M=D"
+    ] @ [
+        //RET = *(FRAME-5)
+        ai "@FRAME"
+        ai "A=M"
+        ai "A=A-1"
+        ai "A=A-1"
+        ai "A=A-1"
+        ai "A=A-1"
+        ai "A=A-1"        
+        ai "D=M"
+        ai "@RET"
+        ai "M=D"
+    ] @ popStackIntoD
+    @ [
+        //*ARG = pop()
+        ai "@ARG"
+        ai "A=M"
+        ai "M=D"
+    ] @ [
+        //SP = ARG + 1
+        ai "@ARG"
+        ai "A=M"
+        ai "D=A+1"
+        ai "@SP"
+        ai "M=D"
+    ] @ [
+        //THAT = *(FRAME-1)
+        ai "@FRAME"
+        ai "A=M"
+        ai "A=A-1"
+        ai "D=M"
+        ai "@THAT"
+        ai "M=D"
+    ] @ [
+        //THIS = *(FRAME-2)
+        ai "@FRAME"
+        ai "A=M"
+        ai "A=A-1"
+        ai "A=A-1"
+        ai "D=M"
+        ai "@THIS"
+        ai "M=D"
+    ] @ [
+        //ARG = *(FRAME-3)
+        ai "@FRAME"
+        ai "A=M"
+        ai "A=A-1"
+        ai "A=A-1"
+        ai "A=A-1"
+        ai "D=M"
+        ai "@ARG"
+        ai "M=D"
+    ] @ [
+        //LCL = *(FRAME-4)
+        ai "@FRAME"
+        ai "A=M"
+        ai "A=A-1"
+        ai "A=A-1"
+        ai "A=A-1"
+        ai "A=A-1"
+        ai "D=M"
+        ai "@LCL"
+        ai "M=D"
+    ] @ [
+        //goto RET
+        ai "@RET"
+        ai "0;JMP"
+    ]
+
 
 let codeGenArithmetic cmd fn i =
     match cmd with
@@ -252,7 +382,10 @@ let codeGenInstruction context fn i cmd  =
     | Label l -> labelInstruction fn l
     | Goto l -> gotoInstruction fn l
     | If_Goto l -> ifGotoInstruction fn l
-    | _ -> failwith $"{cmd} not supported yet"
+    | Call (f, args) -> callFunction context fn f args
+    | Function (f, args) -> defineFunction context f args
+    | Return -> returnFunction
+    | x -> failwith $"\"{x}\" is not a supported operation"
 
 //need to process the list of instructions and group them by function
 let groupCodeIntoFunctions commands =
