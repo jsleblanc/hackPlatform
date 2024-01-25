@@ -276,7 +276,8 @@ let returnFunction =
     @ [
         //FRAME = LCL
         ai "@LCL"
-        ai "D=M"
+        ai "A=M"
+        ai "D=A"
         ai "@FRAME"
         ai "M=D"
     ] @ [
@@ -345,6 +346,7 @@ let returnFunction =
     ] @ [
         //goto RET
         ai "@RET"
+        ai "A=M"
         ai "0;JMP"
     ]
 
