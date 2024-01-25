@@ -218,10 +218,10 @@ let ifGotoInstruction context name =
         ai "D=D;JNE"
     ]
 
-let callFunction context fn f args =
+let callFunction context fn i f args =
     [aComment $"FUNCTION CALL {f} ARGS {args}"]
     @ [
-        ai $"@{fn}.RETURN" 
+        ai $"@{context}.{fn}.RETURN${i}" 
         ai "D=A"
     ] @ pushDIntoStack //push return address onto stack
     @ [
@@ -261,7 +261,7 @@ let callFunction context fn f args =
         ai $"@{f}"
         ai "0;JMP"
     ] @ [
-        ai $"({fn}.RETURN)"
+        ai $"({context}.{fn}.RETURN${i})"
     ]
 
 let defineFunction context fn args =
@@ -357,7 +357,7 @@ let initVm =
         ai "D=A"
         ai "@SP"
         ai "M=D"
-    ] @ callFunction "" "Bootstrap" "Sys.init" 0
+    ] @ callFunction "" "Bootstrap" 0 "Sys.init" 0
 
 let codeGenArithmetic cmd fn i =
     match cmd with
@@ -392,7 +392,7 @@ let codeGenInstruction context fn i cmd  =
     | Label l -> labelInstruction fn l
     | Goto l -> gotoInstruction fn l
     | If_Goto l -> ifGotoInstruction fn l
-    | Call (f, args) -> callFunction context fn f args
+    | Call (f, args) -> callFunction context fn i f args
     | Function (f, args) -> defineFunction context f args
     | Return -> returnFunction
     | x -> failwith $"\"{x}\" is not a supported operation"
