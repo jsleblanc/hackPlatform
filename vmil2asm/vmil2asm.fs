@@ -14,6 +14,7 @@ let filterOutComments instructions =
     instructions |> List.map filter |> List.choose id
 
 let processFile (file:FileInfo) =
+    printfn $"\tProcessing {file}"
     match parseFile file.FullName with
     | Success(results, _, _) ->
         let code = filterOutComments results

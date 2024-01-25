@@ -27,11 +27,14 @@ let main argv =
     let inputPath = results.GetResult InputPath
     let outputFileNameArg = results.TryGetResult OutputFile
     
+    printfn "Virtual Machine IL to Hack ASM"
+    printfn $"Processing {inputPath}"
     let requestOpt = findInputFiles inputPath
     match requestOpt with
     | Some req ->
         let outputFileName = overrideOutputName req.outputName outputFileNameArg
         processRequest { req with outputName = outputFileName }
+        printfn $"Code written to {outputFileName}"
         0
     | None ->
         printfn $"Error: specified path \"{inputPath}\" is not a file or a directory containing .vm files"
