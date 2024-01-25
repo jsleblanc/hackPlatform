@@ -243,7 +243,7 @@ let callFunction context fn f args =
     @ [
         //ARG = @SP-n-5
         ai "@SP"
-        ai "D=A"
+        ai "D=M"
         ai $"@{args}"
         ai "D=D-A"
         ai "@5"
@@ -253,7 +253,7 @@ let callFunction context fn f args =
     ] @ [
         //LCL = SP
         ai "@SP"
-        ai "D=A"
+        ai "D=M"
         ai "@LCL"
         ai "M=D"
     ] @ [
