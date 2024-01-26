@@ -8,6 +8,10 @@ Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "vmil2asm", "vmil2asm\vmil2a
 EndProject
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "vmil2asmTests", "vmil2asmTests\vmil2asmTests.fsproj", "{8B19905D-8778-42A1-9D79-C8CF6F2458FE}"
 EndProject
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "jackc", "jackc\jackc.fsproj", "{DDBE7C95-9AC3-46C4-ACF0-91374AC318ED}"
+EndProject
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "jackcTests", "jackcTests\jackcTests.fsproj", "{D0DA8A57-B68A-4616-81F7-043671AE2FF6}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -30,5 +34,13 @@ Global
 		{8B19905D-8778-42A1-9D79-C8CF6F2458FE}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{8B19905D-8778-42A1-9D79-C8CF6F2458FE}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{8B19905D-8778-42A1-9D79-C8CF6F2458FE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{DDBE7C95-9AC3-46C4-ACF0-91374AC318ED}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DDBE7C95-9AC3-46C4-ACF0-91374AC318ED}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DDBE7C95-9AC3-46C4-ACF0-91374AC318ED}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DDBE7C95-9AC3-46C4-ACF0-91374AC318ED}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D0DA8A57-B68A-4616-81F7-043671AE2FF6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D0DA8A57-B68A-4616-81F7-043671AE2FF6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D0DA8A57-B68A-4616-81F7-043671AE2FF6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D0DA8A57-B68A-4616-81F7-043671AE2FF6}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
