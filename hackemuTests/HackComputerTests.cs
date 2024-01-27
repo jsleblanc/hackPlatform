@@ -62,7 +62,7 @@ public class HackComputerTests
 
     /// <summary>
     /// Runs a small assembly program that multiplies two numbers and writes the result to RAM
-    /// Uses the Mult.asm from Chapter 4
+    /// Uses the Mult.asm program from chapter 4
     /// </summary>
     /// <param name="x"></param>
     /// <param name="y"></param>
@@ -117,6 +117,50 @@ public class HackComputerTests
         hc.SetMemory(1, y);
         hc.ComputeCycles(250);
         
+        Assert.Equal(expected, hc.Memory(2));
+    }
+
+    /// <summary>
+    /// Runs a small assembly program that computes the max of two numbers and writes the result to RAM
+    /// Uses the Max.asm program from chapter 6
+    /// </summary>
+    /// <param name="x"></param>
+    /// <param name="y"></param>
+    /// <param name="expected"></param>
+    [Theory]
+    [InlineData(0, 0, 0)]
+    [InlineData(0, 1, 1)]
+    [InlineData(1, 0, 1)]
+    [InlineData(1, 2, 2)]
+    [InlineData(2, 1, 2)]
+    [InlineData(6, 7, 7)]
+    public void ShouldFindMaxOfTwoNumbers(short x, short y, short expected)
+    {
+        var hc = new HackComputer(new[]
+        {
+            "0000000000000000",
+            "1111110000010000",
+            "0000000000000001",
+            "1111010011010000",
+            "0000000000001100",
+            "1110001100000001",
+            "0000000000000001",
+            "1111110000010000",
+            "0000000000000010",
+            "1110001100001000",
+            "0000000000010000",
+            "1110101010000111",
+            "0000000000000000",
+            "1111110000010000",
+            "0000000000000010",
+            "1110001100001000",
+            "0000000000010000",
+            "1110101010000111"
+        });
+        hc.SetMemory(0, x);
+        hc.SetMemory(1, y);
+        hc.ComputeCycles(250);
+
         Assert.Equal(expected, hc.Memory(2));
     }
 }
