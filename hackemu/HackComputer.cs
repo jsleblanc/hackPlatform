@@ -95,33 +95,11 @@ public class HackComputer : IHackComputer
     }
 
     /// <summary>
-    /// Runs computation until infinite loop detection kicks in or provided cycle limit is reached
-    /// </summary>
-    /// <param name="cycleLimit"></param>
-    /// <returns>Number of cycles executed</returns>
-    public int ComputeUntilFinishedWithLimit(int cycleLimit = 1000)
-    {
-        var x = 0;
-        for (; x < cycleLimit; x++)
-        {
-            var r = ComputeNext();
-            if (!r)
-            {
-                break;
-            }
-        }
-
-        return x;
-    }
-    
-    /// <summary>
     /// Computes current instruction
     /// </summary>
-    /// <returns>True if program continues, false if infinite loop detected</returns>
     /// <exception cref="ArgumentOutOfRangeException"></exception>
-    public bool ComputeNext()
+    public void ComputeNext()
     {
-        var r = true;
         var pcPrev = _pc;
         var instruction = _rom[_pc];
         if (Is_C_Instruction(instruction))
@@ -189,20 +167,12 @@ public class HackComputer : IHackComputer
                 Jump.JMP => _aReg,
                 _ => throw new ArgumentOutOfRangeException(nameof(jump))
             };
-
-            //we're jumping backwards one instruction
-            if (_aReg > 0 && _aReg - pcPrev == -1) 
-            {
-                r = false;
-            }
         }
         else
         {
             _aReg = instruction;
             _pc++;
         }
-
-        return r;
     }
 
     private static bool Is_C_Instruction(short instruction)

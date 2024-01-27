@@ -115,7 +115,7 @@ public class HackComputerTests
         });
         hc.SetMemory(0, x);
         hc.SetMemory(1, y);
-        hc.ComputeUntilFinishedWithLimit();
+        hc.ComputeCycles(100);
         
         Assert.Equal(expected, hc.Memory(2));
     }
@@ -159,34 +159,8 @@ public class HackComputerTests
         });
         hc.SetMemory(0, x);
         hc.SetMemory(1, y);
-        hc.ComputeUntilFinishedWithLimit();
+        hc.ComputeCycles(100);
 
         Assert.Equal(expected, hc.Memory(2));
-    }
-
-    /// <summary>
-    /// Basic infinite loop detection to determine when a program has finished
-    /// </summary>
-    [Fact]
-    public void ShouldDetectInfiniteLoop()
-    {
-        var hc = new HackComputer(new[]
-        {
-            "1110111111010000",
-            "1110111111010000",
-            "1110111111010000",
-            "1110111111010000",
-            "1110111111010000",
-            "0000000000000101",
-            "1110101010000111"
-        });
-
-        Assert.True(hc.ComputeNext());
-        Assert.True(hc.ComputeNext());
-        Assert.True(hc.ComputeNext());
-        Assert.True(hc.ComputeNext());
-        Assert.True(hc.ComputeNext());
-        Assert.True(hc.ComputeNext());
-        Assert.False(hc.ComputeNext());
     }
 }

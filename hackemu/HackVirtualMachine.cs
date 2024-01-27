@@ -17,8 +17,5 @@ public class HackVirtualMachine(HackComputer hackComputer) : IHackComputer
     public void SetMemory(short index, short value) => hackComputer.SetMemory(index, value);
     public void ComputeCycles(int count) => hackComputer.ComputeCycles(count);
 
-    public int ComputeUntilFinishedWithLimit(int cycleLimit = 1000) =>
-        hackComputer.ComputeUntilFinishedWithLimit(cycleLimit);
-
-    public bool ComputeNext() => hackComputer.ComputeNext();
+    public void ComputeNext() => hackComputer.ComputeNext();
 }
