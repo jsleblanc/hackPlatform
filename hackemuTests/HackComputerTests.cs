@@ -115,7 +115,7 @@ public class HackComputerTests
         });
         hc.SetMemory(0, x);
         hc.SetMemory(1, y);
-        while (hc.ComputeNext()){}
+        hc.ComputeUntilFinishedWithLimit();
         
         Assert.Equal(expected, hc.Memory(2));
     }
@@ -159,7 +159,7 @@ public class HackComputerTests
         });
         hc.SetMemory(0, x);
         hc.SetMemory(1, y);
-        while (hc.ComputeNext()) { }
+        hc.ComputeUntilFinishedWithLimit();
 
         Assert.Equal(expected, hc.Memory(2));
     }

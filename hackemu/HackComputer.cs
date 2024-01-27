@@ -94,6 +94,25 @@ public class HackComputer
         }
     }
 
+    /// <summary>
+    /// Runs computation until infinite loop detection kicks in or provided cycle limit is reached
+    /// </summary>
+    /// <param name="cycleLimit"></param>
+    /// <returns>Number of cycles executed</returns>
+    public int ComputeUntilFinishedWithLimit(int cycleLimit = 1000)
+    {
+        var x = 0;
+        for (; x < cycleLimit; x++)
+        {
+            var r = ComputeNext();
+            if (!r)
+            {
+                break;
+            }
+        }
+
+        return x;
+    }
     
     /// <summary>
     /// Computes current instruction
