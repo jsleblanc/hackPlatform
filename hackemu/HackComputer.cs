@@ -8,9 +8,9 @@ public class HackComputer
     private readonly short[] _rom = new short[0xFFFF];
     private readonly short[] _ram = new short[0xFFFF];
 
-    private short _PC;
-    private short _A;
-    private short _D;
+    private short _pc;
+    private short _aReg;
+    private short _dReg;
 
     [Flags]
     private enum Destination
@@ -73,20 +73,20 @@ public class HackComputer
     {
         programCode.CopyTo(_rom, 0);
         _ram.Initialize();
-        _PC = 0;
-        _A = 0;
-        _D = 0;
+        _pc = 0;
+        _aReg = 0;
+        _dReg = 0;
     }
 
-    public short A => _A;
-    public short D => _D;
-    public short M => _ram[_A];
-    public short PC => _PC;
+    public short A => _aReg;
+    public short D => _dReg;
+    public short M => _ram[_aReg];
+    public short PC => _pc;
     public short Memory(short index) => _ram[index];
     
     public bool ComputeNext()
     {
-        var instruction = _rom[_PC];
+        var instruction = _rom[_pc];
         if (Is_C_Instruction(instruction))
         {
             var (destination, opCode, jump) = Decode_C_Instruction(instruction);
@@ -96,92 +96,92 @@ public class HackComputer
                 OpCode.OP_ZERO => 0,
                 OpCode.OP_ONE => 1,
                 OpCode.OP_NEG_ONE => -1,
-                OpCode.OP_D => _D,
-                OpCode.OP_A => _A,
-                OpCode.OP_M => _ram[_A],
-                OpCode.OP_NOT_D => (short)~_D,
-                OpCode.OP_NOT_A => (short)~_A,
-                OpCode.OP_NOT_M => (short)~_ram[_A],
-                OpCode.OP_NEG_D => (short)-_D,
-                OpCode.OP_NEG_A => (short)-_A,
-                OpCode.OP_NEG_M => (short)-_ram[_A],
-                OpCode.OP_D_PLUS_ONE => (short)(_D + 1),
-                OpCode.OP_A_PLUS_ONE => (short)(_A + 1),
-                OpCode.OP_M_PLUS_ONE => (short)(_ram[_A] + 1),
-                OpCode.OP_D_MINUS_ONE => (short)(_D - 1),
-                OpCode.OP_A_MINUS_ONE => (short)(_A - 1),
-                OpCode.OP_M_MINUS_ONE => (short)(_ram[_A] - 1),
-                OpCode.OP_D_PLUS_A => (short)(_D + _A),
-                OpCode.OP_D_PLUS_M => (short)(_D + _ram[_A]),
-                OpCode.OP_D_MINUS_A => (short)(_D - _A),
-                OpCode.OP_D_MINUS_M => (short)(_D - _ram[_A]),
-                OpCode.OP_A_MINUS_D => (short)(_A - _D),
-                OpCode.OP_M_MINUS_D => (short)(_ram[_A] - _D),
-                OpCode.OP_D_AND_A => (short)(_D & _A),
-                OpCode.OP_D_AND_M => (short)(_D & _ram[_A]),
-                OpCode.OP_D_OR_A => (short)(_D | _A),
-                OpCode.OP_D_OR_M => (short)(_D | _ram[_A]),
+                OpCode.OP_D => _dReg,
+                OpCode.OP_A => _aReg,
+                OpCode.OP_M => _ram[_aReg],
+                OpCode.OP_NOT_D => (short)~_dReg,
+                OpCode.OP_NOT_A => (short)~_aReg,
+                OpCode.OP_NOT_M => (short)~_ram[_aReg],
+                OpCode.OP_NEG_D => (short)-_dReg,
+                OpCode.OP_NEG_A => (short)-_aReg,
+                OpCode.OP_NEG_M => (short)-_ram[_aReg],
+                OpCode.OP_D_PLUS_ONE => (short)(_dReg + 1),
+                OpCode.OP_A_PLUS_ONE => (short)(_aReg + 1),
+                OpCode.OP_M_PLUS_ONE => (short)(_ram[_aReg] + 1),
+                OpCode.OP_D_MINUS_ONE => (short)(_dReg - 1),
+                OpCode.OP_A_MINUS_ONE => (short)(_aReg - 1),
+                OpCode.OP_M_MINUS_ONE => (short)(_ram[_aReg] - 1),
+                OpCode.OP_D_PLUS_A => (short)(_dReg + _aReg),
+                OpCode.OP_D_PLUS_M => (short)(_dReg + _ram[_aReg]),
+                OpCode.OP_D_MINUS_A => (short)(_dReg - _aReg),
+                OpCode.OP_D_MINUS_M => (short)(_dReg - _ram[_aReg]),
+                OpCode.OP_A_MINUS_D => (short)(_aReg - _dReg),
+                OpCode.OP_M_MINUS_D => (short)(_ram[_aReg] - _dReg),
+                OpCode.OP_D_AND_A => (short)(_dReg & _aReg),
+                OpCode.OP_D_AND_M => (short)(_dReg & _ram[_aReg]),
+                OpCode.OP_D_OR_A => (short)(_dReg | _aReg),
+                OpCode.OP_D_OR_M => (short)(_dReg | _ram[_aReg]),
                 _ => throw new ArgumentOutOfRangeException(nameof(opCode))
             };
 
             if (destination.HasFlag(Destination.A))
             {
-                _A = compResult;
+                _aReg = compResult;
             }
 
             if (destination.HasFlag(Destination.M))
             {
-                _ram[_A] = compResult;
+                _ram[_aReg] = compResult;
             }
 
             if (destination.HasFlag(Destination.D))
             {
-                _D = compResult;
+                _dReg = compResult;
             }
 
             switch (jump)
             {
                 case Jump.None:
-                    _PC++;
+                    _pc++;
                     break;
                 case Jump.JGT:
                     if (compResult > 0)
                     {
-                        _PC = _A;
+                        _pc = _aReg;
                     }
                     break;
                 case Jump.JEQ:
                     if (compResult == 0)
                     {
-                        _PC = _A;
+                        _pc = _aReg;
                     }
                     break;
                 case Jump.JGE:
                     if (compResult >= 0)
                     {
-                        _PC = _A;
+                        _pc = _aReg;
                     }
                     break;
                 case Jump.JLT:
                     if (compResult < 0)
                     {
-                        _PC = _A;
+                        _pc = _aReg;
                     }
                     break;
                 case Jump.JNE:
                     if (compResult != 0)
                     {
-                        _PC = _A;
+                        _pc = _aReg;
                     }
                     break;
                 case Jump.JLE:
                     if (compResult <= 0)
                     {
-                        _PC = _A;
+                        _pc = _aReg;
                     }
                     break;
                 case Jump.JMP:
-                    _PC = _A;
+                    _pc = _aReg;
                     break;
                 default:
                     throw new ArgumentOutOfRangeException(nameof(jump));
@@ -189,7 +189,8 @@ public class HackComputer
         }
         else
         {
-            _A = instruction;
+            _aReg = instruction;
+            _pc++;
         }
         
         return true;
