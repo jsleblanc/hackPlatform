@@ -204,13 +204,13 @@ public class HackComputer
 
     private static (Destination, OpCode, Jump) Decode_C_Instruction(short instruction)
     {
-        const ushort opCodeMask = 0b111_0000000111111;
-        const ushort destinationMask = 0b111_1111111000111;
-        const ushort jumpMask = 0b111_1111111111000;
+        const ushort opCodeMask = 0b0001111111000000;
+        const ushort destinationMask = 0b0000000000111000;
+        const ushort jumpMask = 0b0000000000000111;
 
-        var dest = instruction ^ destinationMask;
-        var jump = instruction ^ jumpMask;
-        var opCode = instruction ^ opCodeMask;
+        var dest = (instruction & destinationMask) >> 3;
+        var jump = instruction & jumpMask;
+        var opCode = (instruction & opCodeMask) >>> 6;
 
         return ((Destination)dest, (OpCode)opCode, (Jump)jump);
     }
