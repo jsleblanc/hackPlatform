@@ -94,8 +94,16 @@ public class HackComputer
         }
     }
 
-    public void ComputeNext()
+    
+    /// <summary>
+    /// Computes current instruction
+    /// </summary>
+    /// <returns>True if program continues, false if infinite loop detected</returns>
+    /// <exception cref="ArgumentOutOfRangeException"></exception>
+    public bool ComputeNext()
     {
+        var r = true;
+        var pcPrev = _pc;
         var instruction = _rom[_pc];
         if (Is_C_Instruction(instruction))
         {
@@ -162,12 +170,20 @@ public class HackComputer
                 Jump.JMP => _aReg,
                 _ => throw new ArgumentOutOfRangeException(nameof(jump))
             };
+
+            //we're jumping backwards one instruction
+            if (_aReg > 0 && _aReg - pcPrev == -1) 
+            {
+                r = false;
+            }
         }
         else
         {
             _aReg = instruction;
             _pc++;
         }
+
+        return r;
     }
 
     private static bool Is_C_Instruction(short instruction)
