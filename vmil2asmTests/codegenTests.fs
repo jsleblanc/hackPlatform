@@ -117,3 +117,38 @@ function Sys.add12 0
     Assert.Equal(int16 5000, vm.THAT)
     Assert.Equal(int16 135, vm.R5)
     Assert.Equal(int16 246, vm.R6)
+
+[<Fact>]
+let ``Should run simple-function program on virtual machine`` () =
+    let vmil = """
+// This file is part of www.nand2tetris.org
+// and the book "The Elements of Computing Systems"
+// by Nisan and Schocken, MIT Press.
+// File name: projects/08/FunctionCalls/SimpleFunction/SimpleFunction.vm
+
+function Sys.init 0
+	push constant 1234
+	push constant 37
+	call SimpleFunction.test 2
+	label LOOP
+	goto LOOP
+
+// Performs a simple calculation and returns the result.
+// argument[0] and argument[1] must be set by the caller of this code.
+function SimpleFunction.test 2
+	push local 0
+	push local 1
+	add
+	not
+	push argument 0
+	add
+	push argument 1
+	sub
+	return
+"""
+    let asm = vmil2asmString vmil
+    let input = (StringBuilder(), asm) ||> List.fold (fun sb str -> sb.AppendFormat("{0}\n", str))
+    let code = assemble (input.ToString())
+    let vm = HackVirtualMachine(HackComputer(code.instructions))
+    vm.ComputeCycles(10000)
+    Assert.Equal(int16 1196, vm.Memory(int16 261))
