@@ -10,6 +10,7 @@
         <Compile Include="parsers.fs" />
         <Compile Include="translator.fs" />
         <Compile Include="util.fs" />
+        <Compile Include="assembler.fs" />
         <Compile Include="Program.fs"/>
     </ItemGroup>
 

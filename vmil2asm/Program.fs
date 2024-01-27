@@ -2,7 +2,7 @@
 open System
 open Argu
 
-open vmil2asm.main
+open vmil2asm.api
 open vmil2asm.util
 
 type Arguments =

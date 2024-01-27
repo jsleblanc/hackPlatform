@@ -1,4 +1,4 @@
-module vmil2asm.main
+module vmil2asm.api
 
 open System.IO
 open FParsec
@@ -13,6 +13,10 @@ let filterOutComments instructions =
         | Comment _ -> None
     instructions |> List.map filter |> List.choose id
 
+let assemblyInstructionToString ai =
+    match ai with
+    | AssemblyInstruction a -> a    
+
 let processFile (file:FileInfo) =
     printfn $"\tProcessing {file}"
     match parseFile file.FullName with
@@ -21,9 +25,13 @@ let processFile (file:FileInfo) =
         codeGenInstructions file.Name code
     | Failure(msg, _, _) -> failwith msg
 
-let assemblyInstructionToString ai =
-    match ai with
-    | AssemblyInstruction a -> a    
+let processString input =
+    match parseString input with
+    | Success(results, _, _) ->
+        let code = filterOutComments results
+        codeGenInstructions "Stream" code
+        |> List.map assemblyInstructionToString
+    | Failure(msg, _, _) -> failwith msg
     
 let processRequest req =
     let x =
