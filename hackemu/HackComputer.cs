@@ -94,7 +94,7 @@ public class HackComputer
         }
     }
 
-    public bool ComputeNext()
+    public void ComputeNext()
     {
         var instruction = _rom[_pc];
         if (Is_C_Instruction(instruction))
@@ -168,8 +168,6 @@ public class HackComputer
             _aReg = instruction;
             _pc++;
         }
-        
-        return true;
     }
 
     private static bool Is_C_Instruction(short instruction)
