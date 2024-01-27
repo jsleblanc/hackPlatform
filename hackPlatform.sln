@@ -12,6 +12,10 @@ Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "jackc", "jackc\jackc.fsproj
 EndProject
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "jackcTests", "jackcTests\jackcTests.fsproj", "{D0DA8A57-B68A-4616-81F7-043671AE2FF6}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "hackemu", "hackemu\hackemu.csproj", "{E86B733A-520A-4030-A2E7-CD2632F0CB5E}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "hackemuTests", "hackemuTests\hackemuTests.csproj", "{C6CBC920-C490-4178-852A-01DBD14174E6}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -42,5 +46,13 @@ Global
 		{D0DA8A57-B68A-4616-81F7-043671AE2FF6}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D0DA8A57-B68A-4616-81F7-043671AE2FF6}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{D0DA8A57-B68A-4616-81F7-043671AE2FF6}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E86B733A-520A-4030-A2E7-CD2632F0CB5E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E86B733A-520A-4030-A2E7-CD2632F0CB5E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E86B733A-520A-4030-A2E7-CD2632F0CB5E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E86B733A-520A-4030-A2E7-CD2632F0CB5E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C6CBC920-C490-4178-852A-01DBD14174E6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C6CBC920-C490-4178-852A-01DBD14174E6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C6CBC920-C490-4178-852A-01DBD14174E6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C6CBC920-C490-4178-852A-01DBD14174E6}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
