@@ -17,7 +17,7 @@ let assemblyInstructionToString ai =
     match ai with
     | AssemblyInstruction a -> a    
 
-let processFile (file:FileInfo) =
+let vmil2asmFile (file:FileInfo) =
     printfn $"\tProcessing {file}"
     match parseFile file.FullName with
     | Success(results, _, _) ->
@@ -25,7 +25,7 @@ let processFile (file:FileInfo) =
         codeGenInstructions file.Name code
     | Failure(msg, _, _) -> failwith msg
 
-let processString input =
+let vmil2asmString input =
     match parseString input with
     | Success(results, _, _) ->
         let code = filterOutComments results
@@ -33,10 +33,10 @@ let processString input =
         |> List.map assemblyInstructionToString
     | Failure(msg, _, _) -> failwith msg
     
-let processRequest req =
+let vmil2asmRequest req =
     let x =
         req.inputFiles
-        |> List.map processFile
+        |> List.map vmil2asmFile
         |> List.collect id
         |> List.map assemblyInstructionToString
     File.WriteAllLines(req.outputName, x)
