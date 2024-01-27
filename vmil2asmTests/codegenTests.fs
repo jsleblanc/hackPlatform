@@ -36,7 +36,7 @@ function Sys.init 0
 label END  
 	goto END                // loops infinitely
 """
-    let asm = vmil2asmString vmil
+    let asm = vmil2asmString "Main.vm" vmil
     let input = (StringBuilder(), asm) ||> List.fold (fun sb str -> sb.AppendFormat("{0}\n", str))
     let code = assemble (input.ToString())
     let vm = HackVirtualMachine(HackComputer(code.instructions))
@@ -105,7 +105,7 @@ function Sys.add12 0
 	add
 	return
 """
-    let asm = vmil2asmString vmil
+    let asm = vmil2asmString "Main.vm" vmil
     let input = (StringBuilder(), asm) ||> List.fold (fun sb str -> sb.AppendFormat("{0}\n", str))
     let code = assemble (input.ToString())
     let vm = HackVirtualMachine(HackComputer(code.instructions))
@@ -146,9 +146,85 @@ function SimpleFunction.test 2
 	sub
 	return
 """
-    let asm = vmil2asmString vmil
+    let asm = vmil2asmString "Main.vm" vmil
     let input = (StringBuilder(), asm) ||> List.fold (fun sb str -> sb.AppendFormat("{0}\n", str))
     let code = assemble (input.ToString())
     let vm = HackVirtualMachine(HackComputer(code.instructions))
     vm.ComputeCycles(10000)
     Assert.Equal(int16 1196, vm.Memory(int16 261))
+
+
+
+
+
+
+
+
+let class1vm = """
+// Stores two supplied arguments in static[0] and static[1].
+function Class1.set 0
+	push argument 0
+	pop static 0
+	push argument 1
+	pop static 1
+	push constant 0
+	return
+
+// Returns static[0] - static[1].
+function Class1.get 0
+	push static 0
+	push static 1
+	sub
+	return
+"""
+
+let class2vm = """
+// Stores two supplied arguments in static[0] and static[1].
+function Class2.set 0
+	push argument 0
+	pop static 0
+	push argument 1
+	pop static 1
+	push constant 0
+	return
+
+// Returns static[0] - static[1].
+function Class2.get 0
+	push static 0
+	push static 1
+	sub
+	return
+"""
+
+let sysvm = """
+// Tests that different functions, stored in two different 
+// class files, manipulate the static segment correctly. 
+function Sys.init 0
+	push constant 6
+	push constant 8
+	call Class1.set 2
+	pop temp 0 // dumps the return value
+	push constant 23
+	push constant 15
+	call Class2.set 2
+	pop temp 0 // dumps the return value
+	call Class1.get 0
+	call Class2.get 0
+label END
+	goto END
+"""
+
+[<Fact>]
+let ``Should run statics-test program on virtual machine`` () =    
+    let asm = vmil2asmStrings [
+        {name = "Class1.vm"; input = class1vm }
+        {name = "Class2.vm"; input = class2vm }
+        {name = "Sys.vm"; input = sysvm }
+    ]
+    let input = (StringBuilder(), asm) ||> List.fold (fun sb str -> sb.AppendFormat("{0}\n", str))
+    let code = assemble (input.ToString())
+    let vm = HackVirtualMachine(HackComputer(code.instructions))
+    vm.ComputeCycles(10000)
+    Assert.Equal(int16 263, vm.SP)
+    Assert.Equal(int16 -2, vm.Memory(int16 261))
+    Assert.Equal(int16 8, vm.Memory(int16 262))

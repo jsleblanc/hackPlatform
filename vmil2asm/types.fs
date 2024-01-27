@@ -41,8 +41,12 @@ type Command =
 
 type AssemblyInstruction = AssemblyInstruction of string    
     
-type ProcessRequest = {
+type ProcessFilesRequest = {
     inputFiles: FileInfo list
     outputName: string
 }
 
+type StringRequest = {
+    name: string
+    input: string
+}

@@ -25,13 +25,18 @@ let vmil2asmFile (file:FileInfo) =
         codeGenInstructions file.Name code
     | Failure(msg, _, _) -> failwith msg
 
-let vmil2asmString input =
+let vmil2asmString name input =
     match parseString input with
     | Success(results, _, _) ->
         let code = filterOutComments results
-        codeGenInstructions "Stream" code
+        codeGenInstructions name code
         |> List.map assemblyInstructionToString
     | Failure(msg, _, _) -> failwith msg
+
+let vmil2asmStrings (inputs: StringRequest list) =
+    inputs
+    |> List.map (fun req -> vmil2asmString req.name req.input)
+    |> List.collect id
     
 let vmil2asmRequest req =
     let x =
