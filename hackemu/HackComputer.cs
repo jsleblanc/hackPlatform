@@ -3,7 +3,7 @@
 /// <summary>
 /// Emulates the Hack Platform CPU
 /// </summary>
-public class HackComputer
+public class HackComputer : IHackComputer
 {
     private readonly short[] _rom = new short[0xFFFF];
     private readonly short[] _ram = new short[0xFFFF];
