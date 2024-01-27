@@ -83,7 +83,17 @@ public class HackComputer
     public short M => _ram[_aReg];
     public short PC => _pc;
     public short Memory(short index) => _ram[index];
+
+    public void SetMemory(short index, short value) => _ram[index] = value;
     
+    public void ComputeCycles(int count)
+    {
+        for (var x = 0; x < count; x++)
+        {
+            ComputeNext();
+        }
+    }
+
     public bool ComputeNext()
     {
         var instruction = _rom[_pc];
@@ -139,53 +149,19 @@ public class HackComputer
                 _dReg = compResult;
             }
 
-            switch (jump)
+            var pcNext = (short)(_pc + 1);
+            _pc = jump switch
             {
-                case Jump.None:
-                    _pc++;
-                    break;
-                case Jump.JGT:
-                    if (compResult > 0)
-                    {
-                        _pc = _aReg;
-                    }
-                    break;
-                case Jump.JEQ:
-                    if (compResult == 0)
-                    {
-                        _pc = _aReg;
-                    }
-                    break;
-                case Jump.JGE:
-                    if (compResult >= 0)
-                    {
-                        _pc = _aReg;
-                    }
-                    break;
-                case Jump.JLT:
-                    if (compResult < 0)
-                    {
-                        _pc = _aReg;
-                    }
-                    break;
-                case Jump.JNE:
-                    if (compResult != 0)
-                    {
-                        _pc = _aReg;
-                    }
-                    break;
-                case Jump.JLE:
-                    if (compResult <= 0)
-                    {
-                        _pc = _aReg;
-                    }
-                    break;
-                case Jump.JMP:
-                    _pc = _aReg;
-                    break;
-                default:
-                    throw new ArgumentOutOfRangeException(nameof(jump));
-            }
+                Jump.None => pcNext,
+                Jump.JGT => compResult > 0 ? _aReg : pcNext,
+                Jump.JEQ => compResult == 0 ? _aReg : pcNext,
+                Jump.JGE => compResult >= 0 ? _aReg : pcNext,
+                Jump.JLT => compResult < 0 ? _aReg : pcNext,
+                Jump.JNE => compResult != 0 ? _aReg : pcNext,
+                Jump.JLE => compResult <= 0 ? _aReg : pcNext,
+                Jump.JMP => _aReg,
+                _ => throw new ArgumentOutOfRangeException(nameof(jump))
+            };
         }
         else
         {
