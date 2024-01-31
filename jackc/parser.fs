@@ -5,4 +5,4 @@ open FParsec
 let ws = spaces // skips any whitespace
 let str s = pstring s
 
-let pCommentSingleLine = str "//" >>. ws >>. restOfLine true //|>> function c -> Comment c
+//let pCommentSingleLine = str "//" >>. ws >>. restOfLine true //|>> function c -> Comment c
