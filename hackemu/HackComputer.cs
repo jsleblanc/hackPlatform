@@ -1,4 +1,6 @@
-﻿namespace hackemu;
+﻿using System.Diagnostics.CodeAnalysis;
+
+namespace hackemu;
 
 /// <summary>
 /// Emulates the Hack Platform CPU
@@ -21,6 +23,7 @@ public class HackComputer : IHackComputer
         A = 4
     }
 
+    [SuppressMessage("ReSharper", "InconsistentNaming")]
     private enum Jump
     {
         None = 0,
@@ -33,6 +36,7 @@ public class HackComputer : IHackComputer
         JMP = 7
     }
 
+    [SuppressMessage("ReSharper", "InconsistentNaming")]
     private enum OpCode
     {
         OP_ZERO = 0b0_101010,
@@ -100,7 +104,6 @@ public class HackComputer : IHackComputer
     /// <exception cref="ArgumentOutOfRangeException"></exception>
     public void ComputeNext()
     {
-        var pcPrev = _pc;
         var instruction = _rom[_pc];
         if (Is_C_Instruction(instruction))
         {
