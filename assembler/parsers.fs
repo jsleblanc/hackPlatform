@@ -14,13 +14,13 @@ let str s = pstring s
 
 let pComment = str "//" >>. ws >>. restOfLine true |>> function c -> Comment c
 
-let pJGT = str "JGT" .>> ws |>> function _ -> JGT
-let pJEQ = str "JEQ" .>> ws |>> function _ -> JEQ
-let pJGE = str "JGE" .>> ws |>> function _ -> JGE
-let pJLT = str "JLT" .>> ws |>> function _ -> JLT
-let pJNE = str "JNE" .>> ws |>> function _ -> JNE
-let pJLE = str "JLE" .>> ws |>> function _ -> JLE
-let pJMP = str "JMP" .>> ws |>> function _ -> JMP
+let pJGT = stringReturn "JGT" JGT
+let pJEQ = stringReturn "JEQ" JEQ
+let pJGE = stringReturn "JGE" JGE
+let pJLT = stringReturn "JLT" JLT
+let pJNE = stringReturn "JNE" JNE
+let pJLE = stringReturn "JLE" JLE
+let pJMP = stringReturn "JMP" JMP
 let pJump = pchar ';' >>. choice [pJGT; pJEQ; pJGE; pJLT; pJNE; pJLE; pJMP] .>> ws
 
 let pConstant = pchar '@' >>. puint16 .>> ws |>> function c -> Constant c
