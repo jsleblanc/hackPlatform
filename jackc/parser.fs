@@ -22,8 +22,8 @@ let isIdContinue c = isAsciiLetter c || isDigit c || c = '_'
 let pIdentifier = identifier (IdentifierOptions(isAsciiIdStart = isIdStart, isAsciiIdContinue = isIdContinue)) .>> ws
 
 let pClassName = pIdentifier
-let pSubroutineName = pIdentifier
-let pVarName = pIdentifier
+let pSubroutineName = pIdentifier |>> function name -> JackSubroutineName name
+let pVarName = pIdentifier |>> function name -> JackVariableName name
 
 let pType =
     choiceL [
@@ -39,10 +39,28 @@ let pClassVariableDeclaration =
     .>>. (sepBy1 pVarName (str_ws ","))
     .>> str_ws ";"
     |>> function (scope, jt),names -> J_ClassVariableDeclaration (scope, jt, names)
+
+let pLocalVariableDeclaration =
+    (str_ws "var")
+    >>. pType
+    .>>. (sepBy1 pVarName (str_ws ","))
+    .>> str_ws ";"
+    |>> function jt,names -> J_LocalVariableDeclaration (jt, names)    
     
+let pParameterList = between (str_ws "(") (str_ws ")") (sepBy (pType .>>. pVarName) (str_ws ","))
 
+let pSubroutineReturnType =
+    choiceL [
+        stringReturn_ws "void" J_Void
+        pType |>> function t -> J_Return t
+    ] "return type"
 
-
+let pSubroutineDeclaration =
+    ((stringReturn_ws "constructor" J_Constructor) <|> (stringReturn_ws "function" J_Function) <|> (stringReturn_ws "method" J_Method))
+    .>>. pSubroutineReturnType
+    .>>. pSubroutineName
+    .>>. pParameterList
+    |>> function ((subroutineType,subroutineReturnType),subroutineName),parameters -> J_SubroutineDeclaration (subroutineType, subroutineReturnType, subroutineName, parameters, "body")
 
 
 
