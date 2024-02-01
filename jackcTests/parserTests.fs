@@ -79,15 +79,24 @@ let ``Should parse local variable declarations`` s exp =
         
 type JackSubroutineDeclarationTestCases() =
     inherit ClassDataBase([
-        [| "constructor myType new(int x, char y, boolean b)"; J_SubroutineDeclaration(J_Constructor, J_Return (J_Class "myType"), "new", [(J_Int, "x");(J_Char, "y");(J_Boolean, "b")], "body") |]
-        [| "function myType fooFunc(int x, char y, boolean b)"; J_SubroutineDeclaration(J_Function, J_Return (J_Class "myType"), "fooFunc", [(J_Int, "x");(J_Char, "y");(J_Boolean, "b")], "body") |]
-        [| "function int fooFunc(int x, char y, boolean b)"; J_SubroutineDeclaration(J_Function, J_Return J_Int, "fooFunc", [(J_Int, "x");(J_Char, "y");(J_Boolean, "b")], "body") |]
-        [| "function char fooFunc(int x, char y, boolean b)"; J_SubroutineDeclaration(J_Function, J_Return J_Char, "fooFunc", [(J_Int, "x");(J_Char, "y");(J_Boolean, "b")], "body") |]
-        [| "function boolean fooFunc(int x, char y, boolean b)"; J_SubroutineDeclaration(J_Function, J_Return J_Boolean, "fooFunc", [(J_Int, "x");(J_Char, "y");(J_Boolean, "b")], "body") |]
-        [| "method myType fooFunc(int x, char y, boolean b)"; J_SubroutineDeclaration(J_Method, J_Return (J_Class "myType"), "fooFunc", [(J_Int, "x");(J_Char, "y");(J_Boolean, "b")], "body") |]
-        [| "method int fooFunc(int x, char y, boolean b)"; J_SubroutineDeclaration(J_Method, J_Return J_Int, "fooFunc", [(J_Int, "x");(J_Char, "y");(J_Boolean, "b")], "body") |]
-        [| "method char fooFunc(int x, char y, boolean b)"; J_SubroutineDeclaration(J_Method, J_Return J_Char, "fooFunc", [(J_Int, "x");(J_Char, "y");(J_Boolean, "b")], "body") |]
-        [| "method boolean fooFunc(int x, char y, boolean b)"; J_SubroutineDeclaration(J_Method, J_Return J_Boolean, "fooFunc", [(J_Int, "x");(J_Char, "y");(J_Boolean, "b")], "body") |]
+        [| "constructor myType new(int x, char y, boolean b)"
+           J_SubroutineDeclaration(J_Constructor, J_Return (J_Class "myType"), "new", [(J_Int, "x");(J_Char, "y");(J_Boolean, "b")], "body") |]
+        [| "function myType fooFunc(int x, char y, boolean b)"
+           J_SubroutineDeclaration(J_Function, J_Return (J_Class "myType"), "fooFunc", [(J_Int, "x");(J_Char, "y");(J_Boolean, "b")], "body") |]
+        [| "function int fooFunc(int x, char y, boolean b)"
+           J_SubroutineDeclaration(J_Function, J_Return J_Int, "fooFunc", [(J_Int, "x");(J_Char, "y");(J_Boolean, "b")], "body") |]
+        [| "function char fooFunc(int x, char y, boolean b)"
+           J_SubroutineDeclaration(J_Function, J_Return J_Char, "fooFunc", [(J_Int, "x");(J_Char, "y");(J_Boolean, "b")], "body") |]
+        [| "function boolean fooFunc(int x, char y, boolean b)"
+           J_SubroutineDeclaration(J_Function, J_Return J_Boolean, "fooFunc", [(J_Int, "x");(J_Char, "y");(J_Boolean, "b")], "body") |]
+        [| "method myType fooFunc(int x, char y, boolean b)"
+           J_SubroutineDeclaration(J_Method, J_Return (J_Class "myType"), "fooFunc", [(J_Int, "x");(J_Char, "y");(J_Boolean, "b")], "body") |]
+        [| "method int fooFunc(int x, char y, boolean b)"
+           J_SubroutineDeclaration(J_Method, J_Return J_Int, "fooFunc", [(J_Int, "x");(J_Char, "y");(J_Boolean, "b")], "body") |]
+        [| "method char fooFunc(int x, char y, boolean b)"
+           J_SubroutineDeclaration(J_Method, J_Return J_Char, "fooFunc", [(J_Int, "x");(J_Char, "y");(J_Boolean, "b")], "body") |]
+        [| "method boolean fooFunc(int x, char y, boolean b)"
+           J_SubroutineDeclaration(J_Method, J_Return J_Boolean, "fooFunc", [(J_Int, "x");(J_Char, "y");(J_Boolean, "b")], "body") |]
     ])
     
 [<Theory>]
