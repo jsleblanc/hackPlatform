@@ -7,8 +7,10 @@ type JackTypes =
     | J_Class of string
     
 type JackClassVariableScope =
-    | Static
-    | Field
+    | J_Static
+    | J_Field
+
+type JackVariableName = string
     
 type JackLang =
-    | J_ClassVariableDeclaration of JackClassVariableScope * JackTypes * string list
+    | J_ClassVariableDeclaration of JackClassVariableScope * JackTypes * JackVariableName list
