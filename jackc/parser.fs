@@ -56,21 +56,27 @@ let pExpressionBinaryOp =
 let pExpressionIntConstant = pint16 .>> ws |>> function i -> J_Constant_Int i
 let pExpressionStringConstant = between (str "\"") (str "\"") (manySatisfy (fun c -> c <> '"')) .>> ws |>> function s -> J_Constant_String s
 
-let pExpressionTerm =
+let pExpressionImpl, pExpressionRef = createParserForwardedToRef()
+let pExpressionTermImpl, pExpressionTermRef = createParserForwardedToRef()
+
+do pExpressionTermRef :=
     choiceL [
         pExpressionIntConstant
         pExpressionStringConstant
         pExpressionKeywordConstant |>> function k -> J_Constant_Keyword k
+        pVarName .>>. (between (str_ws "[") (str_ws "]") pExpressionImpl) .>> ws |>> function n,e -> J_ArrayIndex (n,e)
         pVarName |>> function v -> J_Variable v
         pExpressionUnaryOp |>> function o -> J_UnaryOp o
     ] "expression term" .>> ws
 
-let pExpression = pExpressionTerm .>>. many (pExpressionBinaryOp .>>. pExpressionTerm) .>> ws |>> function t,o -> J_Expression (t, o)
+do pExpressionRef := pExpressionTermImpl .>>. many (pExpressionBinaryOp .>>. pExpressionTermImpl) .>> ws |>> function t,o -> J_Expression (t, o)
 
-let pExpressionList = between (str_ws "(") (str_ws ")") (sepBy1 pExpression (str_ws ",")) .>> ws
+let pExpressionList = between (str_ws "(") (str_ws ")") (sepBy1 pExpressionImpl (str_ws ",")) .>> ws
 
-let pExpressionArrayIndexing = (pVarName .>> str ".") .>>. (between (str_ws "[") (str_ws "]") pExpression) .>> ws |>> function n,e -> J_ArrayIndex (n,e)
 
+
+
+let pExpression = pExpressionImpl
 
 
 let pType =
