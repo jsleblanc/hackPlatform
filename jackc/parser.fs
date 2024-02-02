@@ -25,7 +25,6 @@ let pClassName = pIdentifier
 let pSubroutineName = pIdentifier |>> function name -> JackSubroutineName name
 let pVarName = pIdentifier |>> function name -> JackVariableName name
 
-
 //Expressions
 let pExpressionKeywordConstant =
     choiceL [
@@ -68,9 +67,9 @@ let pExpressionTerm =
 
 let pExpression = pExpressionTerm .>>. many (pExpressionBinaryOp .>>. pExpressionTerm) .>> ws |>> function t,o -> J_Expression (t, o)
 
-let pExpressionList = between (str "(") (str ")") (sepBy1 pExpression (str_ws ",")) .>> ws
+let pExpressionList = between (str_ws "(") (str_ws ")") (sepBy1 pExpression (str_ws ",")) .>> ws
 
-
+let pExpressionArrayIndexing = (pVarName .>> str ".") .>>. (between (str_ws "[") (str_ws "]") pExpression) .>> ws |>> function n,e -> J_ArrayIndex (n,e)
 
 
 

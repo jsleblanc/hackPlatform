@@ -117,7 +117,10 @@ type JackExpressionTestCases() =
         [|"this"; J_Expression (J_Constant_Keyword J_This, [])|]
         [|"1 + 2"; J_Expression (J_Constant_Int (int16 1), [(J_ADD, J_Constant_Int (int16 2))])|]
         [|"\"foo\" + \"bar\""; J_Expression (J_Constant_String "foo", [(J_ADD, J_Constant_String "bar")])|]
-        [|"1 + 2 + 3"; J_Expression (J_Constant_Int (int16 1), [(J_ADD, J_Constant_Int (int16 2)); J_ADD, J_Constant_Int (int16 3)])|]
+        [|"1 + 2 + 3"; J_Expression (J_Constant_Int (int16 1), [(J_ADD, J_Constant_Int (int16 2)); (J_ADD, J_Constant_Int (int16 3))])|]
+        [|"foo[1]"; J_Expression (J_ArrayIndex ("foo", J_Expression (J_Constant_Int (int16 1), [])), []) |]
+        [|"foo[1 + 2]"; J_Expression (J_ArrayIndex ("foo", J_Expression (J_Constant_Int (int16 1), [ (J_ADD, J_Constant_Int (int16 2))])), []) |]
+        [|"foo[1 + 2 + 3]"; J_Expression (J_ArrayIndex ("foo", J_Expression (J_Constant_Int (int16 1), [(J_ADD, J_Constant_Int (int16 2));(J_ADD, J_Constant_Int (int16 3)) ])), []) |]
     ])
     
 [<Theory>]
