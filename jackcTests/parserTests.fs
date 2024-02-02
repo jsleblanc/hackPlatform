@@ -109,13 +109,15 @@ let ``Should parse subroutine declaration`` s exp =
     
 type JackExpressionTestCases() =
     inherit ClassDataBase([
-        [|"1"; J_Expression (J_Constant_Int (int16 1), None)|]
-        [|"\"foo\""; J_Expression (J_Constant_String "foo", None)|]
-        [|"true"; J_Expression (J_Constant_Keyword (J_Bool true), None)|]
-        [|"false"; J_Expression (J_Constant_Keyword (J_Bool false), None)|]
-        [|"null"; J_Expression (J_Constant_Keyword J_Null, None)|]
-        [|"this"; J_Expression (J_Constant_Keyword J_This, None)|]
-        [|"1 + 2"; J_Expression (J_Constant_Int (int16 1), Some (J_ADD, J_Constant_Int (int16 2)))|]
+        [|"1"; J_Expression (J_Constant_Int (int16 1), [])|]
+        [|"\"foo\""; J_Expression (J_Constant_String "foo", [])|]
+        [|"true"; J_Expression (J_Constant_Keyword (J_Bool true), [])|]
+        [|"false"; J_Expression (J_Constant_Keyword (J_Bool false), [])|]
+        [|"null"; J_Expression (J_Constant_Keyword J_Null, [])|]
+        [|"this"; J_Expression (J_Constant_Keyword J_This, [])|]
+        [|"1 + 2"; J_Expression (J_Constant_Int (int16 1), [(J_ADD, J_Constant_Int (int16 2))])|]
+        [|"\"foo\" + \"bar\""; J_Expression (J_Constant_String "foo", [(J_ADD, J_Constant_String "bar")])|]
+        [|"1 + 2 + 3"; J_Expression (J_Constant_Int (int16 1), [(J_ADD, J_Constant_Int (int16 2)); J_ADD, J_Constant_Int (int16 3)])|]
     ])
     
 [<Theory>]

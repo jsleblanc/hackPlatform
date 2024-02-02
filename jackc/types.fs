@@ -37,7 +37,7 @@ type JackExpressionUnaryOps =
     | J_NOT
 
 type JackExpression =
-    | J_Expression of JackExpressionTerm * (JackExpressionBinaryOps * JackExpressionTerm) option
+    | J_Expression of JackExpressionTerm * (JackExpressionBinaryOps * JackExpressionTerm) list
 
 and JackExpressionTerm =
     | J_Constant_Int of int16

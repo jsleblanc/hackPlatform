@@ -66,7 +66,7 @@ let pExpressionTerm =
         pExpressionUnaryOp |>> function o -> J_UnaryOp o
     ] "expression term" .>> ws
 
-let pExpression = pExpressionTerm .>>. opt (pExpressionBinaryOp .>>. pExpressionTerm) .>> ws |>> function t,o -> J_Expression (t, o)
+let pExpression = pExpressionTerm .>>. many (pExpressionBinaryOp .>>. pExpressionTerm) .>> ws |>> function t,o -> J_Expression (t, o)
 
 let pExpressionList = between (str "(") (str ")") (sepBy1 pExpression (str_ws ",")) .>> ws
 
