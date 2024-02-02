@@ -16,6 +16,39 @@ type JackSubroutineName = string
 
 type JackVariable = JackTypes * JackVariableName
 
+type JackExpressionKeywords =
+    | J_Bool of bool
+    | J_Null
+    | J_This
+
+type JackExpressionBinaryOps =
+    | J_ADD
+    | J_SUB
+    | J_MUL
+    | J_DIV
+    | J_AND
+    | J_OR
+    | J_LT
+    | J_GT
+    | J_EQ
+
+type JackExpressionUnaryOps =
+    | J_NEG
+    | J_NOT
+
+type JackExpression =
+    | J_Expression of JackExpressionTerm * (JackExpressionBinaryOps * JackExpressionTerm) option
+
+and JackExpressionTerm =
+    | J_Constant_Int of int16
+    | J_Constant_String of string
+    | J_Constant_Keyword of JackExpressionKeywords
+    | J_Variable of JackVariableName
+    | J_ArrayIndex of JackVariableName * JackExpression
+    | J_SubroutineCall of JackSubroutineName * JackExpression list
+    | J_Parenthesis of JackExpression
+    | J_UnaryOp of JackExpressionUnaryOps
+
 type JackSubroutineType =
     | J_Constructor
     | J_Function

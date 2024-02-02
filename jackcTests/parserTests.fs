@@ -106,3 +106,23 @@ let ``Should parse subroutine declaration`` s exp =
     | Success(js, _, _) -> Assert.Equal(exp, js)
     | Success _ -> Assert.Fail("Should parse as subroutine declaration")
     | Failure(msg, _, _) -> Assert.Fail(msg)
+    
+type JackExpressionTestCases() =
+    inherit ClassDataBase([
+        [|"1"; J_Expression (J_Constant_Int (int16 1), None)|]
+        [|"\"foo\""; J_Expression (J_Constant_String "foo", None)|]
+        [|"true"; J_Expression (J_Constant_Keyword (J_Bool true), None)|]
+        [|"false"; J_Expression (J_Constant_Keyword (J_Bool false), None)|]
+        [|"null"; J_Expression (J_Constant_Keyword J_Null, None)|]
+        [|"this"; J_Expression (J_Constant_Keyword J_This, None)|]
+        [|"1 + 2"; J_Expression (J_Constant_Int (int16 1), Some (J_ADD, J_Constant_Int (int16 2)))|]
+    ])
+    
+[<Theory>]
+[<ClassData(typeof<JackExpressionTestCases>)>]
+let ``Should parse expression`` s exp =
+    match run pExpression s with
+    | Success(e, _, _) -> Assert.Equal(exp, e)
+    | Failure(msg, _, _) -> Assert.Fail(msg)    
+    
+    
