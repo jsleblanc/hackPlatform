@@ -21,11 +21,13 @@ let pComment = choiceL [pCommentSingleLine; pCommentMultiLine] "comment" |>> fun
 
 let isIdStart c = isAsciiLetter c || c = '_'
 let isIdContinue c = isAsciiLetter c || isDigit c || c = '_'
-let pIdentifier = identifier (IdentifierOptions(isAsciiIdStart = isIdStart, isAsciiIdContinue = isIdContinue)) .>> ws
+let pIdentifier = identifier (IdentifierOptions(isAsciiIdStart = isIdStart, isAsciiIdContinue = isIdContinue))
+let pIdentifier_ws = pIdentifier .>> ws
 
-let pClassName = pIdentifier
-let pSubroutineName = pIdentifier |>> function name -> JackSubroutineName name
+let pClassName = pIdentifier_ws
+let pSubroutineName = pIdentifier_ws |>> function name -> JackSubroutineName name
 let pVarName = pIdentifier |>> function name -> JackVariableName name
+let pVarName_ws = pIdentifier_ws |>> function name -> JackVariableName name
 
 (*
 //Expressions
@@ -57,7 +59,7 @@ let pExpressionBinaryOp =
     ] "binary operator" .>> ws
 *)
 
-let pExpressionVariable = pVarName |>> function v -> J_Variable v
+let pExpressionVariable = pVarName_ws |>> function v -> J_Variable v
 let pExpressionConstantInt = pint16 .>> ws |>> function i -> J_Constant_Int i
 let pExpressionConstantString = between (str "\"") (str "\"") (manySatisfy (fun c -> c <> '"')) .>> ws |>> function s -> J_Constant_String s
 let pExpressionConstantBoolean = choiceL [ (stringReturn_ws "true" (J_Constant_Boolean true)); (stringReturn_ws "false" (J_Constant_Boolean false)) ] "boolean"
@@ -66,8 +68,13 @@ let pExpressionConstantThis = stringReturn_ws "this" J_Constant_This
 
 let pExpressionImpl, pExpressionRef = createParserForwardedToRef()
 
-let pop = skipChar '(' //parser skip open parenthesis
-let pcp = skipChar ')' //parser skip close parenthesis
+let pop = skipChar_ws '(' //parser skip open parenthesis
+let pcp = skipChar_ws ')' //parser skip close parenthesis
+let pob = skipChar_ws '['
+let pcb = skipChar_ws ']'
+
+let pExpressionArrayIndexer = pVarName .>>. (between pob pcb pExpressionImpl) |>> function n,e -> J_Array_Index (n, e)
+
 let curry f = fun x -> fun y -> f(x,y)
 let pPrimary =
     choiceL [
@@ -76,7 +83,8 @@ let pPrimary =
         pExpressionConstantBoolean
         pExpressionConstantNull
         pExpressionConstantThis
-        pExpressionVariable        
+        attempt pExpressionArrayIndexer
+        pExpressionVariable
         between pop pcp pExpressionImpl
     ] "expression"
 let pExpressionUnaryNegate = skipChar_ws '-' >>. pPrimary |>> J_NEG
@@ -139,18 +147,18 @@ let pType =
 let pClassVariableDeclaration =
     ((stringReturn_ws "static" J_Static) <|> (stringReturn_ws "field" J_Field))
     .>>. pType
-    .>>. (sepBy1 pVarName (str_ws ","))
+    .>>. (sepBy1 pVarName_ws (str_ws ","))
     .>> str_ws ";"
     |>> function (scope, jt),names -> J_ClassVariableDeclaration (scope, jt, names)
 
 let pLocalVariableDeclaration =
     (str_ws "var")
     >>. pType
-    .>>. (sepBy1 pVarName (str_ws ","))
+    .>>. (sepBy1 pVarName_ws (str_ws ","))
     .>> str_ws ";"
     |>> function jt,names -> J_LocalVariableDeclaration (jt, names)    
     
-let pParameterList = between (str_ws "(") (str_ws ")") (sepBy (pType .>>. pVarName) (str_ws ","))
+let pParameterList = between (str_ws "(") (str_ws ")") (sepBy (pType .>>. pVarName_ws) (str_ws ","))
 
 let pSubroutineReturnType =
     choiceL [

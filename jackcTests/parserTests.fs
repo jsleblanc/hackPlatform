@@ -113,6 +113,7 @@ type JackExpressionTestCases() =
         [|"-1"; J_NEG (J_Constant_Int 1s)|]
         [|"~1"; J_NOT (J_Constant_Int 1s)|]
         [|"(1)";  (J_Constant_Int 1s)|]
+        [|"( 1 )";  (J_Constant_Int 1s)|]
         [|"\"foo\"";  (J_Constant_String "foo")|]
         [|"(\"foo\")";  (J_Constant_String "foo")|]
         [|"\"foo\" + \"bar\""; J_ADD (J_Constant_String "foo", J_Constant_String "bar") |]        
@@ -135,7 +136,9 @@ type JackExpressionTestCases() =
         [|"(1 + (2 + 3))"; J_ADD (J_Constant_Int 1s, (J_ADD (J_Constant_Int 2s, J_Constant_Int 3s))) |]
         [|"(1 + (2 * 3))"; J_ADD (J_Constant_Int 1s, (J_MUL (J_Constant_Int 2s, J_Constant_Int 3s))) |]
         [|"A & B | C"; J_OR (J_AND (J_Variable "A", J_Variable "B"), J_Variable "C") |]
+        [|"A&B|C"; J_OR (J_AND (J_Variable "A", J_Variable "B"), J_Variable "C") |]
         [|"A & (B | C)"; J_AND (J_Variable "A", J_OR (J_Variable "B", J_Variable "C")) |]
+        [|"A&(B|C)"; J_AND (J_Variable "A", J_OR (J_Variable "B", J_Variable "C")) |]
         [|"1 < 2"; J_LT (J_Constant_Int 1s, J_Constant_Int 2s) |]
         [|"1 > 2"; J_GT (J_Constant_Int 1s, J_Constant_Int 2s) |]
         [|"1 = 2"; J_EQ (J_Constant_Int 1s, J_Constant_Int 2s) |]
@@ -146,5 +149,14 @@ type JackExpressionTestCases() =
 let ``Should parse expression`` s exp =
     match run pExpression s with
     | Success(e, _, _) -> Assert.Equal(exp, e)
+    | Failure(msg, _, _) -> Assert.Fail(msg)    
+
+[<Theory>]
+[<ClassData(typeof<JackExpressionTestCases>)>]
+let ``Should parse expressions used inside array indexer`` s exp =
+    let newString = $"myArray[{s}]"
+    let newExpected = J_Array_Index ("myArray", exp)
+    match run pExpression newString with
+    | Success(e, _, _) -> Assert.Equal(newExpected, e)
     | Failure(msg, _, _) -> Assert.Fail(msg)    
 
