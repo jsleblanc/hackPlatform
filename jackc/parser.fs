@@ -29,36 +29,6 @@ let pSubroutineName = pIdentifier_ws |>> function name -> JackSubroutineName nam
 let pVarName = pIdentifier |>> function name -> JackVariableName name
 let pVarName_ws = pIdentifier_ws |>> function name -> JackVariableName name
 
-(*
-//Expressions
-let pExpressionKeywordConstant =
-    choiceL [
-        stringReturn_ws "true" (J_Bool true)
-        stringReturn_ws "false" (J_Bool false)
-        stringReturn_ws "null" J_Null
-        stringReturn_ws "this" J_This
-    ] "expression constant" .>> ws
-
-let pExpressionUnaryOp =
-    choiceL [
-        stringReturn_ws "-" J_NEG
-        stringReturn_ws "~" J_NOT
-    ] "unary operator" .>> ws
-
-let pExpressionBinaryOp =
-    choiceL [
-        stringReturn_ws "+" J_ADD
-        stringReturn_ws "-" J_SUB
-        stringReturn_ws "*" J_MUL
-        stringReturn_ws "/" J_DIV
-        stringReturn_ws "&" J_AND
-        stringReturn_ws "|" J_OR
-        stringReturn_ws "<" J_LT
-        stringReturn_ws "<" J_GT
-        stringReturn_ws "=" J_EQ
-    ] "binary operator" .>> ws
-*)
-
 let pExpressionVariable = pVarName_ws |>> function v -> J_Variable v
 let pExpressionConstantInt = pint16 .>> ws |>> function i -> J_Constant_Int i
 let pExpressionConstantString = between (str "\"") (str "\"") (manySatisfy (fun c -> c <> '"')) .>> ws |>> function s -> J_Constant_String s
@@ -110,31 +80,9 @@ let pExpr7 = chainl1 pExpr6 pExpressionBinaryDiv
 let pExpr8 = chainl1 pExpr7 pExpressionBinaryAdd
 let pExpr9 = chainl1 pExpr8 pExpressionBinarySub
 
-
 do pExpressionRef := pExpr9
 
-(*
-let pExpressionTermImpl, pExpressionTermRef = createParserForwardedToRef()
-
-do pExpressionTermRef :=
-    choiceL [
-        pExpressionConstantInt
-        pExpressionConstantString
-        pExpressionKeywordConstant |>> function k -> J_Constant_Keyword k
-        pVarName .>>. (between (str_ws "[") (str_ws "]") pExpressionImpl) .>> ws |>> function n,e -> J_ArrayIndex (n,e)
-        pVarName |>> function v -> J_Variable v
-        pExpressionUnaryOp |>> function o -> J_UnaryOp o
-    ] "expression term" .>> ws
-
-do pExpressionRef := pExpressionTermImpl .>>. many (pExpressionBinaryOp .>>. pExpressionTermImpl) .>> ws |>> function t,o -> J_Expression (t, o)
-
-let pExpressionList = between (str_ws "(") (str_ws ")") (sepBy1 pExpressionImpl (str_ws ",")) .>> ws
-*)
-
-
-
 let pExpression = pExpressionImpl
-
 
 let pType =
     choiceL [
