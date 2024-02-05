@@ -120,6 +120,7 @@ type JackExpressionTestCases() =
         [|"true";  (J_Constant_Boolean true)|]
         [|"true ";  (J_Constant_Boolean true)|]
         [|"false";  (J_Constant_Boolean false)|]
+        [|"false ";  (J_Constant_Boolean false)|]
         [|"null";  J_Constant_Null|]
         [|"null ";  J_Constant_Null|]
         [|"this";  J_Constant_This|]
@@ -135,9 +136,9 @@ type JackExpressionTestCases() =
         [|"(1 + (2 * 3))"; J_ADD (J_Constant_Int 1s, (J_MUL (J_Constant_Int 2s, J_Constant_Int 3s))) |]
         [|"A & B | C"; J_OR (J_AND (J_Variable "A", J_Variable "B"), J_Variable "C") |]
         [|"A & (B | C)"; J_AND (J_Variable "A", J_OR (J_Variable "B", J_Variable "C")) |]
-        //[|"foo[1]";  (J_ArrayIndex ("foo", J_Expression (J_Constant_Int (int16 1), [])), []) |]
-        //[|"foo[1 + 2]";  (J_ArrayIndex ("foo", J_Expression (J_Constant_Int (int16 1), [ (J_ADD, J_Constant_Int (int16 2))])), []) |]
-        //[|"foo[1 + 2 + 3]";  (J_ArrayIndex ("foo", J_Expression (J_Constant_Int (int16 1), [(J_ADD, J_Constant_Int (int16 2));(J_ADD, J_Constant_Int (int16 3)) ])), []) |]
+        [|"1 < 2"; J_LT (J_Constant_Int 1s, J_Constant_Int 2s) |]
+        [|"1 > 2"; J_GT (J_Constant_Int 1s, J_Constant_Int 2s) |]
+        [|"1 = 2"; J_EQ (J_Constant_Int 1s, J_Constant_Int 2s) |]
     ])
     
 [<Theory>]
