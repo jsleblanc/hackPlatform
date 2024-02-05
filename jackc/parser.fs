@@ -30,6 +30,7 @@ let pSubroutineScope = pIdentifier .>> str "." |>> function s -> JackSubroutineS
 let pVarName = pIdentifier |>> function name -> JackVariableName name
 let pVarName_ws = pIdentifier_ws |>> function name -> JackVariableName name
 
+//Expressions
 let pExpressionVariable = pVarName_ws |>> function v -> J_Variable v
 let pExpressionConstantInt = pint16 .>> ws |>> function i -> J_Constant_Int i
 let pExpressionConstantString = between (str "\"") (str "\"") (manySatisfy (fun c -> c <> '"')) .>> ws |>> function s -> J_Constant_String s
@@ -50,7 +51,7 @@ let pExpressionSubroutineLocalCall = pSubroutineName .>>. pExpressionList |>> fu
 let pExpressionSubroutineScopedCall = pSubroutineScope .>>. pSubroutineName .>>. pExpressionList |>> function (s,n),p -> J_Subroutine_Call (Some s, n, p)
 
 let curry f = fun x -> fun y -> f(x,y)
-let pPrimary =
+let pExpressionPrimary =
     choiceL [
         pExpressionConstantInt
         pExpressionConstantString
@@ -63,9 +64,9 @@ let pPrimary =
         pExpressionVariable
         between pop pcp pExpressionImpl
     ] "expression"
-let pExpressionUnaryNegate = skipChar_ws '-' >>. pPrimary |>> J_NEG
-let pExpressionUnaryNot = skipChar_ws '~' >>. pPrimary |>> J_NOT
-let pExpressionUnary = choice [ pExpressionUnaryNegate; pExpressionUnaryNot; pPrimary ]
+let pExpressionUnaryNegate = skipChar_ws '-' >>. pExpressionPrimary |>> J_NEG
+let pExpressionUnaryNot = skipChar_ws '~' >>. pExpressionPrimary |>> J_NOT
+let pExpressionUnary = choice [ pExpressionUnaryNegate; pExpressionUnaryNot; pExpressionPrimary ]
 let pExpressionBinaryAdd = skipChar_ws '+' >>% (curry J_ADD)
 let pExpressionBinarySub = skipChar_ws '-' >>% (curry J_SUB)
 let pExpressionBinaryMul = skipChar_ws '*' >>% (curry J_MUL)
@@ -87,8 +88,34 @@ let pExpr8 = chainl1 pExpr7 pExpressionBinaryAdd
 let pExpr9 = chainl1 pExpr8 pExpressionBinarySub
 
 do pExpressionRef := pExpr9
-
 let pExpression = pExpressionImpl
+
+
+//Statements
+let pStatementImpl, pStatementRef = createParserForwardedToRef()
+
+let poc = skipChar_ws '{'
+let pcc = skipChar_ws '}'
+
+let pStatementReturn = str_ws "return" >>. (opt pExpressionImpl) .>> str_ws ";" |>> function e -> J_Return e
+let pStatementLet = (str_ws "let" >>. pExpressionImpl) .>> str_ws ";" |>> function e -> J_Let e
+let pStatementWhile = (str_ws "while" >>. pExpressionImpl) .>>. (between poc pcc (many pStatementImpl)) |>> function e,s -> J_While (e,s)
+
+let pStatementPrimary =
+    choiceL [
+        pStatementReturn
+        pStatementLet
+        pStatementWhile
+    ] "statement"
+
+do pStatementRef := pStatementPrimary
+
+let pStatement = pStatementImpl
+
+
+
+
+
 
 let pType =
     choiceL [
@@ -117,7 +144,7 @@ let pParameterList = between (str_ws "(") (str_ws ")") (sepBy (pType .>>. pVarNa
 let pSubroutineReturnType =
     choiceL [
         stringReturn_ws "void" J_Void
-        pType |>> function t -> J_Return t
+        pType |>> function t -> J_ReturnType t
     ] "return type"
 
 let pSubroutineDeclaration =

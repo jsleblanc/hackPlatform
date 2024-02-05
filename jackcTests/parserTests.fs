@@ -80,23 +80,23 @@ let ``Should parse local variable declarations`` s exp =
 type JackSubroutineDeclarationTestCases() =
     inherit ClassDataBase([
         [| "constructor myType new(int x, char y, boolean b)"
-           J_SubroutineDeclaration(J_Constructor, J_Return (J_Class "myType"), "new", [(J_Int, "x");(J_Char, "y");(J_Boolean, "b")], "body") |]
+           J_SubroutineDeclaration(J_Constructor, J_ReturnType (J_Class "myType"), "new", [(J_Int, "x");(J_Char, "y");(J_Boolean, "b")], "body") |]
         [| "function myType fooFunc(int x, char y, boolean b)"
-           J_SubroutineDeclaration(J_Function, J_Return (J_Class "myType"), "fooFunc", [(J_Int, "x");(J_Char, "y");(J_Boolean, "b")], "body") |]
+           J_SubroutineDeclaration(J_Function, J_ReturnType (J_Class "myType"), "fooFunc", [(J_Int, "x");(J_Char, "y");(J_Boolean, "b")], "body") |]
         [| "function int fooFunc(int x, char y, boolean b)"
-           J_SubroutineDeclaration(J_Function, J_Return J_Int, "fooFunc", [(J_Int, "x");(J_Char, "y");(J_Boolean, "b")], "body") |]
+           J_SubroutineDeclaration(J_Function, J_ReturnType J_Int, "fooFunc", [(J_Int, "x");(J_Char, "y");(J_Boolean, "b")], "body") |]
         [| "function char fooFunc(int x, char y, boolean b)"
-           J_SubroutineDeclaration(J_Function, J_Return J_Char, "fooFunc", [(J_Int, "x");(J_Char, "y");(J_Boolean, "b")], "body") |]
+           J_SubroutineDeclaration(J_Function, J_ReturnType J_Char, "fooFunc", [(J_Int, "x");(J_Char, "y");(J_Boolean, "b")], "body") |]
         [| "function boolean fooFunc(int x, char y, boolean b)"
-           J_SubroutineDeclaration(J_Function, J_Return J_Boolean, "fooFunc", [(J_Int, "x");(J_Char, "y");(J_Boolean, "b")], "body") |]
+           J_SubroutineDeclaration(J_Function, J_ReturnType J_Boolean, "fooFunc", [(J_Int, "x");(J_Char, "y");(J_Boolean, "b")], "body") |]
         [| "method myType fooFunc(int x, char y, boolean b)"
-           J_SubroutineDeclaration(J_Method, J_Return (J_Class "myType"), "fooFunc", [(J_Int, "x");(J_Char, "y");(J_Boolean, "b")], "body") |]
+           J_SubroutineDeclaration(J_Method, J_ReturnType (J_Class "myType"), "fooFunc", [(J_Int, "x");(J_Char, "y");(J_Boolean, "b")], "body") |]
         [| "method int fooFunc(int x, char y, boolean b)"
-           J_SubroutineDeclaration(J_Method, J_Return J_Int, "fooFunc", [(J_Int, "x");(J_Char, "y");(J_Boolean, "b")], "body") |]
+           J_SubroutineDeclaration(J_Method, J_ReturnType J_Int, "fooFunc", [(J_Int, "x");(J_Char, "y");(J_Boolean, "b")], "body") |]
         [| "method char fooFunc(int x, char y, boolean b)"
-           J_SubroutineDeclaration(J_Method, J_Return J_Char, "fooFunc", [(J_Int, "x");(J_Char, "y");(J_Boolean, "b")], "body") |]
+           J_SubroutineDeclaration(J_Method, J_ReturnType J_Char, "fooFunc", [(J_Int, "x");(J_Char, "y");(J_Boolean, "b")], "body") |]
         [| "method boolean fooFunc(int x, char y, boolean b)"
-           J_SubroutineDeclaration(J_Method, J_Return J_Boolean, "fooFunc", [(J_Int, "x");(J_Char, "y");(J_Boolean, "b")], "body") |]
+           J_SubroutineDeclaration(J_Method, J_ReturnType J_Boolean, "fooFunc", [(J_Int, "x");(J_Char, "y");(J_Boolean, "b")], "body") |]
     ])
     
 [<Theory>]
@@ -165,3 +165,22 @@ let ``Should parse expressions used inside array indexer`` s exp =
     | Success(e, _, _) -> Assert.Equal(newExpected, e)
     | Failure(msg, _, _) -> Assert.Fail(msg)    
 
+type JackStatementTestCases() =
+    inherit ClassDataBase([
+        [|"return;"; J_Return None|]
+        [|"return 1;"; J_Return (Some (J_Constant_Int 1s))|]
+        [|"return (1);"; J_Return (Some (J_Constant_Int 1s))|]
+        [|"let x = 1;"; J_Let (J_EQ (J_Variable "x", J_Constant_Int 1s)) |]
+        [|"let x=1;"; J_Let (J_EQ (J_Variable "x", J_Constant_Int 1s)) |]
+        [|"let x[1]=2;"; J_Let (J_EQ (J_Array_Index ("x", J_Constant_Int 1s), J_Constant_Int 2s)) |]
+        [|"let x[1] = 2;"; J_Let (J_EQ (J_Array_Index ("x", J_Constant_Int 1s), J_Constant_Int 2s)) |]
+        [|"while (1) {}"; J_While (J_Constant_Int 1s, [])|]
+        [|"while (true) { let x=1; return 2;}"; J_While (J_Constant_Boolean true, [J_Let (J_EQ (J_Variable "x", J_Constant_Int 1s)); J_Return (Some (J_Constant_Int 2s))])|]
+    ])
+    
+[<Theory>]
+[<ClassData(typeof<JackStatementTestCases>)>]
+let ``Should parse statement`` s exp =
+    match run pStatement s with
+    | Success(st, _, _) -> Assert.Equal(exp, st)
+    | Failure(msg, _, _) -> Assert.Fail(msg)
