@@ -25,7 +25,8 @@ let pIdentifier = identifier (IdentifierOptions(isAsciiIdStart = isIdStart, isAs
 let pIdentifier_ws = pIdentifier .>> ws
 
 let pClassName = pIdentifier_ws
-let pSubroutineName = pIdentifier_ws |>> function name -> JackSubroutineName name
+let pSubroutineName = pIdentifier |>> function name -> JackSubroutineName name
+let pSubroutineScope = pIdentifier .>> str "." |>> function s -> JackSubroutineScope s
 let pVarName = pIdentifier |>> function name -> JackVariableName name
 let pVarName_ws = pIdentifier_ws |>> function name -> JackVariableName name
 
@@ -44,6 +45,9 @@ let pob = skipChar_ws '['
 let pcb = skipChar_ws ']'
 
 let pExpressionArrayIndexer = pVarName .>>. (between pob pcb pExpressionImpl) |>> function n,e -> J_Array_Index (n, e)
+let pExpressionList = between pop pcp (sepBy pExpressionImpl (str_ws ","))
+let pExpressionSubroutineLocalCall = pSubroutineName .>>. pExpressionList |>> function n,p -> J_Subroutine_Call (None, n, p)
+let pExpressionSubroutineScopedCall = pSubroutineScope .>>. pSubroutineName .>>. pExpressionList |>> function (s,n),p -> J_Subroutine_Call (Some s, n, p)
 
 let curry f = fun x -> fun y -> f(x,y)
 let pPrimary =
@@ -53,6 +57,8 @@ let pPrimary =
         pExpressionConstantBoolean
         pExpressionConstantNull
         pExpressionConstantThis
+        attempt pExpressionSubroutineScopedCall
+        attempt pExpressionSubroutineLocalCall
         attempt pExpressionArrayIndexer
         pExpressionVariable
         between pop pcp pExpressionImpl

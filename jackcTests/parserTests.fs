@@ -142,6 +142,11 @@ type JackExpressionTestCases() =
         [|"1 < 2"; J_LT (J_Constant_Int 1s, J_Constant_Int 2s) |]
         [|"1 > 2"; J_GT (J_Constant_Int 1s, J_Constant_Int 2s) |]
         [|"1 = 2"; J_EQ (J_Constant_Int 1s, J_Constant_Int 2s) |]
+        [|"foo(1,2,3)"; J_Subroutine_Call (None, "foo", [J_Constant_Int 1s; J_Constant_Int 2s; J_Constant_Int 3s;])|]
+        [|"foo()"; J_Subroutine_Call (None, "foo", [])|]
+        [|"obj.foo()"; J_Subroutine_Call (Some "obj", "foo", [])|]
+        [|"MyClass.foo(1,2,3)"; J_Subroutine_Call (Some "MyClass", "foo", [J_Constant_Int 1s; J_Constant_Int 2s; J_Constant_Int 3s;])|]
+        [|"obj.foo(1,2,3)"; J_Subroutine_Call (Some "obj", "foo", [J_Constant_Int 1s; J_Constant_Int 2s; J_Constant_Int 3s;])|]
     ])
     
 [<Theory>]

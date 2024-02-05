@@ -11,9 +11,8 @@ type JackClassVariableScope =
     | J_Field
 
 type JackVariableName = string
-
 type JackSubroutineName = string
-
+type JackSubroutineScope = string
 type JackVariable = JackTypes * JackVariableName
 
 type JackExpression =
@@ -35,6 +34,7 @@ type JackExpression =
     | J_Constant_This
     | J_Variable of JackVariableName
     | J_Array_Index of JackVariableName * JackExpression
+    | J_Subroutine_Call of JackSubroutineScope option * JackSubroutineName * JackExpression list
 
 type JackSubroutineType =
     | J_Constructor
