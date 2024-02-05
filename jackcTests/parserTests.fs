@@ -109,18 +109,30 @@ let ``Should parse subroutine declaration`` s exp =
     
 type JackExpressionTestCases() =
     inherit ClassDataBase([
-        [|"1"; J_Expression (J_Constant_Int (int16 1), [])|]
-        [|"\"foo\""; J_Expression (J_Constant_String "foo", [])|]
-        [|"true"; J_Expression (J_Constant_Keyword (J_Bool true), [])|]
-        [|"false"; J_Expression (J_Constant_Keyword (J_Bool false), [])|]
-        [|"null"; J_Expression (J_Constant_Keyword J_Null, [])|]
-        [|"this"; J_Expression (J_Constant_Keyword J_This, [])|]
-        [|"1 + 2"; J_Expression (J_Constant_Int (int16 1), [(J_ADD, J_Constant_Int (int16 2))])|]
-        [|"\"foo\" + \"bar\""; J_Expression (J_Constant_String "foo", [(J_ADD, J_Constant_String "bar")])|]
-        [|"1 + 2 + 3"; J_Expression (J_Constant_Int (int16 1), [(J_ADD, J_Constant_Int (int16 2)); (J_ADD, J_Constant_Int (int16 3))])|]
-        [|"foo[1]"; J_Expression (J_ArrayIndex ("foo", J_Expression (J_Constant_Int (int16 1), [])), []) |]
-        [|"foo[1 + 2]"; J_Expression (J_ArrayIndex ("foo", J_Expression (J_Constant_Int (int16 1), [ (J_ADD, J_Constant_Int (int16 2))])), []) |]
-        [|"foo[1 + 2 + 3]"; J_Expression (J_ArrayIndex ("foo", J_Expression (J_Constant_Int (int16 1), [(J_ADD, J_Constant_Int (int16 2));(J_ADD, J_Constant_Int (int16 3)) ])), []) |]
+        [|"1";  (J_Constant_Int (int16 1))|]
+        [|"(1)";  (J_Constant_Int (int16 1))|]
+        [|"\"foo\"";  (J_Constant_String "foo")|]
+        [|"(\"foo\")";  (J_Constant_String "foo")|]
+        [|"\"foo\" + \"bar\""; J_ADD (J_Constant_String "foo", J_Constant_String "bar") |]        
+        [|"(\"foo\" + \"bar\")"; J_ADD (J_Constant_String "foo", J_Constant_String "bar") |]        
+        [|"true";  (J_Constant_Boolean true)|]
+        [|"true ";  (J_Constant_Boolean true)|]
+        [|"false";  (J_Constant_Boolean false)|]
+        [|"null";  J_Constant_Null|]
+        [|"null ";  J_Constant_Null|]
+        [|"this";  J_Constant_This|]
+        [|"this ";  J_Constant_This|]
+        [|"1 + 2";  J_ADD ((J_Constant_Int (int16 1)), (J_Constant_Int (int16 2))) |]
+        [|"(1 + 2)";  J_ADD ((J_Constant_Int (int16 1)), (J_Constant_Int (int16 2))) |]
+        [|"1+2";  J_ADD ((J_Constant_Int (int16 1)), (J_Constant_Int (int16 2))) |]
+        [|"(1+2)";  J_ADD ((J_Constant_Int (int16 1)), (J_Constant_Int (int16 2))) |]
+        [|"1 + 2 + 3"; J_ADD (J_ADD (J_Constant_Int 1s, J_Constant_Int 2s), J_Constant_Int 3s) |]
+        [|"1 + 2 * 3"; J_ADD (J_Constant_Int (int16 1), (J_MUL (J_Constant_Int (int16 2), J_Constant_Int (int16 3)))) |]
+        [|"(1 + (2 + 3))"; J_ADD (J_Constant_Int (int16 1), (J_ADD (J_Constant_Int (int16 2), J_Constant_Int (int16 3)))) |]
+        [|"(1 + (2 * 3))"; J_ADD (J_Constant_Int (int16 1), (J_MUL (J_Constant_Int (int16 2), J_Constant_Int (int16 3)))) |]
+        //[|"foo[1]";  (J_ArrayIndex ("foo", J_Expression (J_Constant_Int (int16 1), [])), []) |]
+        //[|"foo[1 + 2]";  (J_ArrayIndex ("foo", J_Expression (J_Constant_Int (int16 1), [ (J_ADD, J_Constant_Int (int16 2))])), []) |]
+        //[|"foo[1 + 2 + 3]";  (J_ArrayIndex ("foo", J_Expression (J_Constant_Int (int16 1), [(J_ADD, J_Constant_Int (int16 2));(J_ADD, J_Constant_Int (int16 3)) ])), []) |]
     ])
     
 [<Theory>]
@@ -129,5 +141,4 @@ let ``Should parse expression`` s exp =
     match run pExpression s with
     | Success(e, _, _) -> Assert.Equal(exp, e)
     | Failure(msg, _, _) -> Assert.Fail(msg)    
-    
-    
+

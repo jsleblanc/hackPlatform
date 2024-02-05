@@ -13,6 +13,8 @@ let str s = pstring s
 let str_ws s = pstring s .>> ws
 let stringReturn_ws s t = stringReturn s t .>> ws
 
+let skipChar_ws c = skipChar c .>> ws 
+
 let pCommentSingleLine = str "//" >>. ws >>. restOfLine true 
 let pCommentMultiLine = ((str "/*") <|> (str "/**")) >>. charsTillString "*/" true Int32.MaxValue .>> ws
 let pComment = choiceL [pCommentSingleLine; pCommentMultiLine] "comment" |>> function _ -> Comment
@@ -25,6 +27,7 @@ let pClassName = pIdentifier
 let pSubroutineName = pIdentifier |>> function name -> JackSubroutineName name
 let pVarName = pIdentifier |>> function name -> JackVariableName name
 
+(*
 //Expressions
 let pExpressionKeywordConstant =
     choiceL [
@@ -52,17 +55,53 @@ let pExpressionBinaryOp =
         stringReturn_ws "<" J_GT
         stringReturn_ws "=" J_EQ
     ] "binary operator" .>> ws
-    
-let pExpressionIntConstant = pint16 .>> ws |>> function i -> J_Constant_Int i
-let pExpressionStringConstant = between (str "\"") (str "\"") (manySatisfy (fun c -> c <> '"')) .>> ws |>> function s -> J_Constant_String s
+*)
+
+let pExpressionVariable = pVarName |>> function v -> J_Variable v
+let pExpressionConstantInt = pint16 .>> ws |>> function i -> J_Constant_Int i
+let pExpressionConstantString = between (str "\"") (str "\"") (manySatisfy (fun c -> c <> '"')) .>> ws |>> function s -> J_Constant_String s
+let pExpressionConstantBoolean = choiceL [ (stringReturn_ws "true" (J_Constant_Boolean true)); (stringReturn_ws "false" (J_Constant_Boolean false)) ] "boolean"
+let pExpressionConstantNull = stringReturn_ws "null" J_Constant_Null
+let pExpressionConstantThis = stringReturn_ws "this" J_Constant_This
 
 let pExpressionImpl, pExpressionRef = createParserForwardedToRef()
+
+let pop = skipChar '(' //parser skip open parenthesis
+let pcp = skipChar ')' //parser skip close parenthesis
+let curry f = fun x -> fun y -> f(x,y)
+let pPrimary =
+    choiceL [
+        pExpressionConstantInt
+        pExpressionConstantString
+        pExpressionConstantBoolean
+        pExpressionConstantNull
+        pExpressionConstantThis
+        pExpressionVariable        
+        between pop pcp pExpressionImpl
+    ] "expression"
+let pExpressionUnaryNegate = skipChar_ws '-' >>. pPrimary |>> J_NEG
+let pExpressionUnaryNot = skipChar_ws '~' >>. pPrimary |>> J_NOT
+let pExpressionUnary = choice [ pExpressionUnaryNegate; pExpressionUnaryNot; pPrimary ]
+let pExpressionBinaryAdd = skipChar_ws '+' >>% (curry J_ADD)
+let pExpressionBinarySub = skipChar_ws '-' >>% (curry J_SUB)
+let pExpressionBinaryMul = skipChar_ws '*' >>% (curry J_MUL)
+let pExpressionBinaryDiv = skipChar_ws '/' >>% (curry J_DIV)
+
+let pExpr1 = chainl1 pExpressionUnary pExpressionBinaryDiv
+let pExpr2 = chainl1 pExpr1 pExpressionBinaryMul
+let pExpr3 = chainl1 pExpr2 pExpressionBinaryAdd
+let pExpr4 = chainl1 pExpr3 pExpressionBinarySub
+
+
+do pExpressionRef := pExpr4
+
+(*
 let pExpressionTermImpl, pExpressionTermRef = createParserForwardedToRef()
 
 do pExpressionTermRef :=
     choiceL [
-        pExpressionIntConstant
-        pExpressionStringConstant
+        pExpressionConstantInt
+        pExpressionConstantString
         pExpressionKeywordConstant |>> function k -> J_Constant_Keyword k
         pVarName .>>. (between (str_ws "[") (str_ws "]") pExpressionImpl) .>> ws |>> function n,e -> J_ArrayIndex (n,e)
         pVarName |>> function v -> J_Variable v
@@ -72,7 +111,7 @@ do pExpressionTermRef :=
 do pExpressionRef := pExpressionTermImpl .>>. many (pExpressionBinaryOp .>>. pExpressionTermImpl) .>> ws |>> function t,o -> J_Expression (t, o)
 
 let pExpressionList = between (str_ws "(") (str_ws ")") (sepBy1 pExpressionImpl (str_ws ",")) .>> ws
-
+*)
 
 
 
