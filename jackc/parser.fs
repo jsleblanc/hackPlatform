@@ -86,14 +86,18 @@ let pExpressionBinaryAdd = skipChar_ws '+' >>% (curry J_ADD)
 let pExpressionBinarySub = skipChar_ws '-' >>% (curry J_SUB)
 let pExpressionBinaryMul = skipChar_ws '*' >>% (curry J_MUL)
 let pExpressionBinaryDiv = skipChar_ws '/' >>% (curry J_DIV)
+let pExpressionBinaryAnd = skipChar_ws '&' >>% (curry J_AND)
+let pExpressionBinaryOr = skipChar_ws '|' >>% (curry J_OR)
 
-let pExpr1 = chainl1 pExpressionUnary pExpressionBinaryDiv
-let pExpr2 = chainl1 pExpr1 pExpressionBinaryMul
-let pExpr3 = chainl1 pExpr2 pExpressionBinaryAdd
-let pExpr4 = chainl1 pExpr3 pExpressionBinarySub
+let pExpr1 = chainl1 pExpressionUnary pExpressionBinaryAnd
+let pExpr2 = chainl1 pExpr1 pExpressionBinaryOr
+let pExpr3 = chainl1 pExpr2 pExpressionBinaryMul
+let pExpr4 = chainl1 pExpr3 pExpressionBinaryDiv
+let pExpr5 = chainl1 pExpr4 pExpressionBinaryAdd
+let pExpr6 = chainl1 pExpr5 pExpressionBinarySub
 
 
-do pExpressionRef := pExpr4
+do pExpressionRef := pExpr6
 
 (*
 let pExpressionTermImpl, pExpressionTermRef = createParserForwardedToRef()
