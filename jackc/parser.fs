@@ -187,6 +187,7 @@ let pClassBody = pComment >>. between poc pcc ((many pClassVariableDeclaration) 
 let pClass = pComment >>. (str_ws "class") >>. pClassName .>>. pClassBody |>> function n,(v,s) -> { name = n; variables = v; subroutines = s; }
 
 
-let pInput = many pCommentImpl .>> eof
+let pInput = ws >>. pClass .>> eof
 
 let parseString str = run pInput str
+let parseFile fileName = runParserOnFile pInput () fileName System.Text.Encoding.Default

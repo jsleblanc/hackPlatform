@@ -319,4 +319,17 @@ class Main {
     }
     match run pClass str with
     | Success(c, _, _) -> Assert.Equal(expected, c)
-    | Failure(msg, _, _) -> Assert.Fail(msg)    
+    | Failure(msg, _, _) -> Assert.Fail(msg)
+
+
+
+    
+type JackFileTestCases() =
+    inherit FilePathBase("/Users/josephleblanc/Documents/Code/nand2tetris/", "*.jack")
+    
+[<Theory>]
+[<ClassData(typeof<JackFileTestCases>)>]
+let ``Should parse file`` file =
+    match parseFile file with
+    | Success _ -> Assert.True(true)
+    | Failure(msg, _, _) -> Assert.Fail(msg)
