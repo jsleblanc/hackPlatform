@@ -115,6 +115,18 @@ let ``Should parse multiline if-else statement`` () =
         Assert.Equal([|J_Let (J_EQ (J_Variable "y", J_Constant_Int 2s)); J_Return (Some (J_Variable "y"))|], esl)
     | Success _ -> Assert.Fail("Should have parsed as if-else statement")
     | Failure(msg, _, _) -> Assert.Fail(msg)
+
+[<Fact>]
+let ``Should parse multi-line if-else statement with comments`` () =
+    let str = """if (true) { //comment 1
+        //comment 2
+    } else { //comment 3
+        //comment 4
+    } //comment 5
+"""
+    match run pStatement str with
+    | Success _ -> Assert.True(true)
+    | Failure(msg, _, _) -> Assert.Fail(msg)
     
     
 type JackSubroutineVariableDeclarationTestCases() =
@@ -276,13 +288,18 @@ let ``Should parse class`` () =
     match run pClass str with
     | Success(c, _, _) -> Assert.Equal(expected, c)
     | Failure(msg, _, _) -> Assert.Fail(msg)
-    
+
 [<Fact>]
-let ``Should parse class that includes comments in the code`` () =
+let ``Should parse class that includes comments (class parser only)`` () =
     let str = """/** Hello World program. */
 class Main {
    /* comment */
+   
+   // Character map for displaying characters
+   static Array charMaps;
+   
    function void main() {
+      //comment
       var int x; //comment
       /* Prints some text using the standard library. */
       //second comment
@@ -294,34 +311,112 @@ class Main {
       */
       return; /*comment*/
    }
+   
+   function void a() {
+      var boolean b;      
+      if (b) { //comment
+      }
+   }
+   
+   function void b() { 
+      var boolean b;
+      if (b) {
+      }
+      else { //comment
+      }
+   }   
 }
 """
     let expected = {
-        name = "Main"
-        variables = []
-        subroutines = [
-            {
-                name = "main"
-                subType = J_Function 
+            name = "Main"
+            variables = [(J_Static, J_Class "Array", "charMaps")]
+            subroutines =
+             [{ name = "main"
+                subType = J_Function
                 returnType = J_Void
                 parameters = []
-                variables = [
-                    (J_Int, "x")
-                ]
-                body = [
-                    J_Do (Some "Output", "printString", [J_Constant_String "Hello world!"])
-                    J_Do (Some "Output", "println", [])
-                    J_Let (J_EQ (J_Variable "x", J_Constant_Int 1s))
-                    J_Return None
-                ] 
-            }            
-        ] 
-    }
+                variables = [(J_Int, "x")]
+                body =
+                 [J_Do (Some "Output", "printString", [J_Constant_String "Hello world!"]);
+                  J_Do (Some "Output", "println", []);
+                  J_Let (J_EQ (J_Variable "x", J_Constant_Int 1s)); J_Return None] };
+              { name = "a"
+                subType = J_Function
+                returnType = J_Void
+                parameters = []
+                variables = [(J_Boolean, "b")]
+                body = [J_If_Else (J_Variable "b", [], [])] };
+              { name = "b"
+                subType = J_Function
+                returnType = J_Void
+                parameters = []
+                variables = [(J_Boolean, "b")]
+                body = [J_If_Else (J_Variable "b", [], [])] }]
+             } 
     match run pClass str with
     | Success(c, _, _) -> Assert.Equal(expected, c)
     | Failure(msg, _, _) -> Assert.Fail(msg)
 
+[<Fact>]
+let ``Should parse class that includes comments (input parser)`` () =
+    let str = """
+// This file is part of www.nand2tetris.org
+// and the book "The Elements of Computing Systems"
+// by Nisan and Schocken, MIT Press.
+// File name: projects/11/Pong/Ball.jack
+// (Same as projects/09/Pong/Ball.jack)
 
+/**
+ * A graphical ball in a Pong game. Characterized by a screen location and 
+ * distance of last destination. Has methods for drawing, erasing and moving
+ * on the screen. The ball is displayed as a filled, 6-by-6 pixles rectangle. 
+ */
+class Ball {
+
+    // Character map for displaying characters
+    static Array charMaps; 
+
+    field int x, y;               // the ball's screen location (in pixels)
+    field int lengthx, lengthy;   // distance of last destination (in pixels)
+
+    /** Constructs a new ball with the given initial location and wall locations. */
+    constructor Ball new() {
+        var char key;  // the key currently pressed by the user
+        var boolean exit;                         
+	    let rightWall = ArightWall - 6;    // -6 for ball size
+	    let bottomWall = AbottomWall - 6;  // -6 for ball size
+        return this;
+    }
+}
+"""
+    let expected =  {
+        name = "Ball"
+        variables =         [
+          (J_Static, J_Class "Array", "charMaps")
+          (J_Field, J_Int, "x")
+          (J_Field, J_Int, "y")
+          (J_Field, J_Int, "lengthx")
+          (J_Field, J_Int, "lengthy")
+          ]
+        subroutines =
+         [{ name = "new"
+            subType = J_Constructor
+            returnType = J_ReturnType (J_Class "Ball")
+            parameters = []
+            variables = [(J_Char, "key"); (J_Boolean, "exit")]
+            body =
+             [J_Let
+                (J_SUB
+                   (J_EQ (J_Variable "rightWall", J_Variable "ArightWall"),
+                    J_Constant_Int 6s));
+              J_Let
+                (J_SUB
+                   (J_EQ (J_Variable "bottomWall", J_Variable "AbottomWall"),
+                    J_Constant_Int 6s)); J_Return (Some J_Constant_This)] }]
+         }
+    match run pInput str with
+    | Success(c, _, _) -> Assert.Equal(expected, c)
+    | Failure(msg, _, _) -> Assert.Fail(msg)
 
     
 type JackFileTestCases() =
