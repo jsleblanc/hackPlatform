@@ -47,66 +47,6 @@ let ``Should parse class variable declarations`` s exp =
     | Success _ -> Assert.Fail("Should have parsed as class variable declaration")
     | Failure(msg, _, _) -> Assert.Fail(msg)
     
-type JackLocalVariableDeclarationTestCases() =
-    inherit ClassDataBase([
-        [| "var int foo;"; J_LocalVariableDeclaration(J_Int, ["foo"]) |]
-        [| "var char foo;"; J_LocalVariableDeclaration(J_Char, ["foo"]) |]
-        [| "var boolean foo;"; J_LocalVariableDeclaration(J_Boolean, ["foo"]) |]
-        [| "var mytype foo;"; J_LocalVariableDeclaration(J_Class "mytype", ["foo"]) |]
-        [| "var    mytype    foo1,    foo2,     foo3;"; J_LocalVariableDeclaration(J_Class "mytype", ["foo1";"foo2";"foo3"]) |]
-        [| "var int foo;"; J_LocalVariableDeclaration(J_Int, ["foo"]) |]
-        [| "var char foo;"; J_LocalVariableDeclaration(J_Char, ["foo"]) |]
-        [| "var boolean foo;"; J_LocalVariableDeclaration(J_Boolean, ["foo"]) |]
-        [| "var mytype foo;"; J_LocalVariableDeclaration(J_Class "mytype", ["foo"]) |]        
-        [| "var int foo1,foo2;"; J_LocalVariableDeclaration(J_Int, ["foo1";"foo2"]) |]
-        [| "var char foo1,foo2;"; J_LocalVariableDeclaration(J_Char, ["foo1";"foo2"]) |]
-        [| "var boolean foo1,foo2;"; J_LocalVariableDeclaration(J_Boolean, ["foo1";"foo2"]) |]
-        [| "var mytype foo1,foo2;"; J_LocalVariableDeclaration(J_Class "mytype", ["foo1";"foo2"]) |]
-        [| "var int foo1,foo2;"; J_LocalVariableDeclaration(J_Int, ["foo1";"foo2"]) |]
-        [| "var char foo1,foo2;"; J_LocalVariableDeclaration(J_Char, ["foo1";"foo2"]) |]
-        [| "var boolean foo1,foo2;"; J_LocalVariableDeclaration(J_Boolean, ["foo1";"foo2"]) |]
-        [| "var mytype foo1,foo2;"; J_LocalVariableDeclaration(J_Class "mytype", ["foo1";"foo2"]) |]        
-        ])
-    
-[<Theory>]
-[<ClassData(typeof<JackLocalVariableDeclarationTestCases>)>]
-let ``Should parse local variable declarations`` s exp =
-    match run pLocalVariableDeclaration s with
-    | Success(jc, _, _) -> Assert.Equal(exp, jc)
-    | Success _ -> Assert.Fail("Should have parsed as class variable declaration")
-    | Failure(msg, _, _) -> Assert.Fail(msg)
-        
-        
-type JackSubroutineDeclarationTestCases() =
-    inherit ClassDataBase([
-        [| "constructor myType new(int x, char y, boolean b)"
-           J_SubroutineDeclaration(J_Constructor, J_ReturnType (J_Class "myType"), "new", [(J_Int, "x");(J_Char, "y");(J_Boolean, "b")], "body") |]
-        [| "function myType fooFunc(int x, char y, boolean b)"
-           J_SubroutineDeclaration(J_Function, J_ReturnType (J_Class "myType"), "fooFunc", [(J_Int, "x");(J_Char, "y");(J_Boolean, "b")], "body") |]
-        [| "function int fooFunc(int x, char y, boolean b)"
-           J_SubroutineDeclaration(J_Function, J_ReturnType J_Int, "fooFunc", [(J_Int, "x");(J_Char, "y");(J_Boolean, "b")], "body") |]
-        [| "function char fooFunc(int x, char y, boolean b)"
-           J_SubroutineDeclaration(J_Function, J_ReturnType J_Char, "fooFunc", [(J_Int, "x");(J_Char, "y");(J_Boolean, "b")], "body") |]
-        [| "function boolean fooFunc(int x, char y, boolean b)"
-           J_SubroutineDeclaration(J_Function, J_ReturnType J_Boolean, "fooFunc", [(J_Int, "x");(J_Char, "y");(J_Boolean, "b")], "body") |]
-        [| "method myType fooFunc(int x, char y, boolean b)"
-           J_SubroutineDeclaration(J_Method, J_ReturnType (J_Class "myType"), "fooFunc", [(J_Int, "x");(J_Char, "y");(J_Boolean, "b")], "body") |]
-        [| "method int fooFunc(int x, char y, boolean b)"
-           J_SubroutineDeclaration(J_Method, J_ReturnType J_Int, "fooFunc", [(J_Int, "x");(J_Char, "y");(J_Boolean, "b")], "body") |]
-        [| "method char fooFunc(int x, char y, boolean b)"
-           J_SubroutineDeclaration(J_Method, J_ReturnType J_Char, "fooFunc", [(J_Int, "x");(J_Char, "y");(J_Boolean, "b")], "body") |]
-        [| "method boolean fooFunc(int x, char y, boolean b)"
-           J_SubroutineDeclaration(J_Method, J_ReturnType J_Boolean, "fooFunc", [(J_Int, "x");(J_Char, "y");(J_Boolean, "b")], "body") |]
-    ])
-    
-[<Theory>]
-[<ClassData(typeof<JackSubroutineDeclarationTestCases>)>]
-let ``Should parse subroutine declaration`` s exp =
-    match run pSubroutineDeclaration s with
-    | Success(js, _, _) -> Assert.Equal(exp, js)
-    | Success _ -> Assert.Fail("Should parse as subroutine declaration")
-    | Failure(msg, _, _) -> Assert.Fail(msg)
-    
 type JackExpressionTestCases() =
     inherit ClassDataBase([
         [|"1";  (J_Constant_Int 1s)|]
@@ -205,4 +145,102 @@ let ``Should parse multiline if-else statement`` () =
         Assert.Equal([|J_Let (J_EQ (J_Variable "x", J_Constant_Int 1s)); J_Return (Some (J_Variable "x"))|], msl)
         Assert.Equal([|J_Let (J_EQ (J_Variable "y", J_Constant_Int 2s)); J_Return (Some (J_Variable "y"))|], esl)
     | Success _ -> Assert.Fail("Should have parsed as if-else statement")
+    | Failure(msg, _, _) -> Assert.Fail(msg)
+    
+    
+type JackSubroutineVariableDeclarationTestCases() =
+    inherit ClassDataBase([
+        [| "var int foo;"; [(J_Int, "foo")] |]
+        [| "var char foo;"; [(J_Char, "foo")] |]
+        [| "var boolean foo;"; [(J_Boolean, "foo")] |]
+        [| "var mytype foo;"; [(J_Class "mytype", "foo")] |]
+        [| "var    mytype    foo1,    foo2,     foo3;"; [(J_Class "mytype", "foo1");(J_Class "mytype", "foo2");(J_Class "mytype", "foo3")] |]
+        [| "var int foo;"; [(J_Int, "foo")] |]
+        [| "var char foo;"; [(J_Char, "foo")] |]
+        [| "var boolean foo;"; [(J_Boolean, "foo")] |]
+        [| "var mytype foo;"; [(J_Class "mytype", "foo")] |]        
+        [| "var int foo1,foo2;"; [(J_Int, "foo1");(J_Int, "foo2")] |]
+        [| "var char foo1,foo2;"; [(J_Char, "foo1");(J_Char, "foo2")] |]
+        [| "var boolean foo1,foo2;"; [(J_Boolean, "foo1");(J_Boolean, "foo2")] |]
+        [| "var mytype foo1,foo2;"; [(J_Class "mytype", "foo1");(J_Class "mytype", "foo2")] |]
+        [| "var int foo1,foo2;"; [(J_Int, "foo1");(J_Int, "foo2")] |]
+        [| "var char foo1,foo2;"; [(J_Char, "foo1");(J_Char, "foo2")] |]
+        [| "var boolean foo1,foo2;"; [(J_Boolean, "foo1");(J_Boolean, "foo2")] |]
+        [| "var mytype foo1,foo2;"; [(J_Class "mytype", "foo1");(J_Class "mytype","foo2")] |]        
+        ])
+    
+[<Theory>]
+[<ClassData(typeof<JackSubroutineVariableDeclarationTestCases>)>]
+let ``Should parse subroutine variable declarations`` s (exp: (JackTypes * JackVariableName) list) =
+    let cmp (t1:JackTypes,n1:JackVariableName) (t2,n2) =
+        Assert.Equal(t1,t2)
+        Assert.Equal(n1,n2)
+    match run pSubroutineVariableDeclaration s with
+    | Success(jc, _, _) -> List.map2 cmp exp jc |> ignore
+    | Success _ -> Assert.Fail("Should have parsed as class variable declaration")
+    | Failure(msg, _, _) -> Assert.Fail(msg)
+        
+        
+type JackSubroutineDeclarationTestCases() =
+    inherit ClassDataBase([
+        [| "constructor myType new(int x, char y, boolean b) {}"
+           { name = "new"; subType = J_Constructor; returnType = J_ReturnType (J_Class "myType"); parameters = [(J_Int, "x");(J_Char, "y");(J_Boolean, "b")]; body = []; variables = []; } |]
+        [| "function myType fooFunc(int x, char y, boolean b) {}"
+           { name = "fooFunc"; subType = J_Function; returnType = J_ReturnType (J_Class "myType"); parameters = [(J_Int, "x");(J_Char, "y");(J_Boolean, "b")]; body = []; variables = []; } |]
+        [| "function int fooFunc(int x, char y, boolean b) {}"
+           { name = "fooFunc"; subType = J_Function; returnType = J_ReturnType J_Int; parameters = [(J_Int, "x");(J_Char, "y");(J_Boolean, "b")]; body = []; variables = []; } |]
+        [| "function char fooFunc(int x, char y, boolean b) {}"
+           { name = "fooFunc"; subType = J_Function; returnType = J_ReturnType J_Char; parameters = [(J_Int, "x");(J_Char, "y");(J_Boolean, "b")]; body = []; variables = []; } |]
+        [| "function boolean fooFunc(int x, char y, boolean b) {}"
+           { name = "fooFunc"; subType = J_Function; returnType = J_ReturnType J_Boolean; parameters = [(J_Int, "x");(J_Char, "y");(J_Boolean, "b")]; body = []; variables = []; } |]
+        [| "method myType fooFunc(int x, char y, boolean b) {}"
+           { name = "fooFunc"; subType = J_Method; returnType = J_ReturnType (J_Class "myType"); parameters = [(J_Int, "x");(J_Char, "y");(J_Boolean, "b")]; body = []; variables = []; } |]
+        [| "method int fooFunc(int x, char y, boolean b) {}"
+           { name = "fooFunc"; subType = J_Method; returnType = J_ReturnType J_Int; parameters = [(J_Int, "x");(J_Char, "y");(J_Boolean, "b")]; body = []; variables = []; } |]
+        [| "method char fooFunc(int x, char y, boolean b) {}"
+           { name = "fooFunc"; subType = J_Method; returnType = J_ReturnType J_Char; parameters = [(J_Int, "x");(J_Char, "y");(J_Boolean, "b")]; body = []; variables = []; } |]
+        [| "method boolean fooFunc(int x, char y, boolean b) {}"
+           { name = "fooFunc"; subType = J_Method; returnType = J_ReturnType J_Boolean; parameters = [(J_Int, "x");(J_Char, "y");(J_Boolean, "b")]; body = []; variables = []; } |]
+        [| "method void fooFunc(int x, char y, boolean b) {}"
+           { name = "fooFunc"; subType = J_Method; returnType = J_Void; parameters = [(J_Int, "x");(J_Char, "y");(J_Boolean, "b")]; body = []; variables = []; } |]    ])
+    
+[<Theory>]
+[<ClassData(typeof<JackSubroutineDeclarationTestCases>)>]
+let ``Should parse subroutine declaration`` s exp =
+    match run pSubroutineDeclaration s with
+    | Success(js, _, _) -> Assert.Equal(exp, js)
+    | Success _ -> Assert.Fail("Should parse as subroutine declaration")
+    | Failure(msg, _, _) -> Assert.Fail(msg)
+    
+    
+[<Fact>]
+let ``Should parse subroutine`` () =
+    let sub = """function void foo(int x, char y) {
+    var int foo1,foo2;
+    var boolean bar1,bar2;
+    do someFunc();
+    return;
+}
+"""
+    let expected = {
+        name = "foo"
+        returnType = J_Void
+        subType = J_Function
+        parameters = [
+            (J_Int, "x")
+            (J_Char, "y")
+        ]
+        variables = [
+            (J_Int, "foo1")
+            (J_Int, "foo2")
+            (J_Boolean, "bar1")
+            (J_Boolean, "bar2")
+        ]
+        body = [
+            (J_Do (None, "someFunc", []))
+            (J_Return None)
+        ] 
+    }
+    match run pSubroutineDeclaration sub with
+    | Success(jackSubroutine, _, _) -> Assert.Equal(expected, jackSubroutine)
     | Failure(msg, _, _) -> Assert.Fail(msg)

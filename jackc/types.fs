@@ -13,7 +13,6 @@ type JackClassVariableScope =
 type JackVariableName = string
 type JackSubroutineName = string
 type JackSubroutineScope = string
-type JackVariable = JackTypes * JackVariableName
 
 type JackExpression =
     | J_ADD of JackExpression * JackExpression
@@ -52,14 +51,19 @@ type JackSubroutineReturnType =
     | J_ReturnType of JackTypes
     | J_Void
 
-type JackSubroutineBody = string
+type JackSubroutineBody = JackStatement list
+type JackSubroutineVariable = JackTypes * JackVariableName
+type JackClassVariable = JackClassVariableScope * JackTypes * JackVariableName
+
+type JackSubroutine = {
+    name: JackSubroutineName
+    subType: JackSubroutineType
+    returnType: JackSubroutineReturnType
+    parameters: JackSubroutineVariable list
+    variables: JackSubroutineVariable list
+    body: JackStatement list
+}
     
 type JackLang =
     | J_ClassVariableDeclaration of JackClassVariableScope * JackTypes * JackVariableName list
     | J_LocalVariableDeclaration of JackTypes * JackVariableName list
-    | J_SubroutineDeclaration of
-        JackSubroutineType
-        * JackSubroutineReturnType
-        * JackSubroutineName
-        * JackVariable list
-        * JackSubroutineBody

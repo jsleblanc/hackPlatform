@@ -147,8 +147,17 @@ let pLocalVariableDeclaration =
     .>>. (sepBy1 pVarName_ws (str_ws ","))
     .>> str_ws ";"
     |>> function jt,names -> J_LocalVariableDeclaration (jt, names)    
-    
+
+
+//Subroutines   
 let pParameterList = between (str_ws "(") (str_ws ")") (sepBy (pType .>>. pVarName_ws) (str_ws ","))
+
+let pSubroutineType =
+    choiceL [
+       stringReturn_ws "constructor" J_Constructor
+       stringReturn_ws "function" J_Function
+       stringReturn_ws "method" J_Method
+    ] "subroutine type"
 
 let pSubroutineReturnType =
     choiceL [
@@ -156,16 +165,18 @@ let pSubroutineReturnType =
         pType |>> function t -> J_ReturnType t
     ] "return type"
 
+let pSubroutineVariableDeclaration =
+    (str_ws "var")
+    >>. pType
+    .>>. (sepBy1 pVarName_ws (str_ws ","))
+    .>> str_ws ";"
+    |>> function jt,names -> names |> List.map (fun n -> (jt,n))
+
+let pSubroutineBody = between poc pcc ((many pSubroutineVariableDeclaration) .>>. (many pStatementImpl)) |>> function v,s -> (List.collect id v, s)
+
 let pSubroutineDeclaration =
-    ((stringReturn_ws "constructor" J_Constructor) <|> (stringReturn_ws "function" J_Function) <|> (stringReturn_ws "method" J_Method))
-    .>>. pSubroutineReturnType
-    .>>. pSubroutineName
-    .>>. pParameterList
-    |>> function ((subroutineType,subroutineReturnType),subroutineName),parameters -> J_SubroutineDeclaration (subroutineType, subroutineReturnType, subroutineName, parameters, "body")
-
-
-
-
+    pipe5 pSubroutineType pSubroutineReturnType pSubroutineName pParameterList pSubroutineBody (fun a b c d (vars,statements) -> {subType = a; returnType = b; name = c; parameters = d; variables = vars; body = statements; })
+            
 
 
 
