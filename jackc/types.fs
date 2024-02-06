@@ -70,7 +70,3 @@ type JackClass = {
     variables: JackClassVariable list
     subroutines: JackSubroutine list
 }
-    
-type JackLang =
-    | J_ClassVariableDeclaration of JackClassVariableScope * JackTypes * JackVariableName list
-    | J_LocalVariableDeclaration of JackTypes * JackVariableName list

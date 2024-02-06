@@ -5,7 +5,7 @@ open FParsec
 open jackc.types
 
 type ParseResult =
-    | Code of JackLang
+    | Code of JackClass
     | Comment
 
 let ws = spaces // skips any whitespace
@@ -170,11 +170,12 @@ let pClassVariableDeclaration =
     .>>. pType
     .>>. (sepBy1 pVarName_ws (str_ws ","))
     .>> str_ws ";"
-    |>> function (scope, jt),names -> J_ClassVariableDeclaration (scope, jt, names)
+    |>> function (scope, jt),names -> names |> List.map (fun n -> (scope,jt,n)) 
 
+let pClassBody = between poc pcc ((many pClassVariableDeclaration) .>>. (many1 pSubroutineDeclaration)) .>> ws |>> function v,s -> (List.collect id v, s)
+let pClass = (str_ws "class") >>. pClassName .>>. pClassBody |>> function n,(v,s) -> { name = n; variables = v; subroutines = s; }
 
-
-let pppppp s = run pClassVariableDeclaration s
+let pppppp s = run pClass s
 
 
 let pInput = many pComment .>> eof

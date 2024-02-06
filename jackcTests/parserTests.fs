@@ -219,29 +219,53 @@ let ``Should parse subroutine`` () =
     
 type JackClassVariableDeclarationTestCases() =
     inherit ClassDataBase([
-        [| "static int foo;"; J_ClassVariableDeclaration(J_Static, J_Int, ["foo"]) |]
-        [| "static char foo;"; J_ClassVariableDeclaration(J_Static, J_Char, ["foo"]) |]
-        [| "static boolean foo;"; J_ClassVariableDeclaration(J_Static, J_Boolean, ["foo"]) |]
-        [| "static mytype foo;"; J_ClassVariableDeclaration(J_Static, J_Class "mytype", ["foo"]) |]
-        [| "static    mytype    foo1,    foo2,     foo3;"; J_ClassVariableDeclaration(J_Static, J_Class "mytype", ["foo1";"foo2";"foo3"]) |]
-        [| "field int foo;"; J_ClassVariableDeclaration(J_Field, J_Int, ["foo"]) |]
-        [| "field char foo;"; J_ClassVariableDeclaration(J_Field, J_Char, ["foo"]) |]
-        [| "field boolean foo;"; J_ClassVariableDeclaration(J_Field, J_Boolean, ["foo"]) |]
-        [| "field mytype foo;"; J_ClassVariableDeclaration(J_Field, J_Class "mytype", ["foo"]) |]        
-        [| "static int foo1,foo2;"; J_ClassVariableDeclaration(J_Static, J_Int, ["foo1";"foo2"]) |]
-        [| "static char foo1,foo2;"; J_ClassVariableDeclaration(J_Static, J_Char, ["foo1";"foo2"]) |]
-        [| "static boolean foo1,foo2;"; J_ClassVariableDeclaration(J_Static, J_Boolean, ["foo1";"foo2"]) |]
-        [| "static mytype foo1,foo2;"; J_ClassVariableDeclaration(J_Static, J_Class "mytype", ["foo1";"foo2"]) |]
-        [| "field int foo1,foo2;"; J_ClassVariableDeclaration(J_Field, J_Int, ["foo1";"foo2"]) |]
-        [| "field char foo1,foo2;"; J_ClassVariableDeclaration(J_Field, J_Char, ["foo1";"foo2"]) |]
-        [| "field boolean foo1,foo2;"; J_ClassVariableDeclaration(J_Field, J_Boolean, ["foo1";"foo2"]) |]
-        [| "field mytype foo1,foo2;"; J_ClassVariableDeclaration(J_Field, J_Class "mytype", ["foo1";"foo2"]) |]        
+        [| "static int foo;"; [(J_Static, J_Int, "foo")] |]
+        [| "static char foo;"; [(J_Static, J_Char, "foo")] |]
+        [| "static boolean foo;"; [(J_Static, J_Boolean, "foo")] |]
+        [| "static mytype foo;"; [(J_Static, J_Class "mytype", "foo")] |]
+        [| "static    mytype    foo1,    foo2,     foo3;"; [(J_Static, J_Class "mytype", "foo1");(J_Static, J_Class "mytype", "foo2");(J_Static, J_Class "mytype", "foo3")] |]
+        [| "field int foo;"; [(J_Field, J_Int, "foo")] |]
+        [| "field char foo;"; [(J_Field, J_Char, "foo")] |]
+        [| "field boolean foo;"; [(J_Field, J_Boolean, "foo")] |]
+        [| "field mytype foo;"; [(J_Field, J_Class "mytype", "foo")] |]        
+        [| "static int foo1,foo2;"; [(J_Static, J_Int, "foo1");(J_Static, J_Int, "foo2")] |]
+        [| "static char foo1,foo2;"; [(J_Static, J_Char, "foo1");(J_Static, J_Char, "foo2")] |]
+        [| "static boolean foo1,foo2;"; [(J_Static, J_Boolean, "foo1");(J_Static, J_Boolean, "foo2")] |]
+        [| "static mytype foo1,foo2;"; [(J_Static, J_Class "mytype", "foo1");(J_Static, J_Class "mytype", "foo2")] |]
+        [| "field int foo1,foo2;"; [(J_Field, J_Int, "foo1");(J_Field, J_Int, "foo2")] |]
+        [| "field char foo1,foo2;"; [(J_Field, J_Char, "foo1");(J_Field, J_Char, "foo2")] |]
+        [| "field boolean foo1,foo2;"; [(J_Field, J_Boolean, "foo1");(J_Field, J_Boolean, "foo2")] |]
+        [| "field mytype foo1,foo2;"; [(J_Field, J_Class "mytype", "foo1");(J_Field, J_Class "mytype", "foo2")] |]        
         ])
     
 [<Theory>]
 [<ClassData(typeof<JackClassVariableDeclarationTestCases>)>]
 let ``Should parse class variable declarations`` s exp =
+    let cmp (s1:JackClassVariableScope,t1:JackTypes,n1:JackVariableName) (s2,t2,n2) =
+        Assert.Equal(s1,s2)
+        Assert.Equal(t1,t2)
+        Assert.Equal(n1,n2)
     match run pClassVariableDeclaration s with
-    | Success(jc, _, _) -> Assert.Equal(exp, jc)
+    | Success(jc, _, _) -> List.map2 cmp exp jc |> ignore
     | Success _ -> Assert.Fail("Should have parsed as class variable declaration")
-    | Failure(msg, _, _) -> Assert.Fail(msg)    
+    | Failure(msg, _, _) -> Assert.Fail(msg)
+    
+[<Fact>]
+let ``Should parse class`` () =
+    let str = """class Main {
+   function void main() {
+      /* Prints some text using the standard library. */
+      do Output.printString("Hello world!");
+      do Output.println();      // New line
+      return;
+   }
+}
+"""
+    let expected = {
+        name = "Main"
+        variables = []
+        subroutines = [] 
+    }
+    match run pClass str with
+    | Success(c, _, _) -> Assert.Equal(expected, c)
+    | Failure(msg, _, _) -> Assert.Fail(msg)
