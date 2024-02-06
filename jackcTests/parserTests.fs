@@ -254,9 +254,8 @@ let ``Should parse class variable declarations`` s exp =
 let ``Should parse class`` () =
     let str = """class Main {
    function void main() {
-      /* Prints some text using the standard library. */
       do Output.printString("Hello world!");
-      do Output.println();      // New line
+      do Output.println();
       return;
    }
 }
@@ -264,7 +263,20 @@ let ``Should parse class`` () =
     let expected = {
         name = "Main"
         variables = []
-        subroutines = [] 
+        subroutines = [
+            {
+                name = "main"
+                subType = J_Function 
+                returnType = J_Void
+                parameters = []
+                variables = []
+                body = [
+                    J_Do (Some "Output", "printString", [J_Constant_String "Hello world!"])
+                    J_Do (Some "Output", "println", [])
+                    J_Return None
+                ] 
+            }            
+        ] 
     }
     match run pClass str with
     | Success(c, _, _) -> Assert.Equal(expected, c)

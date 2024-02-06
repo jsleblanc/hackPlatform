@@ -34,9 +34,9 @@ let pVarName_ws = pIdentifier_ws |>> function name -> JackVariableName name
 let pExpressionVariable = pVarName_ws |>> function v -> J_Variable v
 let pExpressionConstantInt = pint16 .>> ws |>> function i -> J_Constant_Int i
 let pExpressionConstantString = between (str "\"") (str "\"") (manySatisfy (fun c -> c <> '"')) .>> ws |>> function s -> J_Constant_String s
-let pExpressionConstantBoolean = choiceL [ (stringReturn_ws "true" (J_Constant_Boolean true)); (stringReturn_ws "false" (J_Constant_Boolean false)) ] "boolean"
-let pExpressionConstantNull = stringReturn_ws "null" J_Constant_Null
-let pExpressionConstantThis = stringReturn_ws "this" J_Constant_This
+let pExpressionConstantBoolean = choiceL [ (stringReturn_ws "true" (J_Constant_Boolean true)); (stringReturn_ws "false" (J_Constant_Boolean false)) ] "boolean" .>> ws
+let pExpressionConstantNull = stringReturn_ws "null" J_Constant_Null .>> ws
+let pExpressionConstantThis = stringReturn_ws "this" J_Constant_This .>> ws
 
 let pExpressionImpl, pExpressionRef = createParserForwardedToRef()
 
@@ -45,8 +45,8 @@ let pcp = skipChar_ws ')' //parser skip close parenthesis
 let pob = skipChar_ws '['
 let pcb = skipChar_ws ']'
 
-let pExpressionArrayIndexer = pVarName .>>. (between pob pcb pExpressionImpl) |>> function n,e -> J_Array_Index (n, e)
-let pExpressionList = between pop pcp (sepBy pExpressionImpl (str_ws ","))
+let pExpressionArrayIndexer = pVarName .>>. (between pob pcb pExpressionImpl) .>> ws |>> function n,e -> J_Array_Index (n, e)
+let pExpressionList = between pop pcp (sepBy pExpressionImpl (str_ws ",")) .>> ws
 let pExpressionSubroutineLocalCall = pSubroutineName .>>. pExpressionList |>> function n,p -> J_Subroutine_Call (None, n, p)
 let pExpressionSubroutineScopedCall = pSubroutineScope .>>. pSubroutineName .>>. pExpressionList |>> function (s,n),p -> J_Subroutine_Call (Some s, n, p)
 
@@ -99,12 +99,12 @@ let pcc = skipChar_ws '}'
 
 let pStatementReturn = str_ws "return" >>. (opt pExpressionImpl) .>> str_ws ";" |>> function e -> J_Return e
 let pStatementLet = (str_ws "let" >>. pExpressionImpl) .>> str_ws ";" |>> function e -> J_Let e
-let pStatementBlock = between poc pcc (many pStatementImpl)
+let pStatementBlock = between poc pcc (many pStatementImpl) .>> ws
 let pStatementWhile = (str_ws "while" >>. pExpressionImpl) .>>. pStatementBlock |>> function e,s -> J_While (e,s)
 let pStatementIfElse = (str_ws "if") >>. pExpressionImpl .>>. pStatementBlock .>>. ((str_ws "else") >>. pStatementBlock) |>> function (c,sl),esl -> J_If_Else (c,sl, esl)
 let pStatementIf = (str_ws "if") >>. pExpressionImpl .>>. pStatementBlock |>> function c,sl -> J_If_Else (c,sl,[])
 let pStatementDoLocalSubroutineCall = (str_ws "do") >>. pSubroutineName .>>. pExpressionList .>> (str_ws ";") |>> function n,es -> J_Do (None, n, es)
-let pStatementDoScopedSubroutineCall = (str_ws "do") >>. pSubroutineScope .>>. pSubroutineName .>>. pExpressionList |>> function (s,n),es -> J_Do (Some s, n, es)
+let pStatementDoScopedSubroutineCall = (str_ws "do") >>. pSubroutineScope .>>. pSubroutineName .>>. pExpressionList .>> (str_ws ";") |>> function (s,n),es -> J_Do (Some s, n, es)
 
 let pStatementPrimary =
     choiceL [
@@ -159,7 +159,7 @@ let pSubroutineVariableDeclaration =
     .>> str_ws ";"
     |>> function jt,names -> names |> List.map (fun n -> (jt,n))
 
-let pSubroutineBody = between poc pcc ((many pSubroutineVariableDeclaration) .>>. (many pStatementImpl)) |>> function v,s -> (List.collect id v, s)
+let pSubroutineBody = between poc pcc ((many pSubroutineVariableDeclaration) .>>. (many pStatementImpl)) .>> ws |>> function v,s -> (List.collect id v, s)
 
 let pSubroutineDeclaration =
     pipe5 pSubroutineType pSubroutineReturnType pSubroutineName pParameterList pSubroutineBody (fun a b c d (vars,statements) -> {subType = a; returnType = b; name = c; parameters = d; variables = vars; body = statements; })
