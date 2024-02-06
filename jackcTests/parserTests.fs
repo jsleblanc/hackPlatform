@@ -146,7 +146,6 @@ let ``Should parse subroutine variable declarations`` s (exp: (JackTypes * JackV
         Assert.Equal(n1,n2)
     match run pSubroutineVariableDeclaration s with
     | Success(jc, _, _) -> List.map2 cmp exp jc |> ignore
-    | Success _ -> Assert.Fail("Should have parsed as class variable declaration")
     | Failure(msg, _, _) -> Assert.Fail(msg)
         
         
@@ -178,7 +177,6 @@ type JackSubroutineDeclarationTestCases() =
 let ``Should parse subroutine declaration`` s exp =
     match run pSubroutineDeclaration s with
     | Success(js, _, _) -> Assert.Equal(exp, js)
-    | Success _ -> Assert.Fail("Should parse as subroutine declaration")
     | Failure(msg, _, _) -> Assert.Fail(msg)
     
     
@@ -245,7 +243,6 @@ let ``Should parse class variable declarations`` s exp =
         Assert.Equal(n1,n2)
     match run pClassVariableDeclaration s with
     | Success(jc, _, _) -> List.map2 cmp exp jc |> ignore
-    | Success _ -> Assert.Fail("Should have parsed as class variable declaration")
     | Failure(msg, _, _) -> Assert.Fail(msg)
     
 [<Fact>]
