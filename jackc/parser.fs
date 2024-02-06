@@ -1,12 +1,7 @@
 module jackc.parser
 
-open System
 open FParsec
 open jackc.types
-
-type ParseResult =
-    | Code of JackClass
-    | Comment
 
 let ws = spaces // skips any whitespace
 let str s = pstring s
@@ -15,9 +10,29 @@ let stringReturn_ws s t = stringReturn s t .>> ws
 
 let skipChar_ws c = skipChar c .>> ws 
 
-let pCommentSingleLine = str "//" >>. ws >>. restOfLine true 
-let pCommentMultiLine = ((str "/*") <|> (str "/**")) >>. charsTillString "*/" true Int32.MaxValue .>> ws
-let pComment = choiceL [pCommentSingleLine; pCommentMultiLine] "comment" |>> function _ -> Comment
+/// Comment parsing help from https://stackoverflow.com/a/24073060/125882
+/// Type abbreviation for parsers without user state.
+type Parser<'a> = Parser<'a, Unit>
+
+/// Skips C-style multiline comment /*...*/ with arbitrary nesting depth.
+let (pCommentImpl : Parser<_>), pCommentRef = createParserForwardedToRef ()
+
+/// Skips any character not beginning of comment end marker */.
+let skipCommentChar : Parser<_> = 
+    notFollowedBy (skipString "*/") >>. skipAnyChar
+
+/// Skips anx mix of nested comments or comment characters.
+let commentContent : Parser<_> =
+    skipMany (choice [ pCommentImpl; skipCommentChar ])
+
+// Skips C-style multiline comment /*...*/ with arbitrary nesting depth.
+do pCommentRef :=
+       choiceL [                  
+           between (skipString "/*") (skipString "*/") commentContent
+           str "//" .>> ws >>. restOfLine true |>> function _ -> ()
+       ] "comment" .>> ws
+
+let pComment = optional (many pCommentImpl)
 
 let isIdStart c = isAsciiLetter c || c = '_'
 let isIdContinue c = isAsciiLetter c || isDigit c || c = '_'
@@ -115,13 +130,11 @@ let pStatementPrimary =
         pStatementIf
         attempt pStatementDoScopedSubroutineCall
         pStatementDoLocalSubroutineCall
-    ] "statement"
+    ] "statement" 
 
-do pStatementRef := pStatementPrimary
+do pStatementRef := pComment >>. pStatementPrimary .>> ws .>> pComment
 
 let pStatement = pStatementImpl
-
-
 
 
 
@@ -133,8 +146,6 @@ let pType =
         stringReturn "boolean" J_Boolean
         pClassName |>> function name -> J_Class name
     ] "type" .>> ws
-
-
 
 //Subroutines   
 let pParameterList = between (str_ws "(") (str_ws ")") (sepBy (pType .>>. pVarName_ws) (str_ws ","))
@@ -159,10 +170,10 @@ let pSubroutineVariableDeclaration =
     .>> str_ws ";"
     |>> function jt,names -> names |> List.map (fun n -> (jt,n))
 
-let pSubroutineBody = between poc pcc ((many pSubroutineVariableDeclaration) .>>. (many pStatementImpl)) .>> ws |>> function v,s -> (List.collect id v, s)
+let pSubroutineBody = pComment >>. between poc pcc ((many pSubroutineVariableDeclaration) .>>. (many pStatementImpl)) .>> ws |>> function v,s -> (List.collect id v, s)
 
 let pSubroutineDeclaration =
-    pipe5 pSubroutineType pSubroutineReturnType pSubroutineName pParameterList pSubroutineBody (fun a b c d (vars,statements) -> {subType = a; returnType = b; name = c; parameters = d; variables = vars; body = statements; })
+    pComment >>. pipe5 pSubroutineType pSubroutineReturnType pSubroutineName pParameterList pSubroutineBody (fun a b c d (vars,statements) -> {subType = a; returnType = b; name = c; parameters = d; variables = vars; body = statements; })
             
 //Classes
 let pClassVariableDeclaration =
@@ -172,12 +183,10 @@ let pClassVariableDeclaration =
     .>> str_ws ";"
     |>> function (scope, jt),names -> names |> List.map (fun n -> (scope,jt,n)) 
 
-let pClassBody = between poc pcc ((many pClassVariableDeclaration) .>>. (many1 pSubroutineDeclaration)) .>> ws |>> function v,s -> (List.collect id v, s)
-let pClass = (str_ws "class") >>. pClassName .>>. pClassBody |>> function n,(v,s) -> { name = n; variables = v; subroutines = s; }
-
-let pppppp s = run pClass s
+let pClassBody = pComment >>. between poc pcc ((many pClassVariableDeclaration) .>>. (many1 pSubroutineDeclaration)) .>> ws |>> function v,s -> (List.collect id v, s)
+let pClass = pComment >>. (str_ws "class") >>. pClassName .>>. pClassBody |>> function n,(v,s) -> { name = n; variables = v; subroutines = s; }
 
 
-let pInput = many pComment .>> eof
+let pInput = many pCommentImpl .>> eof
 
 let parseString str = run pInput str

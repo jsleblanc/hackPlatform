@@ -1,6 +1,5 @@
 module jackcTests.parserTests
 
-open System
 open FParsec.CharParsers
 open Xunit
 
@@ -14,8 +13,7 @@ open jackc.parser
 [<InlineData("/** api comment */")>]
 let ``Should parse comments`` s =
     match run pComment s with
-    | Success(Comment, _, _) -> Assert.True(true)
-    | Success _ -> Assert.Fail("Should have parsed as a comment")
+    | Success _ -> Assert.True(true)
     | Failure(msg, _, _) -> Assert.Fail(msg)
     
 type JackExpressionTestCases() =
@@ -281,3 +279,47 @@ let ``Should parse class`` () =
     match run pClass str with
     | Success(c, _, _) -> Assert.Equal(expected, c)
     | Failure(msg, _, _) -> Assert.Fail(msg)
+    
+[<Fact>]
+let ``Should parse class that includes comments in the code`` () =
+    let str = """/** Hello World program. */
+class Main {
+   /* comment */
+   function void main() {
+      var int x; //comment
+      /* Prints some text using the standard library. */
+      //second comment
+      do Output.printString("Hello world!"); /* comment */
+      do Output.println();      // New line
+      let x = 1; //comment
+      /*
+         comment block
+      */
+      return; /*comment*/
+   }
+}
+"""
+    let expected = {
+        name = "Main"
+        variables = []
+        subroutines = [
+            {
+                name = "main"
+                subType = J_Function 
+                returnType = J_Void
+                parameters = []
+                variables = [
+                    (J_Int, "x")
+                ]
+                body = [
+                    J_Do (Some "Output", "printString", [J_Constant_String "Hello world!"])
+                    J_Do (Some "Output", "println", [])
+                    J_Let (J_EQ (J_Variable "x", J_Constant_Int 1s))
+                    J_Return None
+                ] 
+            }            
+        ] 
+    }
+    match run pClass str with
+    | Success(c, _, _) -> Assert.Equal(expected, c)
+    | Failure(msg, _, _) -> Assert.Fail(msg)    
