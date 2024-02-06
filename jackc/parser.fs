@@ -99,13 +99,22 @@ let pcc = skipChar_ws '}'
 
 let pStatementReturn = str_ws "return" >>. (opt pExpressionImpl) .>> str_ws ";" |>> function e -> J_Return e
 let pStatementLet = (str_ws "let" >>. pExpressionImpl) .>> str_ws ";" |>> function e -> J_Let e
-let pStatementWhile = (str_ws "while" >>. pExpressionImpl) .>>. (between poc pcc (many pStatementImpl)) |>> function e,s -> J_While (e,s)
+let pStatementBlock = between poc pcc (many pStatementImpl)
+let pStatementWhile = (str_ws "while" >>. pExpressionImpl) .>>. pStatementBlock |>> function e,s -> J_While (e,s)
+let pStatementIfElse = (str_ws "if") >>. pExpressionImpl .>>. pStatementBlock .>>. ((str_ws "else") >>. pStatementBlock) |>> function (c,sl),esl -> J_If_Else (c,sl, esl)
+let pStatementIf = (str_ws "if") >>. pExpressionImpl .>>. pStatementBlock |>> function c,sl -> J_If_Else (c,sl,[])
+let pStatementDoLocalSubroutineCall = (str_ws "do") >>. pSubroutineName .>>. pExpressionList .>> (str_ws ";") |>> function n,es -> J_Do (None, n, es)
+let pStatementDoScopedSubroutineCall = (str_ws "do") >>. pSubroutineScope .>>. pSubroutineName .>>. pExpressionList |>> function (s,n),es -> J_Do (Some s, n, es)
 
 let pStatementPrimary =
     choiceL [
         pStatementReturn
         pStatementLet
         pStatementWhile
+        attempt pStatementIfElse
+        pStatementIf
+        attempt pStatementDoScopedSubroutineCall
+        pStatementDoLocalSubroutineCall
     ] "statement"
 
 do pStatementRef := pStatementPrimary

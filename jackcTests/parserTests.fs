@@ -176,6 +176,10 @@ type JackStatementTestCases() =
         [|"let x[1] = 2;"; J_Let (J_EQ (J_Array_Index ("x", J_Constant_Int 1s), J_Constant_Int 2s)) |]
         [|"while (1) {}"; J_While (J_Constant_Int 1s, [])|]
         [|"while (true) { let x=1; return 2;}"; J_While (J_Constant_Boolean true, [J_Let (J_EQ (J_Variable "x", J_Constant_Int 1s)); J_Return (Some (J_Constant_Int 2s))])|]
+        [|"if (true) {}"; J_If_Else ((J_Constant_Boolean true), [], [])|]
+        [|"if (true) { return 1; } else { return 2; }"; J_If_Else ((J_Constant_Boolean true), [J_Return (Some (J_Constant_Int 1s))], [J_Return (Some (J_Constant_Int 2s))])|]
+        [|"do foo();"; J_Do (None, "foo", [])|]
+        [|"do Bar.foo();"; J_Do (Some "Bar", "foo", [])|]
     ])
     
 [<Theory>]
@@ -183,4 +187,22 @@ type JackStatementTestCases() =
 let ``Should parse statement`` s exp =
     match run pStatement s with
     | Success(st, _, _) -> Assert.Equal(exp, st)
+    | Failure(msg, _, _) -> Assert.Fail(msg)
+    
+[<Fact>]
+let ``Should parse multiline if-else statement`` () =
+    let str = """if (true) {
+    let x = 1;
+    return x;
+} else {
+    let y = 2;
+    return y;
+}
+"""
+    match run pStatement str with
+    | Success(J_If_Else (c, msl, esl), _, _) ->
+        Assert.Equal(J_Constant_Boolean true, c)
+        Assert.Equal([|J_Let (J_EQ (J_Variable "x", J_Constant_Int 1s)); J_Return (Some (J_Variable "x"))|], msl)
+        Assert.Equal([|J_Let (J_EQ (J_Variable "y", J_Constant_Int 2s)); J_Return (Some (J_Variable "y"))|], esl)
+    | Success _ -> Assert.Fail("Should have parsed as if-else statement")
     | Failure(msg, _, _) -> Assert.Fail(msg)

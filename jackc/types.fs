@@ -38,7 +38,7 @@ type JackExpression =
 
 type JackStatement =
     | J_Let of JackExpression //enforce that only J_EQ is used later
-    | J_If of JackExpression * JackStatement list * JackStatement list option //if expression then statement list (else optional statement list)
+    | J_If_Else of JackExpression * JackStatement list * JackStatement list //if expression then statement list (else optional statement list)
     | J_While of JackExpression * JackStatement list
     | J_Do of JackSubroutineScope option * JackSubroutineName * JackExpression list
     | J_Return of JackExpression option
