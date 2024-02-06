@@ -10,6 +10,7 @@ type JackClassVariableScope =
     | J_Static
     | J_Field
 
+type JackClassName = string
 type JackVariableName = string
 type JackSubroutineName = string
 type JackSubroutineScope = string
@@ -37,7 +38,7 @@ type JackExpression =
 
 type JackStatement =
     | J_Let of JackExpression //enforce that only J_EQ is used later
-    | J_If_Else of JackExpression * JackStatement list * JackStatement list //if expression then statement list (else optional statement list)
+    | J_If_Else of JackExpression * JackStatement list * JackStatement list //if expression then statement list else statement list
     | J_While of JackExpression * JackStatement list
     | J_Do of JackSubroutineScope option * JackSubroutineName * JackExpression list
     | J_Return of JackExpression option
@@ -62,6 +63,12 @@ type JackSubroutine = {
     parameters: JackSubroutineVariable list
     variables: JackSubroutineVariable list
     body: JackStatement list
+}
+
+type JackClass = {
+    name: JackClassName
+    variables: JackClassVariable list
+    subroutines: JackSubroutine list
 }
     
 type JackLang =

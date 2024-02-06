@@ -134,19 +134,6 @@ let pType =
         pClassName |>> function name -> J_Class name
     ] "type" .>> ws
 
-let pClassVariableDeclaration =
-    ((stringReturn_ws "static" J_Static) <|> (stringReturn_ws "field" J_Field))
-    .>>. pType
-    .>>. (sepBy1 pVarName_ws (str_ws ","))
-    .>> str_ws ";"
-    |>> function (scope, jt),names -> J_ClassVariableDeclaration (scope, jt, names)
-
-let pLocalVariableDeclaration =
-    (str_ws "var")
-    >>. pType
-    .>>. (sepBy1 pVarName_ws (str_ws ","))
-    .>> str_ws ";"
-    |>> function jt,names -> J_LocalVariableDeclaration (jt, names)    
 
 
 //Subroutines   
@@ -177,8 +164,13 @@ let pSubroutineBody = between poc pcc ((many pSubroutineVariableDeclaration) .>>
 let pSubroutineDeclaration =
     pipe5 pSubroutineType pSubroutineReturnType pSubroutineName pParameterList pSubroutineBody (fun a b c d (vars,statements) -> {subType = a; returnType = b; name = c; parameters = d; variables = vars; body = statements; })
             
-
-
+//Classes
+let pClassVariableDeclaration =
+    ((stringReturn_ws "static" J_Static) <|> (stringReturn_ws "field" J_Field))
+    .>>. pType
+    .>>. (sepBy1 pVarName_ws (str_ws ","))
+    .>> str_ws ";"
+    |>> function (scope, jt),names -> J_ClassVariableDeclaration (scope, jt, names)
 
 
 
