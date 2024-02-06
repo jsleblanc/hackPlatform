@@ -112,12 +112,12 @@ let pStatementImpl, pStatementRef = createParserForwardedToRef()
 let poc = skipChar_ws '{'
 let pcc = skipChar_ws '}'
 
-let pStatementReturn = str_ws "return" >>. (opt pExpressionImpl) .>> str_ws ";" |>> function e -> J_Return e
-let pStatementLet = (str_ws "let" >>. pExpressionImpl) .>> str_ws ";" |>> function e -> J_Let e
+let pStatementReturn = str_ws "return" >>. (opt pExpression) .>> str_ws ";" |>> function e -> J_Return e
+let pStatementLet = (str_ws "let" >>. pExpression) .>> str_ws ";" |>> function e -> J_Let e
 let pStatementBlock = between poc pcc (many pStatementImpl) .>> ws
-let pStatementWhile = (str_ws "while" >>. pExpressionImpl) .>>. pStatementBlock |>> function e,s -> J_While (e,s)
-let pStatementIfElse = (str_ws "if") >>. pExpressionImpl .>>. pStatementBlock .>>. ((str_ws "else") >>. pStatementBlock) |>> function (c,sl),esl -> J_If_Else (c,sl, esl)
-let pStatementIf = (str_ws "if") >>. pExpressionImpl .>>. pStatementBlock |>> function c,sl -> J_If_Else (c,sl,[])
+let pStatementWhile = (str_ws "while" >>. pExpression) .>>. pStatementBlock |>> function e,s -> J_While (e,s)
+let pStatementIfElse = (str_ws "if") >>. pExpression .>>. pStatementBlock .>>. ((str_ws "else") >>. pStatementBlock) |>> function (c,sl),esl -> J_If_Else (c,sl, esl)
+let pStatementIf = (str_ws "if") >>. pExpression .>>. pStatementBlock |>> function c,sl -> J_If_Else (c,sl,[])
 let pStatementDoLocalSubroutineCall = (str_ws "do") >>. pSubroutineName .>>. pExpressionList .>> (str_ws ";") |>> function n,es -> J_Do (None, n, es)
 let pStatementDoScopedSubroutineCall = (str_ws "do") >>. pSubroutineScope .>>. pSubroutineName .>>. pExpressionList .>> (str_ws ";") |>> function (s,n),es -> J_Do (Some s, n, es)
 
