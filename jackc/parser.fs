@@ -114,7 +114,7 @@ let pcc = skipChar_ws '}'
 
 let pStatementReturn = str_ws "return" >>. (opt pExpression) .>> str_ws ";" |>> function e -> J_Return e
 let pStatementLet = (str_ws "let" >>. pExpression) .>> str_ws ";" |>> function e -> J_Let e
-let pStatementBlock = between poc pcc (many pStatementImpl) .>> ws
+let pStatementBlock = between poc pcc (pComment >>. many pStatementImpl) .>> ws
 let pStatementWhile = (str_ws "while" >>. pExpression) .>>. pStatementBlock |>> function e,s -> J_While (e,s)
 let pStatementIfElse = (str_ws "if") >>. pExpression .>>. pStatementBlock .>>. ((str_ws "else") >>. pStatementBlock) |>> function (c,sl),esl -> J_If_Else (c,sl, esl)
 let pStatementIf = (str_ws "if") >>. pExpression .>>. pStatementBlock |>> function c,sl -> J_If_Else (c,sl,[])
@@ -164,27 +164,31 @@ let pSubroutineReturnType =
     ] "return type"
 
 let pSubroutineVariableDeclaration =
-    (str_ws "var")
+    pComment
+    >>. (str_ws "var")
     >>. pType
     .>>. (sepBy1 pVarName_ws (str_ws ","))
     .>> str_ws ";"
+    .>> pComment
     |>> function jt,names -> names |> List.map (fun n -> (jt,n))
 
-let pSubroutineBody = pComment >>. between poc pcc ((many pSubroutineVariableDeclaration) .>>. (many pStatementImpl)) .>> ws |>> function v,s -> (List.collect id v, s)
+let pSubroutineBody = pComment >>. between poc pcc ((pComment >>. many pSubroutineVariableDeclaration) .>>. (pComment >>. many pStatementImpl)) .>> ws |>> function v,s -> (List.collect id v, s)
 
 let pSubroutineDeclaration =
     pComment >>. pipe5 pSubroutineType pSubroutineReturnType pSubroutineName pParameterList pSubroutineBody (fun a b c d (vars,statements) -> {subType = a; returnType = b; name = c; parameters = d; variables = vars; body = statements; })
             
 //Classes
 let pClassVariableDeclaration =
-    ((stringReturn_ws "static" J_Static) <|> (stringReturn_ws "field" J_Field))
+    pComment
+    >>. ((stringReturn_ws "static" J_Static) <|> (stringReturn_ws "field" J_Field))
     .>>. pType
     .>>. (sepBy1 pVarName_ws (str_ws ","))
     .>> str_ws ";"
+    .>> pComment
     |>> function (scope, jt),names -> names |> List.map (fun n -> (scope,jt,n)) 
 
-let pClassBody = pComment >>. between poc pcc ((many pClassVariableDeclaration) .>>. (many1 pSubroutineDeclaration)) .>> ws |>> function v,s -> (List.collect id v, s)
-let pClass = pComment >>. (str_ws "class") >>. pClassName .>>. pClassBody |>> function n,(v,s) -> { name = n; variables = v; subroutines = s; }
+let pClassBody = pComment >>. between poc pcc ((pComment >>. many pClassVariableDeclaration) .>>. (many1 pSubroutineDeclaration)) .>> ws |>> function v,s -> (List.collect id v, s)
+let pClass = pComment >>. (str_ws "class") >>. pClassName .>>. pClassBody .>> ws |>> function n,(v,s) -> { name = n; variables = v; subroutines = s; }
 
 
 let pInput = ws >>. pClass .>> eof

@@ -290,6 +290,40 @@ let ``Should parse class`` () =
     | Failure(msg, _, _) -> Assert.Fail(msg)
 
 [<Fact>]
+let ``Should parse class with comment but no class variables`` () =
+    let str = """class Main {
+    
+    /* comment */
+   function void main() {
+      do Output.printString("Hello world!");
+      do Output.println();
+      return;
+   }
+}
+"""
+    let expected = {
+        name = "Main"
+        variables = []
+        subroutines = [
+            {
+                name = "main"
+                subType = J_Function 
+                returnType = J_Void
+                parameters = []
+                variables = []
+                body = [
+                    J_Do (Some "Output", "printString", [J_Constant_String "Hello world!"])
+                    J_Do (Some "Output", "println", [])
+                    J_Return None
+                ] 
+            }            
+        ] 
+    }
+    match run pClass str with
+    | Success(c, _, _) -> Assert.Equal(expected, c)
+    | Failure(msg, _, _) -> Assert.Fail(msg)
+
+[<Fact>]
 let ``Should parse class that includes comments (class parser only)`` () =
     let str = """/** Hello World program. */
 class Main {
@@ -310,6 +344,7 @@ class Main {
          comment block
       */
       return; /*comment*/
+      //comment
    }
    
    function void a() {
@@ -324,6 +359,14 @@ class Main {
       }
       else { //comment
       }
+   }
+   
+   /** Draws this square in its current (x,y) location */
+   method void draw() {
+      // Draws the square using the color black
+      do Screen.setColor(true);
+      do Screen.drawRectangle(x, y, x + size, y + size);
+      return;
    }   
 }
 """
@@ -351,8 +394,19 @@ class Main {
                 returnType = J_Void
                 parameters = []
                 variables = [(J_Boolean, "b")]
-                body = [J_If_Else (J_Variable "b", [], [])] }]
-             } 
+                body = [J_If_Else (J_Variable "b", [], [])] };
+              { name = "draw"
+                subType = J_Method
+                returnType = J_Void
+                parameters = []
+                variables = []
+                body =
+                 [J_Do (Some "Screen", "setColor", [J_Constant_Boolean true]);
+                  J_Do
+                    (Some "Screen", "drawRectangle",
+                     [J_Variable "x"; J_Variable "y";
+                      J_ADD (J_Variable "x", J_Variable "size");
+                      J_ADD (J_Variable "y", J_Variable "size")]); J_Return None] }] }
     match run pClass str with
     | Success(c, _, _) -> Assert.Equal(expected, c)
     | Failure(msg, _, _) -> Assert.Fail(msg)
@@ -387,7 +441,11 @@ class Ball {
 	    let bottomWall = AbottomWall - 6;  // -6 for ball size
         return this;
     }
+    
+    //comment
+    
 }
+
 """
     let expected =  {
         name = "Ball"
