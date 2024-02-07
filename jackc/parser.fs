@@ -175,7 +175,7 @@ let pSubroutineVariableDeclaration =
 let pSubroutineBody = pComment >>. between poc pcc ((pComment >>. many pSubroutineVariableDeclaration) .>>. (pComment >>. many pStatementImpl)) .>> ws |>> function v,s -> (List.collect id v, s)
 
 let pSubroutineDeclaration =
-    pComment >>. pipe5 pSubroutineType pSubroutineReturnType pSubroutineName pParameterList pSubroutineBody (fun a b c d (vars,statements) -> {subType = a; returnType = b; name = c; parameters = d; variables = vars; body = statements; })
+    pComment >>. pipe5 pSubroutineType pSubroutineReturnType pSubroutineName pParameterList pSubroutineBody (fun a b c d (vars,statements) -> {subType = a; returnType = b; name = c; parameters = d; variables = vars; body = statements; }) .>> pComment
             
 //Classes
 let pClassVariableDeclaration =
