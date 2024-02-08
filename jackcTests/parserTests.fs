@@ -117,6 +117,27 @@ let ``Should parse multiline if-else statement`` () =
     | Failure(msg, _, _) -> Assert.Fail(msg)
 
 [<Fact>]
+let ``Should parse nested if-else statement`` () =
+    let str = """if (a) {
+    if (b) {
+        return 1;
+    } else {
+        return 2;
+    }
+} else {
+    return 3;
+}
+"""
+    let expected =
+        J_If_Else(
+            J_Variable "a",
+            [ J_If_Else(J_Variable "b", [ J_Return(Some(J_Constant_Int 1s)) ], [ J_Return(Some(J_Constant_Int 2s)) ]) ],
+            [ J_Return(Some(J_Constant_Int 3s)) ])
+    match run pStatement str with
+    | Success(s, _, _) -> Assert.Equal(expected, s)
+    | Failure(msg, _, _) -> Assert.Fail(msg)
+    
+[<Fact>]
 let ``Should parse multi-line if-else statement with comments`` () =
     let str = """if (true) { //comment 1
         //comment 2
