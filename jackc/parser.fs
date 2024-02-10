@@ -41,7 +41,7 @@ let pIdentifier_ws = pIdentifier .>> ws
 
 let pClassName = pIdentifier_ws
 let pSubroutineName = pIdentifier |>> function name -> JackSubroutineName name
-let pSubroutineScope = pIdentifier .>> str "." |>> function s -> JackSubroutineScope s
+let pSubroutineScope = pIdentifier .>> str "." |>> function s -> JackSubroutineCallScope s
 let pVarName = pIdentifier |>> function name -> JackVariableName name
 let pVarName_ws = pIdentifier_ws |>> function name -> JackVariableName name
 

@@ -13,7 +13,7 @@ type JackClassVariableScope =
 type JackClassName = string
 type JackVariableName = string
 type JackSubroutineName = string
-type JackSubroutineScope = string
+type JackSubroutineCallScope = string
 
 type JackExpression =
     | J_ADD of JackExpression * JackExpression
@@ -34,13 +34,13 @@ type JackExpression =
     | J_Constant_This
     | J_Variable of JackVariableName
     | J_Array_Index of JackVariableName * JackExpression
-    | J_Subroutine_Call of JackSubroutineScope option * JackSubroutineName * JackExpression list
+    | J_Subroutine_Call of JackSubroutineCallScope option * JackSubroutineName * JackExpression list
 
 type JackStatement =
     | J_Let of JackExpression //enforce that only J_EQ is used later
     | J_If_Else of JackExpression * JackStatement list * JackStatement list //if expression then statement list else statement list
     | J_While of JackExpression * JackStatement list
-    | J_Do of JackSubroutineScope option * JackSubroutineName * JackExpression list
+    | J_Do of JackSubroutineCallScope option * JackSubroutineName * JackExpression list
     | J_Return of JackExpression option
 
 type JackSubroutineType =
