@@ -70,3 +70,8 @@ type JackClass = {
     variables: JackClassVariable list
     subroutines: JackSubroutine list
 }
+
+type CompiledCode = {
+    name: string
+    code: string
+}

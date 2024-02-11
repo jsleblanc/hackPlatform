@@ -7,12 +7,16 @@
 
     <ItemGroup>
         <Compile Include="types.fs" />
-        <Compile Include="parser.fs" />
         <Compile Include="validation.fs" />
+        <Compile Include="parser.fs" />
+        <Compile Include="codeGen.fs" />
+        <Compile Include="util.fs" />
+        <Compile Include="jackc.fs" />
         <Compile Include="Program.fs" />
     </ItemGroup>
 
     <ItemGroup>
+      <PackageReference Include="Argu" Version="6.1.5" />
       <PackageReference Include="FParsec" Version="1.1.1" />
       <PackageReference Update="FSharp.Core" Version="8.0.101" />
     </ItemGroup>

@@ -11,6 +11,9 @@ type ValidationResult<'a> =
     
 let error e = Invalid [e]
 
+let errorMsg ctx msg =
+    error { context = ctx; message = msg }
+
 let errors v =
     match v with
     | OK _ -> []
@@ -57,6 +60,7 @@ let emptyError = {
 }
 
 let (<*>) = apply
+let (>>=) = bind
     
 type ValidationBuilder() =
     member this.Bind(x, f) = bind f x
@@ -66,6 +70,7 @@ type ValidationBuilder() =
     member this.ReturnFrom(x) = OK x
     member this.Zero() = Invalid [emptyError]
     //member this.Combine(a,b) = this.Bind(a, fun()-> b)
+    member this.Traverse(vs) = fold vs
     member this.MergeSources(x, y) =
         match x,y with
         | OK ax, OK ay -> OK (ax,ay)
