@@ -44,6 +44,7 @@ type JackExpressionTestCases() =
         [|"1 + 2 * 3"; J_ADD (J_Constant_Int 1s, (J_MUL (J_Constant_Int 2s, J_Constant_Int 3s))) |]
         [|"(1 + (2 + 3))"; J_ADD (J_Constant_Int 1s, (J_ADD (J_Constant_Int 2s, J_Constant_Int 3s))) |]
         [|"(1 + (2 * 3))"; J_ADD (J_Constant_Int 1s, (J_MUL (J_Constant_Int 2s, J_Constant_Int 3s))) |]
+        [|"(5 + 3) * 2"; J_MUL (J_ADD (J_Constant_Int 5s, J_Constant_Int 3s), J_Constant_Int 2s) |]
         [|"A & B | C"; J_OR (J_AND (J_Variable "A", J_Variable "B"), J_Variable "C") |]
         [|"A&B|C"; J_OR (J_AND (J_Variable "A", J_Variable "B"), J_Variable "C") |]
         [|"A & (B | C)"; J_AND (J_Variable "A", J_OR (J_Variable "B", J_Variable "C")) |]

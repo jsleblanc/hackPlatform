@@ -12,6 +12,7 @@
         <Compile Include="util.fs" />
         <Compile Include="parserTests.fs" />
         <Compile Include="symbolTableTests.fs" />
+        <Compile Include="codeGenTests.fs" />
         <Compile Include="Program.fs"/>
     </ItemGroup>
 
