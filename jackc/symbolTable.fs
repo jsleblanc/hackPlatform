@@ -103,3 +103,5 @@ let symbolLookup table name =
     | Some e, _ -> Some e
     | None, Some e -> Some e
     | None, None -> None
+    
+let emptySymbolTable = symbolStateToTable initSymbolTableState
