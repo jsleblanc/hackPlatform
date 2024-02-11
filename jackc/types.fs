@@ -10,6 +10,10 @@ type JackClassVariableScope =
     | J_Static
     | J_Field
 
+type JackSubroutineVariableScope =
+    | J_Argument
+    | J_Local
+
 type JackClassName = string
 type JackVariableName = string
 type JackSubroutineName = string
@@ -53,7 +57,7 @@ type JackSubroutineReturnType =
     | J_Void
 
 type JackSubroutineBody = JackStatement list
-type JackSubroutineVariable = JackTypes * JackVariableName
+type JackSubroutineVariable = JackSubroutineVariableScope * JackTypes * JackVariableName
 type JackClassVariable = JackClassVariableScope * JackTypes * JackVariableName
 
 type JackSubroutine = {

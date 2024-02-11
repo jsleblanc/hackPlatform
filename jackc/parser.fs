@@ -148,7 +148,7 @@ let pType =
     ] "type" .>> ws
 
 //Subroutines   
-let pParameterList = between (str_ws "(") (str_ws ")") (sepBy (pType .>>. pVarName_ws) (str_ws ","))
+let pParameterList = between (str_ws "(") (str_ws ")") (sepBy (pType .>>. pVarName_ws |>> function jt,name -> (J_Argument,jt,name)) (str_ws ","))
 
 let pSubroutineType =
     choiceL [
@@ -170,7 +170,7 @@ let pSubroutineVariableDeclaration =
     .>>. (sepBy1 pVarName_ws (str_ws ","))
     .>> str_ws ";"
     .>> pComment
-    |>> function jt,names -> names |> List.map (fun n -> (jt,n))
+    |>> function jt,names -> names |> List.map (fun n -> (J_Local,jt,n))
 
 let pSubroutineBody = pComment >>. between poc pcc ((pComment >>. many pSubroutineVariableDeclaration) .>>. (pComment >>. many pStatementImpl)) .>> ws |>> function v,s -> (List.collect id v, s)
 

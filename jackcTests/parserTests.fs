@@ -174,9 +174,10 @@ type JackSubroutineVariableDeclarationTestCases() =
 [<Theory>]
 [<ClassData(typeof<JackSubroutineVariableDeclarationTestCases>)>]
 let ``Should parse subroutine variable declarations`` s (exp: (JackTypes * JackVariableName) list) =
-    let cmp (t1:JackTypes,n1:JackVariableName) (t2,n2) =
+    let cmp (t1:JackTypes,n1:JackVariableName) (s2,t2,n2) =
         Assert.Equal(t1,t2)
         Assert.Equal(n1,n2)
+        Assert.Equal(J_Local,s2)
     match run pSubroutineVariableDeclaration s with
     | Success(jc, _, _) -> List.map2 cmp exp jc |> ignore
     | Failure(msg, _, _) -> Assert.Fail(msg)
@@ -185,25 +186,25 @@ let ``Should parse subroutine variable declarations`` s (exp: (JackTypes * JackV
 type JackSubroutineDeclarationTestCases() =
     inherit ClassDataBase([
         [| "constructor myType new(int x, char y, boolean b) {}"
-           { name = "new"; subType = J_Constructor; returnType = J_ReturnType (J_Class "myType"); parameters = [(J_Int, "x");(J_Char, "y");(J_Boolean, "b")]; body = []; variables = []; } |]
+           { name = "new"; subType = J_Constructor; returnType = J_ReturnType (J_Class "myType"); parameters = [(J_Argument, J_Int, "x");(J_Argument, J_Char, "y");(J_Argument, J_Boolean, "b")]; body = []; variables = []; } |]
         [| "function myType fooFunc(int x, char y, boolean b) {}"
-           { name = "fooFunc"; subType = J_Function; returnType = J_ReturnType (J_Class "myType"); parameters = [(J_Int, "x");(J_Char, "y");(J_Boolean, "b")]; body = []; variables = []; } |]
+           { name = "fooFunc"; subType = J_Function; returnType = J_ReturnType (J_Class "myType"); parameters = [(J_Argument, J_Int, "x");(J_Argument, J_Char, "y");(J_Argument, J_Boolean, "b")]; body = []; variables = []; } |]
         [| "function int fooFunc(int x, char y, boolean b) {}"
-           { name = "fooFunc"; subType = J_Function; returnType = J_ReturnType J_Int; parameters = [(J_Int, "x");(J_Char, "y");(J_Boolean, "b")]; body = []; variables = []; } |]
+           { name = "fooFunc"; subType = J_Function; returnType = J_ReturnType J_Int; parameters = [(J_Argument, J_Int, "x");(J_Argument, J_Char, "y");(J_Argument, J_Boolean, "b")]; body = []; variables = []; } |]
         [| "function char fooFunc(int x, char y, boolean b) {}"
-           { name = "fooFunc"; subType = J_Function; returnType = J_ReturnType J_Char; parameters = [(J_Int, "x");(J_Char, "y");(J_Boolean, "b")]; body = []; variables = []; } |]
+           { name = "fooFunc"; subType = J_Function; returnType = J_ReturnType J_Char; parameters = [(J_Argument, J_Int, "x");(J_Argument, J_Char, "y");(J_Argument, J_Boolean, "b")]; body = []; variables = []; } |]
         [| "function boolean fooFunc(int x, char y, boolean b) {}"
-           { name = "fooFunc"; subType = J_Function; returnType = J_ReturnType J_Boolean; parameters = [(J_Int, "x");(J_Char, "y");(J_Boolean, "b")]; body = []; variables = []; } |]
+           { name = "fooFunc"; subType = J_Function; returnType = J_ReturnType J_Boolean; parameters = [(J_Argument, J_Int, "x");(J_Argument, J_Char, "y");(J_Argument, J_Boolean, "b")]; body = []; variables = []; } |]
         [| "method myType fooFunc(int x, char y, boolean b) {}"
-           { name = "fooFunc"; subType = J_Method; returnType = J_ReturnType (J_Class "myType"); parameters = [(J_Int, "x");(J_Char, "y");(J_Boolean, "b")]; body = []; variables = []; } |]
+           { name = "fooFunc"; subType = J_Method; returnType = J_ReturnType (J_Class "myType"); parameters = [(J_Argument,J_Int, "x");(J_Argument,J_Char, "y");(J_Argument,J_Boolean, "b")]; body = []; variables = []; } |]
         [| "method int fooFunc(int x, char y, boolean b) {}"
-           { name = "fooFunc"; subType = J_Method; returnType = J_ReturnType J_Int; parameters = [(J_Int, "x");(J_Char, "y");(J_Boolean, "b")]; body = []; variables = []; } |]
+           { name = "fooFunc"; subType = J_Method; returnType = J_ReturnType J_Int; parameters = [(J_Argument,J_Int, "x");(J_Argument,J_Char, "y");(J_Argument,J_Boolean, "b")]; body = []; variables = []; } |]
         [| "method char fooFunc(int x, char y, boolean b) {}"
-           { name = "fooFunc"; subType = J_Method; returnType = J_ReturnType J_Char; parameters = [(J_Int, "x");(J_Char, "y");(J_Boolean, "b")]; body = []; variables = []; } |]
+           { name = "fooFunc"; subType = J_Method; returnType = J_ReturnType J_Char; parameters = [(J_Argument,J_Int, "x");(J_Argument,J_Char, "y");(J_Argument,J_Boolean, "b")]; body = []; variables = []; } |]
         [| "method boolean fooFunc(int x, char y, boolean b) {}"
-           { name = "fooFunc"; subType = J_Method; returnType = J_ReturnType J_Boolean; parameters = [(J_Int, "x");(J_Char, "y");(J_Boolean, "b")]; body = []; variables = []; } |]
+           { name = "fooFunc"; subType = J_Method; returnType = J_ReturnType J_Boolean; parameters = [(J_Argument,J_Int, "x");(J_Argument,J_Char, "y");(J_Argument,J_Boolean, "b")]; body = []; variables = []; } |]
         [| "method void fooFunc(int x, char y, boolean b) {}"
-           { name = "fooFunc"; subType = J_Method; returnType = J_Void; parameters = [(J_Int, "x");(J_Char, "y");(J_Boolean, "b")]; body = []; variables = []; } |]    ])
+           { name = "fooFunc"; subType = J_Method; returnType = J_Void; parameters = [(J_Argument,J_Int, "x");(J_Argument,J_Char, "y");(J_Argument,J_Boolean, "b")]; body = []; variables = []; } |]    ])
     
 [<Theory>]
 [<ClassData(typeof<JackSubroutineDeclarationTestCases>)>]
@@ -227,14 +228,14 @@ let ``Should parse subroutine`` () =
         returnType = J_Void
         subType = J_Function
         parameters = [
-            (J_Int, "x")
-            (J_Char, "y")
+            (J_Argument, J_Int, "x")
+            (J_Argument, J_Char, "y")
         ]
         variables = [
-            (J_Int, "foo1")
-            (J_Int, "foo2")
-            (J_Boolean, "bar1")
-            (J_Boolean, "bar2")
+            (J_Local, J_Int, "foo1")
+            (J_Local, J_Int, "foo2")
+            (J_Local, J_Boolean, "bar1")
+            (J_Local, J_Boolean, "bar2")
         ]
         body = [
             (J_Do (None, "someFunc", []))
@@ -399,7 +400,7 @@ class Main {
                 subType = J_Function
                 returnType = J_Void
                 parameters = []
-                variables = [(J_Int, "x")]
+                variables = [(J_Local, J_Int, "x")]
                 body =
                  [J_Do (Some "Output", "printString", [J_Constant_String "Hello world!"]);
                   J_Do (Some "Output", "println", []);
@@ -408,13 +409,13 @@ class Main {
                 subType = J_Function
                 returnType = J_Void
                 parameters = []
-                variables = [(J_Boolean, "b")]
+                variables = [(J_Local, J_Boolean, "b")]
                 body = [J_If_Else (J_Variable "b", [], [])] };
               { name = "b"
                 subType = J_Function
                 returnType = J_Void
                 parameters = []
-                variables = [(J_Boolean, "b")]
+                variables = [(J_Local, J_Boolean, "b")]
                 body = [J_If_Else (J_Variable "b", [], [])] };
               { name = "draw"
                 subType = J_Method
@@ -482,7 +483,7 @@ class Ball {
             subType = J_Constructor
             returnType = J_ReturnType (J_Class "Ball")
             parameters = []
-            variables = [(J_Char, "key"); (J_Boolean, "exit")]
+            variables = [(J_Local, J_Char, "key"); (J_Local, J_Boolean, "exit")]
             body =
              [J_Let
                 (J_SUB
