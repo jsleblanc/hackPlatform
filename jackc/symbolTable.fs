@@ -105,3 +105,7 @@ let symbolLookup table name =
     | None, None -> None
     
 let emptySymbolTable = symbolStateToTable initSymbolTableState
+
+let buildSymbolTableFromEntries (entries:SymbolEntry list) =
+    let folder state var = { state with entries = state.entries @ [var] }
+    entries |> List.fold folder initSymbolTableState |> symbolStateToTable
