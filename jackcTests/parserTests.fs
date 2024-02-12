@@ -57,6 +57,9 @@ type JackExpressionTestCases() =
         [|"obj.foo()"; J_Subroutine_Call (Some "obj", "foo", [])|]
         [|"MyClass.foo(1,2,3)"; J_Subroutine_Call (Some "MyClass", "foo", [J_Constant_Int 1s; J_Constant_Int 2s; J_Constant_Int 3s;])|]
         [|"obj.foo(1,2,3)"; J_Subroutine_Call (Some "obj", "foo", [J_Constant_Int 1s; J_Constant_Int 2s; J_Constant_Int 3s;])|]
+        [|"(a + a_len)-1"; J_SUB (J_ADD (J_Variable "a", J_Variable "a_len"), J_Constant_Int 1s)|]
+        [|"(3 - 2) > (4 + 5)"; J_GT (J_SUB (J_Constant_Int 3s, J_Constant_Int 2s), J_ADD (J_Constant_Int 4s, J_Constant_Int 5s))|]
+        [|"3 - 2 > 4 + 5"; J_GT (J_SUB (J_Constant_Int 3s, J_Constant_Int 2s), J_ADD (J_Constant_Int 4s, J_Constant_Int 5s))|]
     ])
     
 [<Theory>]
@@ -90,6 +93,8 @@ type JackStatementTestCases() =
         [|"if (true) { return 1; } else { return 2; }"; J_If_Else ((J_Constant_Boolean true), [J_Return (Some (J_Constant_Int 1s))], [J_Return (Some (J_Constant_Int 2s))])|]
         [|"do foo();"; J_Do (None, "foo", [])|]
         [|"do Bar.foo();"; J_Do (Some "Bar", "foo", [])|]
+        [|"let a_high = (a + a_len)-1;"; J_Let (J_EQ (J_Variable "a_high", J_SUB (J_ADD (J_Variable "a", J_Variable "a_len"), J_Constant_Int 1s)))|]
+        [|"if ((3 - 2) > (4 + 5)) {}"; J_If_Else ((J_GT (J_SUB (J_Constant_Int 3s, J_Constant_Int 2s), J_ADD (J_Constant_Int 4s, J_Constant_Int 5s))), [], []) |]
     ])
     
 [<Theory>]
@@ -472,29 +477,26 @@ class Ball {
 """
     let expected =  {
         name = "Ball"
-        variables =         [
+        variables = [
           (J_Static, J_Class "Array", "charMaps")
           (J_Field, J_Int, "x")
           (J_Field, J_Int, "y")
           (J_Field, J_Int, "lengthx")
           (J_Field, J_Int, "lengthy")
-          ]
+        ]
         subroutines =
          [{ name = "new"
             subType = J_Constructor
             returnType = J_ReturnType (J_Class "Ball")
             parameters = []
             variables = [(J_Local, J_Char, "key"); (J_Local, J_Boolean, "exit")]
-            body =
-             [J_Let
-                (J_SUB
-                   (J_EQ (J_Variable "rightWall", J_Variable "ArightWall"),
-                    J_Constant_Int 6s));
-              J_Let
-                (J_SUB
-                   (J_EQ (J_Variable "bottomWall", J_Variable "AbottomWall"),
-                    J_Constant_Int 6s)); J_Return (Some J_Constant_This)] }]
-         }
+            body = [
+              J_Let (J_EQ (J_Variable "rightWall", J_SUB (J_Variable "ArightWall", J_Constant_Int 6s)));
+              J_Let (J_EQ (J_Variable "bottomWall", J_SUB (J_Variable "AbottomWall", J_Constant_Int 6s)))
+              J_Return (Some J_Constant_This)
+            ]
+         }]
+    }
     match run pInput str with
     | Success(c, _, _) -> Assert.Equal(expected, c)
     | Failure(msg, _, _) -> Assert.Fail(msg)
