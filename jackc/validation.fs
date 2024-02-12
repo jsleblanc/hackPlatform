@@ -77,6 +77,12 @@ type ValidationBuilder() =
         | Invalid ex, OK _ -> Invalid ex
         | OK _, Invalid ey -> Invalid ey
         | Invalid ex, Invalid ey -> Invalid (ex @ ey)
+    member this.MergeLists x y =
+        match x,y with
+        | OK xl, OK yl -> OK (xl @ yl)
+        | Invalid xe, Invalid ye -> Invalid (xe @ ye)
+        | Invalid xe, _ -> Invalid xe
+        | _, Invalid ye -> Invalid ye
     
                 
 let validation = ValidationBuilder()
