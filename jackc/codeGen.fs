@@ -4,6 +4,15 @@ open jackc.types
 open jackc.symbolTable
 open jackc.validation
 
+type StackDirection =
+    | Push
+    | Pop
+
+let stackDirectionCommand dir =
+    match dir with
+    | Push -> "push"
+    | Pop -> "pop"
+
 let compileConstantInt i = [$"push constant {i}"]
 
 let compileConstantBoolean b =
@@ -15,8 +24,19 @@ let compileConstantNull = ["push constant 0"]
 
 let compileConstantThis = ["push pointer 0"]
 
+let compileVariable dir context name symbolTable =
+    match symbolLookup symbolTable name with
+    | Some symbol ->
+        match symbol.segment with
+        | Argument i -> OK [$"{stackDirectionCommand dir} argument {i}"]
+        | This i -> OK [$"{stackDirectionCommand dir} this {i}"]
+        | Static i -> OK [$"{stackDirectionCommand dir} static {i}"]
+        | Local i -> OK [$"{stackDirectionCommand dir} local {i}"]
+    | None -> errorMsg context $"Could not resolve symbol \"{name}\""    
+
+let fold = List.fold validation.MergeLists (OK [])
+
 let rec compileExpression context expr symbolTable =
-    let fold = List.fold validation.MergeLists (OK [])
     match expr with
     | J_ADD(exprLeft, exprRight) ->
         let left = compileExpression context exprLeft symbolTable
@@ -65,18 +85,24 @@ let rec compileExpression context expr symbolTable =
     | J_Constant_Boolean b -> OK (compileConstantBoolean b)
     | J_Constant_Null -> OK compileConstantNull
     | J_Constant_This -> OK compileConstantThis
-    | J_Variable name ->
-        match symbolLookup symbolTable name with
-        | Some symbol ->
-            match symbol.segment with
-            | Argument i -> OK [$"push argument {i}"]
-            | This i -> OK [$"push this {i}"]
-            | Static i -> OK [$"push static {i}"]
-            | Local i -> OK [$"push local {i}"]
-        | None -> errorMsg context $"Could not resolve symbol \"{name}\""
+    | J_Variable name -> compileVariable Push context name symbolTable
     | J_Array_Index(name, expr) -> failwith "todo"
     | J_Subroutine_Call(scope, name, expr) -> failwith "todo"
     
+let rec compileStatement context statement symbolTable =
+    match statement with
+    | J_Let expr ->
+        match expr with
+        | J_EQ (J_Variable name, exprRight) ->
+            let variableAssignment = compileVariable Pop context name symbolTable
+            let valueToAssign = compileExpression context exprRight symbolTable
+            fold [valueToAssign; variableAssignment]
+        | J_EQ (J_Array_Index (name, indexExpr), exprRight) -> failwith "todo"
+        | _ -> errorMsg context $"Unsupported expression in \"let\" statement: {expr}"
+    | J_If_Else(condExpr, jackStatements, statements) -> failwith "todo"
+    | J_While(condExpr, jackStatements) -> failwith "todo"
+    | J_Do(scope, name, jackExpressions) -> failwith "todo"
+    | J_Return exprOption -> failwith "todo"
 
 let compileClass (c:JackClass) =
     let classSymbols = buildSymbolsForClass c

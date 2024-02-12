@@ -81,3 +81,24 @@ let ``Should fail to compile expression that references variable missing from sy
     | Invalid _ -> Assert.True(true)
     | _ -> Assert.Fail("Compiling expression should have failed due to missing symbol")
  
+[<Fact>]
+let ``Should compile let statement assigning value to variable`` () =
+    let statement = J_Let (J_EQ (J_Variable "x", J_Constant_Int 5s))
+    let symbolTable = buildSymbolTableFromEntries [
+        { name = "x"; scope = SubroutineScope; varType = J_Int; segment = Local 0 }
+    ]
+    let code = compileStatement "" statement symbolTable
+    let expected = OK ["push constant 5"; "pop local 0"]
+    Assert.Equal(expected, code)
+    
+[<Fact>]
+let ``Should compile let statement assigning expression to variable`` () =
+    let statement = J_Let (J_EQ (J_Variable "v", J_ADD (J_Variable "g", J_Variable "r2")))
+    let symbolTable = buildSymbolTableFromEntries [
+        { name = "v"; scope = SubroutineScope; varType = J_Int; segment = Local 1 }
+        { name = "g"; scope = ClassScope; varType = J_Int; segment = Static 0 }
+        { name = "r2"; scope = ClassScope; varType = J_Int; segment = This 1 }
+    ]
+    let code = compileStatement "" statement symbolTable
+    let expected = OK ["push static 0"; "push this 1"; "add"; "pop local 1"]
+    Assert.Equal(expected, code)
