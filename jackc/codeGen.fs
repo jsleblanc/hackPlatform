@@ -102,7 +102,12 @@ let rec compileStatement context statement symbolTable =
     | J_If_Else(condExpr, jackStatements, statements) -> failwith "todo"
     | J_While(condExpr, jackStatements) -> failwith "todo"
     | J_Do(scope, name, jackExpressions) -> failwith "todo"
-    | J_Return exprOption -> failwith "todo"
+    | J_Return exprOption ->
+        match exprOption with
+        | Some expr ->
+            let code = compileExpression context expr symbolTable
+            fold [code; OK ["return"]]
+        | None -> OK ["push constant 0"; "return"]
 
 let compileClass (c:JackClass) =
     let classSymbols = buildSymbolsForClass c

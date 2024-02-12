@@ -102,3 +102,17 @@ let ``Should compile let statement assigning expression to variable`` () =
     let code = compileStatement "" statement symbolTable
     let expected = OK ["push static 0"; "push this 1"; "add"; "pop local 1"]
     Assert.Equal(expected, code)
+    
+[<Fact>]
+let ``Should compile return statement that returns no value`` () =
+    let statement = J_Return None
+    let code = compileStatement "" statement emptySymbolTable
+    let expected = OK ["push constant 0"; "return"]
+    Assert.Equal(expected, code)
+    
+[<Fact>]
+let ``Should compile return statement that returns this`` () =
+    let statement = J_Return (Some J_Constant_This)
+    let code = compileStatement "" statement emptySymbolTable
+    let expected = OK ["push pointer 0"; "return"]
+    Assert.Equal(expected, code)    
