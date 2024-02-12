@@ -87,7 +87,7 @@ let ``Should compile let statement assigning value to variable`` () =
     let symbolTable = buildSymbolTableFromEntries [
         { name = "x"; scope = SubroutineScope; varType = J_Int; segment = Local 0 }
     ]
-    let code = compileStatement "" statement symbolTable
+    let code = compileStatement "" symbolTable statement
     let expected = OK ["push constant 5"; "pop local 0"]
     Assert.Equal(expected, code)
     
@@ -99,20 +99,20 @@ let ``Should compile let statement assigning expression to variable`` () =
         { name = "g"; scope = ClassScope; varType = J_Int; segment = Static 0 }
         { name = "r2"; scope = ClassScope; varType = J_Int; segment = This 1 }
     ]
-    let code = compileStatement "" statement symbolTable
+    let code = compileStatement "" symbolTable statement
     let expected = OK ["push static 0"; "push this 1"; "add"; "pop local 1"]
     Assert.Equal(expected, code)
     
 [<Fact>]
 let ``Should compile return statement that returns no value`` () =
     let statement = J_Return None
-    let code = compileStatement "" statement emptySymbolTable
+    let code = compileStatement "" emptySymbolTable statement
     let expected = OK ["push constant 0"; "return"]
     Assert.Equal(expected, code)
     
 [<Fact>]
 let ``Should compile return statement that returns this`` () =
     let statement = J_Return (Some J_Constant_This)
-    let code = compileStatement "" statement emptySymbolTable
+    let code = compileStatement "" emptySymbolTable statement
     let expected = OK ["push pointer 0"; "return"]
     Assert.Equal(expected, code)    
