@@ -11,19 +11,20 @@ type ParseResult =
 let ws = spaces // skips any whitespace
 
 let str s = pstring s
+let stringReturn_ws s t = stringReturn s t .>> ws
 
 let pComment = str "//" >>. ws >>. restOfLine true |>> function c -> Comment c
 
 //arithmetic commands
-let pA_add = str "add" .>> ws |>> function _ -> ADD
-let pA_sub = str "sub" .>> ws |>> function _ -> SUB
-let pA_neg = str "neg" .>> ws |>> function _ -> NEG
-let pA_eq = str "eq" .>> ws |>> function _ -> EQ
-let pA_GT = str "gt" .>> ws |>> function _ -> GT
-let pA_LT = str "lt" .>> ws |>> function _ -> LT
-let pA_and = str "and" .>> ws |>> function _ -> AND
-let pA_or = str "or" .>> ws |>> function _ -> OR
-let pA_not = str "not" .>> ws |>> function _ -> NOT
+let pA_add = stringReturn_ws "add" ADD
+let pA_sub = stringReturn_ws "sub" SUB
+let pA_neg = stringReturn_ws "neg" NEG
+let pA_eq = stringReturn_ws "eq" EQ
+let pA_GT = stringReturn_ws "gt" GT
+let pA_LT = stringReturn_ws "lt" LT
+let pA_and = stringReturn_ws "and" AND
+let pA_or = stringReturn_ws "or" OR
+let pA_not = stringReturn_ws "not" NOT
 
 let pArithmeticCommand =
     choiceL [
