@@ -9,56 +9,56 @@ open jackc.codeGen
 [<Fact>]
 let ``Should add two constants`` () =
     let expr = J_ADD (J_Constant_Int 1s, J_Constant_Int 2s)
-    let code = compileExpression "" expr emptySymbolTable
+    let code = compileExpression "" emptySymbolTable expr
     let expected = OK ["push constant 1"; "push constant 2"; "add"]
     Assert.Equal(expected, code)
     
 [<Fact>]
 let ``Should add three constants (left)`` () =
     let expr = J_ADD (J_ADD (J_Constant_Int 1s, J_Constant_Int 2s), J_Constant_Int 3s)
-    let code = compileExpression "" expr emptySymbolTable
+    let code = compileExpression "" emptySymbolTable expr
     let expected = OK ["push constant 1"; "push constant 2"; "add"; "push constant 3"; "add"]
     Assert.Equal(expected, code)
     
 [<Fact>]
 let ``Should add three constants (right)`` () =
     let expr = J_ADD (J_Constant_Int 3s, J_ADD (J_Constant_Int 1s, J_Constant_Int 2s))
-    let code = compileExpression "" expr emptySymbolTable
+    let code = compileExpression "" emptySymbolTable expr
     let expected = OK ["push constant 3"; "push constant 1"; "push constant 2"; "add"; "add"]
     Assert.Equal(expected, code)
     
 [<Fact>]
 let ``Should subtract two constants`` () =
     let expr = J_SUB (J_Constant_Int 3s, J_Constant_Int 2s)
-    let code = compileExpression "" expr emptySymbolTable
+    let code = compileExpression "" emptySymbolTable expr
     let expected = OK ["push constant 3"; "push constant 2"; "sub"]
     Assert.Equal(expected, code)
     
 [<Fact>]
 let ``Should subtract three constants (left)`` () =
     let expr = J_SUB (J_SUB (J_Constant_Int 3s, J_Constant_Int 2s), J_Constant_Int 1s)
-    let code = compileExpression "" expr emptySymbolTable
+    let code = compileExpression "" emptySymbolTable expr
     let expected = OK ["push constant 3"; "push constant 2"; "sub"; "push constant 1"; "sub"]
     Assert.Equal(expected, code)
     
 [<Fact>]
 let ``Should subtract three constants (right)`` () =
     let expr = J_SUB (J_Constant_Int 3s, J_SUB (J_Constant_Int 2s, J_Constant_Int 1s))
-    let code = compileExpression "" expr emptySymbolTable
+    let code = compileExpression "" emptySymbolTable expr
     let expected = OK ["push constant 3"; "push constant 2"; "push constant 1"; "sub"; "sub"]
     Assert.Equal(expected, code)
     
 [<Fact>]
 let ``Should give multiplication precedence in expression`` () =
     let expr = J_ADD (J_Constant_Int 5s, J_MUL (J_Constant_Int 3s, J_Constant_Int 2s)) //5 + 3 * 2
-    let code = compileExpression "" expr emptySymbolTable
+    let code = compileExpression "" emptySymbolTable expr
     let expected = OK ["push constant 5"; "push constant 3"; "push constant 2"; "call Math.multiply 2"; "add"]
     Assert.Equal(expected, code)
     
 [<Fact>]
 let ``Should give addition precedence in expression`` () =
     let expr = J_MUL (J_ADD (J_Constant_Int 5s, J_Constant_Int 3s), J_Constant_Int 2s) //(5 + 3) * 2
-    let code = compileExpression "" expr emptySymbolTable
+    let code = compileExpression "" emptySymbolTable expr
     let expected = OK ["push constant 5"; "push constant 3"; "add"; "push constant 2"; "call Math.multiply 2";]
     Assert.Equal(expected, code)
     
@@ -69,14 +69,14 @@ let ``Should add two local variable together`` () =
         { name = "x"; scope = SubroutineScope; varType = J_Int; segment = Local 0 }
         { name = "y"; scope = SubroutineScope; varType = J_Int; segment = Local 1 }
     ]
-    let code = compileExpression "" expr symbolTable
+    let code = compileExpression "" symbolTable expr
     let expected = OK ["push local 0"; "push local 1"; "add"]
     Assert.Equal(expected, code)
     
 [<Fact>]
 let ``Should fail to compile expression that references variable missing from symbol table`` () =
     let expr = J_ADD (J_Variable "x", J_Constant_Int 5s)
-    let code = compileExpression "" expr emptySymbolTable
+    let code = compileExpression "" emptySymbolTable expr
     match code with
     | Invalid _ -> Assert.True(true)
     | _ -> Assert.Fail("Compiling expression should have failed due to missing symbol")
@@ -115,4 +115,11 @@ let ``Should compile return statement that returns this`` () =
     let statement = J_Return (Some J_Constant_This)
     let code = compileStatement "" emptySymbolTable statement
     let expected = OK ["push pointer 0"; "return"]
-    Assert.Equal(expected, code)    
+    Assert.Equal(expected, code)
+    
+[<Fact>]
+let ``Should compile do statement making subroutine call`` () =
+    let statement = J_Do (Some "Output", "printInt", [J_Constant_Int 7s])
+    let code = compileStatement "" emptySymbolTable statement
+    let expected = OK ["push constant 7";"call Output.printInt 1";"pop temp 0"]
+    Assert.Equal(expected, code)

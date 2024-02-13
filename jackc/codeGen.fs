@@ -37,49 +37,49 @@ let compileVariable dir context name symbolTable =
 
 let fold = List.fold validation.MergeLists (OK [])
 
-let rec compileExpression context expr symbolTable =
+let rec compileExpression context symbolTable expr =
     match expr with
     | J_ADD(exprLeft, exprRight) ->
-        let left = compileExpression context exprLeft symbolTable
-        let right = compileExpression context exprRight symbolTable
+        let left = compileExpression context symbolTable exprLeft
+        let right = compileExpression context symbolTable exprRight
         fold [left; right; OK ["add"]]
     | J_SUB(exprLeft, exprRight) ->
-        let left = compileExpression context exprLeft symbolTable
-        let right = compileExpression context exprRight symbolTable
+        let left = compileExpression context symbolTable exprLeft
+        let right = compileExpression context symbolTable exprRight
         fold [left; right; OK ["sub"]]
     | J_MUL(exprLeft, exprRight) ->
-        let left = compileExpression context exprLeft symbolTable
-        let right = compileExpression context exprRight symbolTable
+        let left = compileExpression context symbolTable exprLeft
+        let right = compileExpression context symbolTable exprRight
         fold [left; right; OK ["call Math.multiply 2"]]
     | J_DIV(exprLeft, exprRight) ->
-        let left = compileExpression context exprLeft symbolTable
-        let right = compileExpression context exprRight symbolTable
+        let left = compileExpression context symbolTable exprLeft
+        let right = compileExpression context symbolTable exprRight
         fold [left; right; OK ["call Math.divide 2"]]
     | J_AND(exprLeft, exprRight) ->
-        let left = compileExpression context exprLeft symbolTable
-        let right = compileExpression context exprRight symbolTable
+        let left = compileExpression context symbolTable exprLeft
+        let right = compileExpression context symbolTable exprRight
         fold [left; right; OK ["and"]]
     | J_OR(exprLeft, exprRight) ->
-        let left = compileExpression context exprLeft symbolTable
-        let right = compileExpression context exprRight symbolTable
+        let left = compileExpression context symbolTable exprLeft
+        let right = compileExpression context symbolTable exprRight
         fold [left; right; OK ["or"]]
     | J_LT(exprLeft, exprRight) ->
-        let left = compileExpression context exprLeft symbolTable
-        let right = compileExpression context exprRight symbolTable
+        let left = compileExpression context symbolTable exprLeft
+        let right = compileExpression context symbolTable exprRight
         fold [left; right; OK ["lt"]]
     | J_GT(exprLeft, exprRight) ->
-        let left = compileExpression context exprLeft symbolTable
-        let right = compileExpression context exprRight symbolTable
+        let left = compileExpression context symbolTable exprLeft
+        let right = compileExpression context symbolTable exprRight
         fold [left; right; OK ["gt"]]
     | J_EQ(exprLeft, exprRight) ->
-        let left = compileExpression context exprLeft symbolTable
-        let right = compileExpression context exprRight symbolTable
+        let left = compileExpression context symbolTable exprLeft
+        let right = compileExpression context symbolTable exprRight
         fold [left; right; OK ["eq"]]
     | J_NEG expr ->
-        let code = compileExpression context expr symbolTable
+        let code = compileExpression context symbolTable expr
         fold [code; OK ["neg"]]
     | J_NOT expr ->
-        let code = compileExpression context expr symbolTable
+        let code = compileExpression context symbolTable expr
         fold [code; OK ["not"]]
     | J_Constant_Int i -> OK (compileConstantInt i)    
     | J_Constant_String str -> errorMsg context "todo"
@@ -96,17 +96,23 @@ let rec compileStatement context symbolTable statement =
         match expr with
         | J_EQ (J_Variable name, exprRight) ->
             let variableAssignment = compileVariable Pop context name symbolTable
-            let valueToAssign = compileExpression context exprRight symbolTable
+            let valueToAssign = compileExpression context symbolTable exprRight
             fold [valueToAssign; variableAssignment]
         | J_EQ (J_Array_Index (name, indexExpr), exprRight) -> errorMsg context "todo"
         | _ -> errorMsg context $"Unsupported expression in \"let\" statement: {expr}"
     | J_If_Else(condExpr, jackStatements, statements) -> errorMsg context "todo"
     | J_While(condExpr, jackStatements) -> errorMsg context "todo"
-    | J_Do(scope, name, jackExpressions) -> errorMsg context "todo"
+    | J_Do(scope, name, parameterExpressions) ->
+        let functionName =
+            match scope with
+            | Some s -> $"{s}.{name}"
+            | None -> name
+        let code = parameterExpressions |> List.map (compileExpression context symbolTable) |> fold
+        fold [code; OK [$"call {functionName} {parameterExpressions.Length}"; "pop temp 0"]]
     | J_Return exprOption ->
         match exprOption with
         | Some expr ->
-            let code = compileExpression context expr symbolTable
+            let code = compileExpression context symbolTable expr
             fold [code; OK ["return"]]
         | None -> OK ["push constant 0"; "return"]
 
