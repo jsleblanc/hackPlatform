@@ -3,6 +3,7 @@ module jackc.codeGen
 open jackc.types
 open jackc.symbolTable
 open jackc.validation
+open jackc.util
 
 type StackDirection =
     | Push
@@ -116,9 +117,8 @@ let compileSubroutine className symbols (s:JackSubroutine) =
 
 let compileClass (c:JackClass) =
     let classSymbols = buildSymbolsForClass c
-    let code = c.subroutines |> List.map (compileSubroutine c.name classSymbols) |> fold
-    match code with
-    //| OK s -> OK { name = c.name; code = "" }
+    let result = c.subroutines |> List.map (compileSubroutine c.name classSymbols) |> fold
+    match result with
+    //| OK code -> OK { name = c.name; code = combineStrings code }
     | OK _ -> errorMsg c.name "todo" 
     | Invalid e -> Invalid e
-    //errorMsg c.name "not implemented yet"

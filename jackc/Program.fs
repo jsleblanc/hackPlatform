@@ -25,18 +25,22 @@ let main argv =
     let inputPath = results.GetResult InputPath    
     printfn "Jack to Virtual Machine IL Compiler"
     printfn $"Processing {inputPath}"
-    let files = findInputFiles inputPath    
-    match files with
-    | [] ->
+    let files = findInputFiles inputPath
+    let outputPath = computeOutputPath inputPath
+    match files, outputPath with
+    | [], None ->
         printfn $"Error: specified path \"{inputPath}\" is not a .jack file or a directory containing .jack files"
         -1
-    | xs ->
+    | xs, Some output ->
         match compileFiles xs with
         | OK compiledCode ->
-            writeCompiledCodeToDisk compiledCode
+            writeCompiledCodeToDisk output compiledCode
             0
         | Invalid errors ->
             printfn $"Failed to compile due to errors ({errors.Length}):"
             printErrors errors
             -1
+    | _ ->
+        printfn $"Could not determine an output path from \"{inputPath}\""
+        -1
             
