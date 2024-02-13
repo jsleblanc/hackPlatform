@@ -45,66 +45,56 @@ let pSubroutineScope = pIdentifier .>> str "." |>> function s -> JackSubroutineC
 let pVarName = pIdentifier |>> function name -> JackVariableName name
 let pVarName_ws = pIdentifier_ws |>> function name -> JackVariableName name
 
-//Expressions
-let pExpressionVariable = pVarName_ws |>> function v -> J_Variable v
-let pExpressionConstantInt = pint16 .>> ws |>> function i -> J_Constant_Int i
-let pExpressionConstantString = between (str "\"") (str "\"") (manySatisfy (fun c -> c <> '"')) .>> ws |>> function s -> J_Constant_String s
-let pExpressionConstantBoolean = choiceL [ (stringReturn_ws "true" (J_Constant_Boolean true)); (stringReturn_ws "false" (J_Constant_Boolean false)) ] "boolean" .>> ws
-let pExpressionConstantNull = stringReturn_ws "null" J_Constant_Null .>> ws
-let pExpressionConstantThis = stringReturn_ws "this" J_Constant_This .>> ws
-
-let pExpressionImpl, pExpressionRef = createParserForwardedToRef()
-
 let pop = skipChar_ws '(' //parser skip open parenthesis
 let pcp = skipChar_ws ')' //parser skip close parenthesis
 let pob = skipChar_ws '['
 let pcb = skipChar_ws ']'
 
-let pExpressionArrayIndexer = pVarName .>>. (between pob pcb pExpressionImpl) .>> ws |>> function n,e -> J_Array_Index (n, e)
-let pExpressionList = between pop pcp (sepBy pExpressionImpl (str_ws ",")) .>> ws
-let pExpressionSubroutineLocalCall = pSubroutineName .>>. pExpressionList |>> function n,p -> J_Subroutine_Call (None, n, p)
-let pExpressionSubroutineScopedCall = pSubroutineScope .>>. pSubroutineName .>>. pExpressionList |>> function (s,n),p -> J_Subroutine_Call (Some s, n, p)
+//Terms and Expressions
+let opp = OperatorPrecedenceParser<JackExpression,unit,unit>()
+let expr = opp.ExpressionParser
 
-let curry f = fun x -> fun y -> f(x,y)
-let pExpressionPrimary =
+let pTermVariable = pVarName_ws |>> function v -> J_Variable v
+let pTermConstantInt = pint16 .>> ws |>> function i -> J_Constant_Int i
+let pTermConstantString = between (str "\"") (str "\"") (manySatisfy (fun c -> c <> '"')) .>> ws |>> function s -> J_Constant_String s
+let pTermConstantBoolean = choiceL [ (stringReturn_ws "true" (J_Constant_Boolean true)); (stringReturn_ws "false" (J_Constant_Boolean false)) ] "boolean" .>> ws
+let pTermConstantNull = stringReturn_ws "null" J_Constant_Null .>> ws
+let pTermConstantThis = stringReturn_ws "this" J_Constant_This .>> ws
+let pTermArrayIndexer = pVarName .>>. (between pob pcb expr) .>> ws |>> function n,e -> J_Array_Index (n, e)
+let pTermsList = between pop pcp (sepBy expr (str_ws ",")) .>> ws
+let pTermSubroutineLocalCall = pSubroutineName .>>. pTermsList |>> function n,p -> J_Subroutine_Call (None, n, p)
+let pTermSubroutineScopedCall = pSubroutineScope .>>. pSubroutineName .>>. pTermsList |>> function (s,n),p -> J_Subroutine_Call (Some s, n, p)
+
+let pTerms =
     choiceL [
-        pExpressionConstantInt
-        pExpressionConstantString
-        pExpressionConstantBoolean
-        pExpressionConstantNull
-        pExpressionConstantThis
-        attempt pExpressionSubroutineScopedCall
-        attempt pExpressionSubroutineLocalCall
-        attempt pExpressionArrayIndexer
-        pExpressionVariable
-        between pop pcp pExpressionImpl
-    ] "expression"
-let pExpressionUnaryNegate = skipChar_ws '-' >>. pExpressionPrimary |>> J_NEG
-let pExpressionUnaryNot = skipChar_ws '~' >>. pExpressionPrimary |>> J_NOT
-let pExpressionUnary = choice [ pExpressionUnaryNegate; pExpressionUnaryNot; pExpressionPrimary ]
-let pExpressionBinaryAdd = skipChar_ws '+' >>% (curry J_ADD)
-let pExpressionBinarySub = skipChar_ws '-' >>% (curry J_SUB)
-let pExpressionBinaryMul = skipChar_ws '*' >>% (curry J_MUL)
-let pExpressionBinaryDiv = skipChar_ws '/' >>% (curry J_DIV)
-let pExpressionBinaryAnd = skipChar_ws '&' >>% (curry J_AND)
-let pExpressionBinaryOr = skipChar_ws '|' >>% (curry J_OR)
-let pExpressionBinaryLt = skipChar_ws '<' >>% (curry J_LT)
-let pExpressionBinaryGt = skipChar_ws '>' >>% (curry J_GT)
-let pExpressionBinaryEq = skipChar_ws '=' >>% (curry J_EQ)
+        pTermConstantInt
+        pTermConstantString
+        pTermConstantBoolean
+        pTermConstantNull
+        pTermConstantThis
+        attempt pTermSubroutineScopedCall
+        attempt pTermSubroutineLocalCall
+        attempt pTermArrayIndexer
+        pTermVariable
+    ] "terms" .>> ws
 
-let pExpr1 = chainl1 pExpressionUnary pExpressionBinaryLt
-let pExpr2 = chainl1 pExpr1 pExpressionBinaryGt
-let pExpr3 = chainl1 pExpr2 pExpressionBinaryEq
-let pExpr4 = chainl1 pExpr3 pExpressionBinaryAnd
-let pExpr5 = chainl1 pExpr4 pExpressionBinaryOr
-let pExpr6 = chainl1 pExpr5 pExpressionBinaryMul
-let pExpr7 = chainl1 pExpr6 pExpressionBinaryDiv
-let pExpr8 = chainl1 pExpr7 pExpressionBinaryAdd
-let pExpr9 = chainl1 pExpr8 pExpressionBinarySub
+let term = between pop pcp expr <|> pTerms
+opp.TermParser <- term
 
-do pExpressionRef := pExpr9
-let pExpression = pExpressionImpl
+type Assoc = Associativity
+opp.AddOperator(PrefixOperator("-", ws, 5, true, J_NEG))
+opp.AddOperator(PrefixOperator("~", ws, 5, true, J_NOT))
+opp.AddOperator(InfixOperator("&", ws, 4, Assoc.Left, fun x y -> J_AND (x,y)))
+opp.AddOperator(InfixOperator("|", ws, 4, Assoc.Left, fun x y -> J_OR (x,y)))
+opp.AddOperator(InfixOperator("/", ws, 3, Assoc.Left, fun x y -> J_DIV (x,y)))
+opp.AddOperator(InfixOperator("*", ws, 3, Assoc.Left, fun x y -> J_MUL (x,y)))
+opp.AddOperator(InfixOperator("+", ws, 2, Assoc.Left, fun x y -> J_ADD (x,y)))
+opp.AddOperator(InfixOperator("-", ws, 2, Assoc.Left, fun x y -> J_SUB (x,y)))
+opp.AddOperator(InfixOperator("=", ws, 1, Assoc.None, fun x y -> J_EQ (x,y)))
+opp.AddOperator(InfixOperator("<", ws, 1, Assoc.Left, fun x y -> J_LT (x,y)))
+opp.AddOperator(InfixOperator(">", ws, 1, Assoc.Left, fun x y -> J_GT (x,y)))
 
+let pExpression = expr
 
 //Statements
 let pStatementImpl, pStatementRef = createParserForwardedToRef()
@@ -118,8 +108,8 @@ let pStatementBlock = between poc pcc (pComment >>. many pStatementImpl) .>> ws
 let pStatementWhile = (str_ws "while" >>. pExpression) .>>. pStatementBlock |>> function e,s -> J_While (e,s)
 let pStatementIfElse = (str_ws "if") >>. pExpression .>>. pStatementBlock .>>. ((str_ws "else") >>. pStatementBlock) |>> function (c,sl),esl -> J_If_Else (c,sl, esl)
 let pStatementIf = (str_ws "if") >>. pExpression .>>. pStatementBlock |>> function c,sl -> J_If_Else (c,sl,[])
-let pStatementDoLocalSubroutineCall = (str_ws "do") >>. pSubroutineName .>>. pExpressionList .>> (str_ws ";") |>> function n,es -> J_Do (None, n, es)
-let pStatementDoScopedSubroutineCall = (str_ws "do") >>. pSubroutineScope .>>. pSubroutineName .>>. pExpressionList .>> (str_ws ";") |>> function (s,n),es -> J_Do (Some s, n, es)
+let pStatementDoLocalSubroutineCall = (str_ws "do") >>. pSubroutineName .>>. pTermsList .>> (str_ws ";") |>> function n,es -> J_Do (None, n, es)
+let pStatementDoScopedSubroutineCall = (str_ws "do") >>. pSubroutineScope .>>. pSubroutineName .>>. pTermsList .>> (str_ws ";") |>> function (s,n),es -> J_Do (Some s, n, es)
 
 let pStatementPrimary =
     choiceL [
@@ -135,9 +125,6 @@ let pStatementPrimary =
 do pStatementRef := pComment >>. pStatementPrimary .>> ws .>> pComment
 
 let pStatement = pStatementImpl
-
-
-
 
 let pType =
     choiceL [
