@@ -1,9 +1,37 @@
 module jackc.codeGen
 
+open jackc.state
 open jackc.types
 open jackc.symbolTable
 open jackc.validation
 open jackc.util
+
+type SymbolTable = Map<string * VariableScope,SymbolEntry>
+
+type CompilationState = {
+    context: string
+    labelCounter: int
+    classSymbols: SymbolTableState
+    subroutineSymbolTable: SymbolTable 
+}
+
+let emptyCompilationState = {
+    context = ""
+    labelCounter = 1
+    classSymbols = initSymbolTableState
+    subroutineSymbolTable = emptySymbolTable 
+}
+
+let setContext ctx = Stateful (fun state -> (), { state with context = ctx })
+let getContext = Stateful (fun state -> state.context, state)
+let incLabelCounter = Stateful (fun state -> state.labelCounter, { state with labelCounter = state.labelCounter + 1 })
+let setClassSymbols c = Stateful (fun state -> (), { state with classSymbols = c })
+let getClassSymbols = Stateful (fun state -> state.classSymbols, state)
+let setSubroutineSymbolTable t = Stateful (fun state -> (), { state with subroutineSymbolTable = t })
+let getSubroutineSymbolTable = Stateful (fun state -> state.subroutineSymbolTable, state)
+let initStateWithSymbolTable t = { emptyCompilationState with subroutineSymbolTable = t }
+
+
 
 type StackDirection =
     | Push
@@ -37,93 +65,122 @@ let compileVariable dir context name symbolTable =
 
 let fold = List.fold validation.MergeLists (OK [])
 
-let rec compileExpression context symbolTable expr =
-    match expr with
-    | J_ADD(exprLeft, exprRight) ->
-        let left = compileExpression context symbolTable exprLeft
-        let right = compileExpression context symbolTable exprRight
-        fold [left; right; OK ["add"]]
-    | J_SUB(exprLeft, exprRight) ->
-        let left = compileExpression context symbolTable exprLeft
-        let right = compileExpression context symbolTable exprRight
-        fold [left; right; OK ["sub"]]
-    | J_MUL(exprLeft, exprRight) ->
-        let left = compileExpression context symbolTable exprLeft
-        let right = compileExpression context symbolTable exprRight
-        fold [left; right; OK ["call Math.multiply 2"]]
-    | J_DIV(exprLeft, exprRight) ->
-        let left = compileExpression context symbolTable exprLeft
-        let right = compileExpression context symbolTable exprRight
-        fold [left; right; OK ["call Math.divide 2"]]
-    | J_AND(exprLeft, exprRight) ->
-        let left = compileExpression context symbolTable exprLeft
-        let right = compileExpression context symbolTable exprRight
-        fold [left; right; OK ["and"]]
-    | J_OR(exprLeft, exprRight) ->
-        let left = compileExpression context symbolTable exprLeft
-        let right = compileExpression context symbolTable exprRight
-        fold [left; right; OK ["or"]]
-    | J_LT(exprLeft, exprRight) ->
-        let left = compileExpression context symbolTable exprLeft
-        let right = compileExpression context symbolTable exprRight
-        fold [left; right; OK ["lt"]]
-    | J_GT(exprLeft, exprRight) ->
-        let left = compileExpression context symbolTable exprLeft
-        let right = compileExpression context symbolTable exprRight
-        fold [left; right; OK ["gt"]]
-    | J_EQ(exprLeft, exprRight) ->
-        let left = compileExpression context symbolTable exprLeft
-        let right = compileExpression context symbolTable exprRight
-        fold [left; right; OK ["eq"]]
-    | J_NEG expr ->
-        let code = compileExpression context symbolTable expr
-        fold [code; OK ["neg"]]
-    | J_NOT expr ->
-        let code = compileExpression context symbolTable expr
-        fold [code; OK ["not"]]
-    | J_Constant_Int i -> OK (compileConstantInt i)    
-    | J_Constant_String str -> errorMsg context "todo"
-    | J_Constant_Boolean b -> OK (compileConstantBoolean b)
-    | J_Constant_Null -> OK compileConstantNull
-    | J_Constant_This -> OK compileConstantThis
-    | J_Variable name -> compileVariable Push context name symbolTable
-    | J_Array_Index(name, expr) -> errorMsg context "todo"
-    | J_Subroutine_Call(scope, name, expr) -> errorMsg context "todo"
-    
-let rec compileStatement context symbolTable statement =
-    match statement with
-    | J_Let expr ->
+let rec compileExpression expr =
+    state {
+        let! context = getContext
+        let! symbolTable = getSubroutineSymbolTable
         match expr with
-        | J_EQ (J_Variable name, exprRight) ->
-            let variableAssignment = compileVariable Pop context name symbolTable
-            let valueToAssign = compileExpression context symbolTable exprRight
-            fold [valueToAssign; variableAssignment]
-        | J_EQ (J_Array_Index (name, indexExpr), exprRight) -> errorMsg context "todo"
-        | _ -> errorMsg context $"Unsupported expression in \"let\" statement: {expr}"
-    | J_If_Else(condExpr, jackStatements, statements) -> errorMsg context "todo"
-    | J_While(condExpr, jackStatements) -> errorMsg context "todo"
-    | J_Do(scope, name, parameterExpressions) ->
-        let functionName =
-            match scope with
-            | Some s -> $"{s}.{name}"
-            | None -> name
-        let code = parameterExpressions |> List.map (compileExpression context symbolTable) |> fold
-        fold [code; OK [$"call {functionName} {parameterExpressions.Length}"; "pop temp 0"]]
-    | J_Return exprOption ->
-        match exprOption with
-        | Some expr ->
-            let code = compileExpression context symbolTable expr
-            fold [code; OK ["return"]]
-        | None -> OK ["push constant 0"; "return"]
+        | J_ADD(exprLeft, exprRight) ->
+            let! left = compileExpression exprLeft
+            let! right = compileExpression exprRight
+            return fold [left; right; OK ["add"]]
+        | J_SUB(exprLeft, exprRight) ->
+            let! left = compileExpression exprLeft
+            let! right = compileExpression exprRight
+            return fold [left; right; OK ["sub"]]
+        | J_MUL(exprLeft, exprRight) ->
+            let! left = compileExpression exprLeft
+            let! right = compileExpression exprRight
+            return fold [left; right; OK ["call Math.multiply 2"]]
+        | J_DIV(exprLeft, exprRight) ->
+            let! left = compileExpression exprLeft
+            let! right = compileExpression exprRight
+            return fold [left; right; OK ["call Math.divide 2"]]
+        | J_AND(exprLeft, exprRight) ->
+            let! left = compileExpression exprLeft
+            let! right = compileExpression exprRight
+            return fold [left; right; OK ["and"]]
+        | J_OR(exprLeft, exprRight) ->
+            let! left = compileExpression exprLeft
+            let! right = compileExpression exprRight
+            return fold [left; right; OK ["or"]]
+        | J_LT(exprLeft, exprRight) ->
+            let! left = compileExpression exprLeft
+            let! right = compileExpression exprRight
+            return fold [left; right; OK ["lt"]]
+        | J_GT(exprLeft, exprRight) ->
+            let! left = compileExpression exprLeft
+            let! right = compileExpression exprRight
+            return fold [left; right; OK ["gt"]]
+        | J_EQ(exprLeft, exprRight) ->
+            let! left = compileExpression exprLeft
+            let! right = compileExpression exprRight
+            return fold [left; right; OK ["eq"]]
+        | J_NEG expr ->
+            let! code = compileExpression expr
+            return fold [code; OK ["neg"]]
+        | J_NOT expr ->
+            let! code = compileExpression expr
+            return fold [code; OK ["not"]]
+        | J_Constant_Int i -> return OK (compileConstantInt i)    
+        | J_Constant_String str -> return errorMsg context "todo"
+        | J_Constant_Boolean b -> return OK (compileConstantBoolean b)
+        | J_Constant_Null -> return OK compileConstantNull
+        | J_Constant_This -> return OK compileConstantThis
+        | J_Variable name -> return compileVariable Push context name symbolTable
+        | J_Array_Index(name, expr) -> return errorMsg context "todo"
+        | J_Subroutine_Call(scope, name, expr) -> return errorMsg context "todo"        
+    }
+    
+let rec compileStatement statement =
+    state {
+        let! context = getContext
+        let! symbolTable = getSubroutineSymbolTable
+        match statement with
+        | J_Let expr ->
+            match expr with
+            | J_EQ (J_Variable name, exprRight) ->
+                let variableAssignment = compileVariable Pop context name symbolTable
+                let! valueToAssign = compileExpression exprRight
+                return fold [valueToAssign; variableAssignment]
+            | J_EQ (J_Array_Index (name, indexExpr), exprRight) -> return errorMsg context "todo"
+            | _ -> return errorMsg context $"Unsupported expression in \"let\" statement: {expr}"
+        | J_If_Else(condExpr, jackStatements, statements) -> return errorMsg context "todo"
+        | J_While(condExpr, jackStatements) -> return errorMsg context "todo"
+        | J_Do(scope, name, parameterExpressions) ->
+            (*
+            let functionName =
+                match scope with
+                | Some s -> $"{s}.{name}"
+                | None -> name
+            let! code = parameterExpressions |> List.map compileExpressionStateful |> fold
+            return fold [code; OK [$"call {functionName} {parameterExpressions.Length}"; "pop temp 0"]]
+            *)
+            return errorMsg context "todo"
+        | J_Return exprOption ->
+            match exprOption with
+            | Some expr ->
+                let! code = compileExpression expr
+                return fold [code; OK ["return"]]
+            | None -> return OK ["push constant 0"; "return"]        
+    }
 
-let compileSubroutine className symbols (s:JackSubroutine) =
-    let context = $"{className}.{s.name} ({s.subType})"
-    let symbolTable = buildSymbolsForSubroutine symbols s
-    s.body |> List.map (compileStatement context symbolTable) |> fold
+let compileSubroutine (s:JackSubroutine) =
+    state {
+        let! context = getContext
+        let! classSymbols = getClassSymbols
+        do! setContext $"{context}.{s.name}"
+        do! setSubroutineSymbolTable (buildSymbolsForSubroutine classSymbols s)
+        let! x = compileStatement s.body[0]
+        return x
+        (*
+        return! seq {
+            for statement in s.body do
+                yield! compileStatementState statement
+        } *)       
+    }
+
+let compileClassStateful (c:JackClass) =
+    state {
+        do! setContext c.name
+        do! setClassSymbols (buildSymbolsForClass c)
+        return! compileSubroutine c.subroutines[0]
+    }
 
 let compileClass (c:JackClass) =
-    let classSymbols = buildSymbolsForClass c
-    let result = c.subroutines |> List.map (compileSubroutine c.name classSymbols) |> fold
+    let result,state = run emptyCompilationState (compileClassStateful c)
+    //let classSymbols = buildSymbolsForClass c
+    //let result = c.subroutines |> List.map (compileSubroutine c.name classSymbols) |> fold
     match result with
     //| OK code -> OK { name = c.name; code = combineStrings code }
     | OK _ -> errorMsg c.name "todo" 
