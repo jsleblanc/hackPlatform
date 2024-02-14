@@ -124,3 +124,10 @@ let ``Should compile do statement making subroutine call`` () =
     let code,_ = run emptyCompilationState (compileStatement statement)
     let expected = OK ["push constant 7";"call Output.printInt 1";"pop temp 0"]
     Assert.Equal(expected, code)
+    
+[<Fact>]
+let ``Should compile do statement making subroutine call multiple arguments`` () =
+    let statement = J_Do (Some "Output", "printInt", [J_Constant_Int 7s; J_Constant_Int 5s])
+    let code,_ = run emptyCompilationState (compileStatement statement)
+    let expected = OK ["push constant 7";"push constant 5";"call Output.printInt 2";"pop temp 0"]
+    Assert.Equal(expected, code)    
