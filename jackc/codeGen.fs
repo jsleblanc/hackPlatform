@@ -35,6 +35,13 @@ let initStateWithSymbolTable t = { emptyCompilationState with subroutineSymbolTa
 let pushResult r = Stateful (fun state -> (), { state with results = state.results @ [r] })
 let getResults = Stateful (fun state -> state.results, state)
 
+let getNextLabel name =
+    state {
+        let! context = getContext
+        let! lc = incLabelCounter
+        return $"{context}.{name}${lc}"
+    }
+
 type StackDirection =
     | Push
     | Pop
@@ -164,7 +171,27 @@ and compileStatement statement =
                 return fold [valueToAssign; variableAssignment]
             | J_EQ (J_Array_Index (name, indexExpr), exprRight) -> return errorMsg context "todo"
             | _ -> return errorMsg context $"Unsupported expression in \"let\" statement: {expr}"
-        | J_If_Else(condExpr, conditionStatements, elseStatements) -> return errorMsg context "todo"
+        | J_If_Else(condExpr, conditionStatements, elseStatements) ->
+            let! conditionExpressionCode = compileExpression condExpr
+            let! conditionStatementsCode = compileStatements conditionStatements
+            let! label1 = getNextLabel "IF_ELSE"
+            match elseStatements with
+            | [] ->
+                return fold [
+                    conditionExpressionCode
+                    OK ["not";$"if-goto {label1}"]
+                    fold conditionStatementsCode
+                    OK [$"label {label1}"]]
+            | xs ->
+                let! label2 = getNextLabel "IF_ELSE"
+                let! elseStatementsCode = compileStatements xs            
+                return fold [
+                    conditionExpressionCode
+                    OK [ "not"; $"if-goto {label1}"]
+                    fold conditionStatementsCode
+                    OK [$"goto {label2}"; $"label {label1}"]
+                    fold elseStatementsCode
+                    OK [$"label {label2}"]]                
         | J_While(condExpr, statements) -> return errorMsg context "todo"
         | J_Do(scope, name, parameterExpressions) ->            
             let functionName =
@@ -209,8 +236,6 @@ let compileClassStateful (c:JackClass) =
 
 let compileClass (c:JackClass) =
     let result,state = run emptyCompilationState (compileClassStateful c)
-    //let classSymbols = buildSymbolsForClass c
-    //let result = c.subroutines |> List.map (compileSubroutine c.name classSymbols) |> fold
     match result with
     //| OK code -> OK { name = c.name; code = combineStrings code }
     | OK _ -> errorMsg c.name "todo" 

@@ -10,9 +10,6 @@ let map f s = Stateful(fun (state: 's) ->
     let x, state = run state s
     f x, state)
 
-/// 'state -> Stateful<'state, 'result> -> ('result * 'state)
-//let run state (Stateful f) = f state
-
 /// 'result -> Stateful<'state, 'result>
 let ret result =
     Stateful (fun state -> (result, state))
@@ -38,27 +35,5 @@ type StatefulBuilder() =
     member this.While (f, x) =
         if f () then this.Combine (x, this.While (f, x))
         else this.Zero ()    
-    (*
-    member this.While (guard, body : Stateful<_,_>) : Stateful<_,_> =
-        if guard () then
-            this.Bind (body, (fun () -> this.While (guard, body)))
-        else
-            this.Zero ()
-    member this.For (sequence : seq<_>, body : 'T -> Stateful<_,_>) =
-        sequence.GetEnumerator() |> (fun enum -> this.While(enum.MoveNext, this.Delay (fun () -> body enum.Current)))
-*)
-(*
-  member x.While(f, l) = if f() then l() @ (x.While(f, l)) else []
-
-
-    member inline this.For (sequence : seq<_>, body : 'T -> StateFunc<_,_>)
-        : StateFunc<'State, unit> =
-        this.Using (sequence.GetEnumerator (),
-            (fun enum ->
-                this.While (
-                    enum.MoveNext,
-                    this.Delay (fun () ->
-                        body enum.Current))))
-                        *)
 
 let state = StatefulBuilder()
