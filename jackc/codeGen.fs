@@ -173,8 +173,8 @@ and compileStatement statement =
             | _ -> return errorMsg context $"Unsupported expression in \"let\" statement: {expr}"
         | J_If_Else(condExpr, conditionStatements, elseStatements) ->
             let! conditionExpressionCode = compileExpression condExpr
-            let! conditionStatementsCode = compileStatements conditionStatements
             let! label1 = getNextLabel "IF_ELSE"
+            let! conditionStatementsCode = compileStatements conditionStatements
             match elseStatements with
             | [] ->
                 return fold [

@@ -133,7 +133,7 @@ let ``Should compile do statement making subroutine call multiple arguments`` ()
     Assert.Equal(expected, code)
     
 [<Fact>]
-let ``Should compile simple if-else statement`` () =
+let ``Should compile if-else statement`` () =
     let statement = J_If_Else (J_GT (J_Variable "u", J_Constant_Int 0s), [J_Let (J_EQ (J_Variable "v", J_Variable "g"))], [])
     let symbolTable = buildSymbolTableFromEntries [
         { name = "u"; scope = SubroutineScope; varType = J_Int; segment = Local 0 }
@@ -168,4 +168,47 @@ let ``Should compile if-else statement with else clause`` () =
             "label .IF_ELSE$2"
         ]
     Assert.Equal(expected, code)
-      
+
+[<Fact>]
+let ``Should compile if-else statement with nested if-else statements`` () =
+    let statement =
+        J_If_Else (J_EQ (J_Constant_Boolean true, J_Constant_Boolean false),
+                   [
+                       J_If_Else (J_EQ (J_Constant_Int 1s, J_Constant_Int 2s), [
+                          J_Do (None, "printInt", [J_Constant_Int 7s]) 
+                       ],[
+                          J_Do (None, "printInt", [J_Constant_Int 8s]) 
+                       ])
+                   ],
+                   [J_Do (None, "printInt", [J_Constant_Int 9s])])
+    let code,_ = run emptyCompilationState (compileStatement statement)
+    let expected =
+        OK [
+            "push constant 1"
+            "neg"
+            "push constant 0"
+            "eq"
+            "not"
+            "if-goto .IF_ELSE$1"
+            "push constant 1"
+            "push constant 2"
+            "eq"
+            "not"
+            "if-goto .IF_ELSE$2"
+            "push constant 7"            
+            "call printInt 1"
+            "pop temp 0"
+            "goto .IF_ELSE$3"
+            "label .IF_ELSE$2"
+            "push constant 8"
+            "call printInt 1"
+            "pop temp 0"
+            "label .IF_ELSE$3"
+            "goto .IF_ELSE$4"
+            "label .IF_ELSE$1"
+            "push constant 9"
+            "call printInt 1"
+            "pop temp 0"
+            "label .IF_ELSE$4"
+        ]
+    Assert.Equal(expected, code)     
