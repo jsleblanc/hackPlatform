@@ -30,8 +30,8 @@ type StatefulBuilder() =
     member _.Delay(f) = f ()
     member this.For (seq, f: 'a -> Stateful<'s, 'b>) =
         seq
-        |> List.map f
-        |> List.reduceBack (fun x1 x2 -> this.Combine (x1, x2))
+        |> Seq.map f
+        |> Seq.reduceBack (fun x1 x2 -> this.Combine (x1, x2))
     member this.While (f, x) =
         if f () then this.Combine (x, this.While (f, x))
         else this.Zero ()    

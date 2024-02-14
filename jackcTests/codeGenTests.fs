@@ -211,4 +211,18 @@ let ``Should compile if-else statement with nested if-else statements`` () =
             "pop temp 0"
             "label .IF_ELSE$4"
         ]
-    Assert.Equal(expected, code)     
+    Assert.Equal(expected, code)
+    
+[<Fact>]
+let ``Should compile subroutine with empty body`` () =
+    let subroutine = {
+        name = "foo"
+        subType = J_Method
+        returnType = J_Void
+        parameters = []
+        variables = []
+        body = [] 
+    }
+    let code,_ = run emptyCompilationState (compileSubroutine subroutine)
+    let expected = OK []
+    Assert.Equal(expected, code)
