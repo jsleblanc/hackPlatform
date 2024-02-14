@@ -215,9 +215,10 @@ let compileSubroutine (s:JackSubroutine) =
         do! setContext $"{context}.{s.name}"
         do! setSubroutineSymbolTable (buildSymbolsForSubroutine classSymbols s)
         
-        for statement in s.body do
-            let! code = compileStatement statement
-            do! pushResult code
+        if not (List.isEmpty s.body) then
+            for statement in s.body do
+                let! code = compileStatement statement
+                do! pushResult code
         
         let! results = getResults
         return (fold results)
@@ -226,10 +227,11 @@ let compileSubroutine (s:JackSubroutine) =
 let compileClassStateful (c:JackClass) =
     state {
         do! setClassSymbols (buildSymbolsForClass c)        
-        for subroutine in c.subroutines do
-            do! setContext c.name
-            let! code = compileSubroutine subroutine
-            do! pushResult code        
+        if not (List.isEmpty c.subroutines) then
+            for subroutine in c.subroutines do
+                do! setContext c.name
+                let! code = compileSubroutine subroutine
+                do! pushResult code        
         let! results = getResults
         return (fold results)
     }
