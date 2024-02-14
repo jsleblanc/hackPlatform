@@ -12,14 +12,16 @@ type CompilationState = {
     context: string
     labelCounter: int
     classSymbols: SymbolTableState
-    subroutineSymbolTable: SymbolTable 
+    subroutineSymbolTable: SymbolTable
+    results: ValidationResult<string list> list
 }
 
 let emptyCompilationState = {
     context = ""
     labelCounter = 1
     classSymbols = initSymbolTableState
-    subroutineSymbolTable = emptySymbolTable 
+    subroutineSymbolTable = emptySymbolTable
+    results = []
 }
 
 let setContext ctx = Stateful (fun state -> (), { state with context = ctx })
@@ -30,8 +32,8 @@ let getClassSymbols = Stateful (fun state -> state.classSymbols, state)
 let setSubroutineSymbolTable t = Stateful (fun state -> (), { state with subroutineSymbolTable = t })
 let getSubroutineSymbolTable = Stateful (fun state -> state.subroutineSymbolTable, state)
 let initStateWithSymbolTable t = { emptyCompilationState with subroutineSymbolTable = t }
-
-
+let pushResult r = Stateful (fun state -> (), { state with results = state.results @ [r] })
+let getResults = Stateful (fun state -> state.results, state)
 
 type StackDirection =
     | Push
@@ -121,8 +123,35 @@ let rec compileExpression expr =
         | J_Array_Index(name, expr) -> return errorMsg context "todo"
         | J_Subroutine_Call(scope, name, expr) -> return errorMsg context "todo"        
     }
-    
-let rec compileStatement statement =
+
+//This is to get around pushing intermediate results back into the state
+//I couldn't figure out any other way to have a stateful function (one that
+//needs access to my CompilationState type) process a list of items and return
+//the results from processing each item as one big list.
+//The only approaches I've had work so far are to push the results of each item
+//as its processed into the state object before processing the next one, or
+//this recursive non-sense below
+let rec compileExpressions expressions =
+    state {
+        match expressions with
+        | [] -> return []
+        | e::tail ->
+            let! code = compileExpression e
+            let! next = compileExpressions tail
+            return [code] @ next
+    }
+
+let rec compileStatements statements =
+    state {
+        match statements with
+        | [] -> return []
+        | s::tail ->
+            let! code = compileStatement s
+            let! next = compileStatements tail
+            return [code] @ next
+    }
+
+and compileStatement statement =
     state {
         let! context = getContext
         let! symbolTable = getSubroutineSymbolTable
@@ -135,18 +164,15 @@ let rec compileStatement statement =
                 return fold [valueToAssign; variableAssignment]
             | J_EQ (J_Array_Index (name, indexExpr), exprRight) -> return errorMsg context "todo"
             | _ -> return errorMsg context $"Unsupported expression in \"let\" statement: {expr}"
-        | J_If_Else(condExpr, jackStatements, statements) -> return errorMsg context "todo"
-        | J_While(condExpr, jackStatements) -> return errorMsg context "todo"
-        | J_Do(scope, name, parameterExpressions) ->
-            (*
+        | J_If_Else(condExpr, conditionStatements, elseStatements) -> return errorMsg context "todo"
+        | J_While(condExpr, statements) -> return errorMsg context "todo"
+        | J_Do(scope, name, parameterExpressions) ->            
             let functionName =
                 match scope with
                 | Some s -> $"{s}.{name}"
                 | None -> name
-            let! code = parameterExpressions |> List.map compileExpressionStateful |> fold
-            return fold [code; OK [$"call {functionName} {parameterExpressions.Length}"; "pop temp 0"]]
-            *)
-            return errorMsg context "todo"
+            let! code = compileExpressions parameterExpressions
+            return fold [fold code; OK [$"call {functionName} {parameterExpressions.Length}"; "pop temp 0"]]            
         | J_Return exprOption ->
             match exprOption with
             | Some expr ->
@@ -161,20 +187,24 @@ let compileSubroutine (s:JackSubroutine) =
         let! classSymbols = getClassSymbols
         do! setContext $"{context}.{s.name}"
         do! setSubroutineSymbolTable (buildSymbolsForSubroutine classSymbols s)
-        let! x = compileStatement s.body[0]
-        return x
-        (*
-        return! seq {
-            for statement in s.body do
-                yield! compileStatementState statement
-        } *)       
+        
+        for statement in s.body do
+            let! code = compileStatement statement
+            do! pushResult code
+        
+        let! results = getResults
+        return (fold results)
     }
 
 let compileClassStateful (c:JackClass) =
     state {
-        do! setContext c.name
-        do! setClassSymbols (buildSymbolsForClass c)
-        return! compileSubroutine c.subroutines[0]
+        do! setClassSymbols (buildSymbolsForClass c)        
+        for subroutine in c.subroutines do
+            do! setContext c.name
+            let! code = compileSubroutine subroutine
+            do! pushResult code        
+        let! results = getResults
+        return (fold results)
     }
 
 let compileClass (c:JackClass) =
