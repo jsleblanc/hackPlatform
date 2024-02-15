@@ -230,15 +230,20 @@ let compileSubroutine (s:JackSubroutine) =
         let! context = getContext
         let! classSymbols = getClassSymbols
         do! setContext $"{context}.{s.name}"
-        do! setSubroutineSymbolTable (buildSymbolsForSubroutine classSymbols s)
+        do! setSubroutineSymbolTable (buildSymbolsForSubroutine classSymbols s)        
+        let! statementsCode = compileStatements s.body
         
-        if not (List.isEmpty s.body) then
-            for statement in s.body do
-                let! code = compileStatement statement
-                do! pushResult code
+        let initCode =
+            match s.subType with
+            | J_Constructor -> OK []
+            | J_Function -> OK []
+            | J_Method -> OK []
         
-        let! results = getResults
-        return (fold results)
+        return fold [
+            OK [$"function {s.name} {s.variables.Length}"]
+            initCode
+            fold statementsCode
+        ]
     }
 
 let compileClassStateful (c:JackClass) =

@@ -231,5 +231,5 @@ let ``Should compile subroutine with empty body`` () =
         body = [] 
     }
     let code,_ = run emptyCompilationState (compileSubroutine subroutine)
-    let expected = OK []
+    let expected = OK ["function foo 0"]
     Assert.Equal(expected, code)
