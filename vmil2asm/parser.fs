@@ -40,14 +40,14 @@ let pArithmeticCommand =
     ] "arithmetic command" |>> function a -> Arithmetic a
 
 //segments
-let pS_Argument = str "argument" .>> ws |>> function _ -> Argument
-let pS_Local = str "local" .>> ws |>> function _ -> Local
-let pS_Static = str "static" .>> ws |>> function _ -> Static
-let pS_Constant = str "constant" .>> ws |>> function _ -> Constant
-let pS_This = str "this" .>> ws |>> function _ -> This
-let pS_That = str "that" .>> ws |>> function _ -> That
-let pS_Pointer = str "pointer" .>> ws |>> function _ -> Pointer
-let pS_Temp = str "temp" .>> ws |>> function _ -> Temp
+let pS_Argument = stringReturn_ws "argument" Argument
+let pS_Local = stringReturn_ws "local" Local
+let pS_Static = stringReturn_ws "static" Static
+let pS_Constant = stringReturn_ws "constant" Constant
+let pS_This = stringReturn_ws "this" This
+let pS_That = stringReturn_ws "that" That
+let pS_Pointer = stringReturn_ws "pointer" Pointer
+let pS_Temp = stringReturn_ws "temp" Temp
 
 let pSegment =
     choiceL [
