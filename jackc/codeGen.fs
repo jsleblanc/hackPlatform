@@ -6,6 +6,12 @@ open jackc.symbolTable
 open jackc.validation
 open jackc.util
 
+[<Literal>]
+let LABEL_IF_ELSE = "IF_ELSE"
+
+[<Literal>]
+let LABEL_WHILE = "WHILE"
+
 type SymbolTable = Map<string * VariableScope,SymbolEntry>
 
 type CompilationState = {
@@ -173,7 +179,7 @@ and compileStatement statement =
             | _ -> return errorMsg context $"Unsupported expression in \"let\" statement: {expr}"
         | J_If_Else(condExpr, conditionStatements, elseStatements) ->
             let! conditionExpressionCode = compileExpression condExpr
-            let! label1 = getNextLabel "IF_ELSE"
+            let! label1 = getNextLabel LABEL_IF_ELSE
             let! conditionStatementsCode = compileStatements conditionStatements
             match elseStatements with
             | [] ->
@@ -183,7 +189,7 @@ and compileStatement statement =
                     fold conditionStatementsCode
                     OK [$"label {label1}"]]
             | xs ->
-                let! label2 = getNextLabel "IF_ELSE"
+                let! label2 = getNextLabel LABEL_IF_ELSE
                 let! elseStatementsCode = compileStatements xs            
                 return fold [
                     conditionExpressionCode
@@ -192,7 +198,18 @@ and compileStatement statement =
                     OK [$"goto {label2}"; $"label {label1}"]
                     fold elseStatementsCode
                     OK [$"label {label2}"]]                
-        | J_While(condExpr, statements) -> return errorMsg context "todo"
+        | J_While(condExpr, statements) ->
+            let! label1 = getNextLabel LABEL_WHILE
+            let! label2 = getNextLabel LABEL_WHILE
+            let! conditionExpressionCode = compileExpression condExpr
+            let! statementsCode = compileStatements statements
+            return fold [
+                OK [$"label {label1}"]
+                conditionExpressionCode
+                OK ["not"; $"if-goto {label2}"]
+                fold statementsCode
+                OK [$"goto {label1}";$"label {label2}"]
+            ]
         | J_Do(scope, name, parameterExpressions) ->            
             let functionName =
                 match scope with

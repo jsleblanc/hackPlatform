@@ -212,7 +212,14 @@ let ``Should compile if-else statement with nested if-else statements`` () =
             "label .IF_ELSE$4"
         ]
     Assert.Equal(expected, code)
-    
+
+[<Fact>]
+let ``Should compile while statement`` () =
+    let statement = J_While (J_EQ (J_Constant_Int 1s, J_Constant_Int 2s), [J_Do (None, "foo", [J_Constant_Int 5s])])
+    let code,_ = run emptyCompilationState (compileStatement statement)
+    let expected = OK ["label .WHILE$1";"push constant 1";"push constant 2";"eq";"not";"if-goto .WHILE$2";"push constant 5";"call foo 1";"pop temp 0";"goto .WHILE$1";"label .WHILE$2"]
+    Assert.Equal(expected, code)
+        
 [<Fact>]
 let ``Should compile subroutine with empty body`` () =
     let subroutine = {
