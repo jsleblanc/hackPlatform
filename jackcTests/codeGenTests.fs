@@ -222,7 +222,7 @@ let ``Should compile while statement`` () =
     Assert.Equal(expected, code)
         
 [<Fact>]
-let ``Should compile subroutine with empty body`` () =
+let ``Should compile method subroutine with empty body`` () =
     let subroutine = {
         name = "foo"
         subType = J_Method
@@ -232,11 +232,25 @@ let ``Should compile subroutine with empty body`` () =
         body = [] 
     }
     let code,_ = run emptyCompilationState (compileSubroutine subroutine)
-    let expected = OK ["function foo 0"]
+    let expected = OK ["function .foo 0";"push argument 0";"pop pointer 0"]
     Assert.Equal(expected, code)
+   
+[<Fact>]
+let ``Should compile function subroutine with empty body`` () =
+    let subroutine = {
+        name = "foo"
+        subType = J_Function
+        returnType = J_Void
+        parameters = []
+        variables = []
+        body = [] 
+    }
+    let code,_ = run emptyCompilationState (compileSubroutine subroutine)
+    let expected = OK ["function .foo 0"]
+    Assert.Equal(expected, code)   
     
 [<Fact>]
-let ``Should compile class 1`` () =
+let ``Should compile class - only simple constructor`` () =
     let code = """
 class test1 {
     constructor test1 new() {
@@ -254,3 +268,66 @@ return
     match compileString code with
     | OK cc -> Assert.Equal(expected, cc.code)
     | Invalid e -> Assert.Fail(foldErrors e)
+    
+[<Fact>]
+let ``Should compile class - only simple method`` () =
+    let code = """
+class test1 {
+    method void fooMethod() {
+        return;
+    }
+}
+"""
+    let expected = """function test1.fooMethod 0
+push argument 0
+pop pointer 0
+push constant 0
+return
+"""
+    match compileString code with
+    | OK cc -> Assert.Equal(expected, cc.code)
+    | Invalid e -> Assert.Fail(foldErrors e)
+    
+[<Fact>]
+let ``Should compile class - only simple function`` () =
+    let code = """
+class test1 {
+    function void fooFunc() {
+        return;
+    }
+}
+"""
+    let expected = """function test1.fooFunc 0
+push constant 0
+return
+"""
+    match compileString code with
+    | OK cc -> Assert.Equal(expected, cc.code)
+    | Invalid e -> Assert.Fail(foldErrors e)
+    
+[<Fact>]
+let ``Should compile class - only simple method that uses some variables`` () =
+    let code = """
+class test1 {
+    method int fooMethod(int x) {
+        var int j;
+        let j = x + 1;
+        return j;
+    }
+}
+"""
+    let expected = """function test1.fooMethod 1
+push argument 0
+pop pointer 0
+push argument 1
+push constant 1
+add
+pop local 0
+push local 0
+return
+"""
+    match compileString code with
+    | OK cc -> Assert.Equal(expected, cc.code)
+    | Invalid e -> Assert.Fail(foldErrors e)
+    
+    

@@ -44,7 +44,7 @@ let initSymbolTableState = {
     segThis = This 0
     segStatic = Static 0
     segLocal = Local 0
-    segArgument = Argument 0 
+    segArgument = Argument 1 //0 is reserved for passing "THIS" pointer to methods 
 }
 
 let genClassSymbolTable c =

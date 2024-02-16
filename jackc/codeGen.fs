@@ -235,12 +235,12 @@ let compileSubroutine (s:JackSubroutine) =
         
         let initCode =
             match s.subType with
-            | J_Constructor -> OK []
-            | J_Function -> OK []
-            | J_Method -> OK []
+            | J_Method -> OK ["push argument 0";"pop pointer 0"] //setup THIS pointer
+            | J_Function -> OK [] //functions are static
+            | J_Constructor -> errorMsg context "Internal error: Constructors must be compiled separately from methods and functions"
         
         return fold [
-            OK [$"function {s.name} {s.variables.Length}"]
+            OK [$"function {context}.{s.name} {s.variables.Length}"]
             initCode
             fold statementsCode
         ]
