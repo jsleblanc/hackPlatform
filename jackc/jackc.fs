@@ -10,9 +10,17 @@ let parseFile (file:FileInfo) =
     | Success(jc, _, _) -> OK jc
     | Failure(msg, _, _) -> errorMsg file.Name msg
 
+let parseString str =
+    match parser.parseString str with
+    | Success(jc, _, _) -> OK jc
+    | Failure(msg, _, _) -> errorMsg "" msg
+
 let compileFile (file: FileInfo) =
     let contextualizeError (e:Error) = { e with context = $"{file.FullName} -- {e.context}"; }
     compileClass >>= parseFile file |> mapError (List.map contextualizeError)
+
+let compileString str =
+    compileClass >>= parseString str
 
 let compileFiles files =
     files |> List.map compileFile |> validation.Traverse

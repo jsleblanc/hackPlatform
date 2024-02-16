@@ -6,6 +6,7 @@ open jackc.state
 open jackc.types
 open jackc.symbolTable
 open jackc.codeGen
+open jackc.api
 
 [<Fact>]
 let ``Should add two constants`` () =
@@ -233,3 +234,23 @@ let ``Should compile subroutine with empty body`` () =
     let code,_ = run emptyCompilationState (compileSubroutine subroutine)
     let expected = OK ["function foo 0"]
     Assert.Equal(expected, code)
+    
+[<Fact>]
+let ``Should compile class 1`` () =
+    let code = """
+class test1 {
+    constructor test1 new() {
+        return this;
+    }
+}
+"""
+    let expected = """function test1.new 0
+push constant 0
+call Memory.alloc 1
+pop pointer 0
+push pointer 0
+return
+"""
+    match compileString code with
+    | OK cc -> Assert.Equal(expected, cc.code)
+    | Invalid e -> Assert.Fail(foldErrors e)

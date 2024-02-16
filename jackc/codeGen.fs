@@ -248,17 +248,60 @@ let compileSubroutine (s:JackSubroutine) =
 
 let compileConstructor (c:JackClass) (s:JackSubroutine) =
     state {
-        return OK []
+        let! context = getContext
+        let! classSymbols = getClassSymbols
+        do! setContext $"{context}.{s.name}"
+        do! setSubroutineSymbolTable (buildSymbolsForSubroutine classSymbols s)
+        
+        let checkReturnType = 
+            match s.returnType with
+            | J_ReturnType (J_Class className) ->
+                if className = c.name then OK [] else errorMsg c.name "Constructor return type must be that of the class it belongs to"
+            | _ -> OK []
+        
+        let checkReturnsThis =
+            match s.body |> List.tryLast with
+            | Some (J_Return (Some J_Constant_This)) -> OK []
+            | _ -> errorMsg c.name "Constructor must return THIS"
+        
+        let variableFilter v =
+            match v with
+            | J_Static, _, _ -> true
+            | J_Field, _, _ -> false
+        
+        let staticVars,fieldVars = c.variables |> List.partition variableFilter
+        let! statementsCode = compileStatements s.body
+                
+        return fold [
+            checkReturnType
+            checkReturnsThis
+            OK [
+                $"function {c.name}.{s.name} {s.variables.Length}"
+                $"push constant {fieldVars.Length}"
+                "call Memory.alloc 1"
+                "pop pointer 0"
+            ]
+            fold statementsCode
+        ]
     }
 
 let compileClassStateful (c:JackClass) =
     state {
         do! setClassSymbols (buildSymbolsForClass c)        
-        if not (List.isEmpty c.subroutines) then
-            for subroutine in c.subroutines do
+        let constructors, subroutines = c.subroutines |> List.partition (fun s -> s.subType = J_Constructor)
+       
+        if not (List.isEmpty constructors) then
+            for constructor in constructors do
+                do! setContext c.name
+                let! code = compileConstructor c constructor
+                do! pushResult code
+        
+        if not (List.isEmpty subroutines) then
+            for subroutine in subroutines do
                 do! setContext c.name
                 let! code = compileSubroutine subroutine
-                do! pushResult code        
+                do! pushResult code
+                
         let! results = getResults
         return (fold results)
     }

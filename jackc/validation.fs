@@ -14,6 +14,9 @@ let error e = Invalid [e]
 let errorMsg ctx msg =
     error { context = ctx; message = msg }
 
+let foldErrors errors =
+    List.fold (fun state e -> state + e.message + ", ") "" errors
+
 let errors v =
     match v with
     | OK _ -> []
