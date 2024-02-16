@@ -6,11 +6,13 @@ open jackc.util
 open jackc.validation
 
 type Arguments =
-    | [<MainCommand; ExactlyOnce>] InputPath of path:string
+    | [<MainCommand; ExactlyOnce>] InputPath of path: string
+    | [<Unique; AltCommandLine("-o");>] OutputPath of outputPath: string option
     interface IArgParserTemplate with
         member s.Usage =
             match s with
             | InputPath _ -> "Path to a single .jack file or path to a directory containing .jack files to compile"
+            | OutputPath _ -> "Specify the path to write compiled .vm files to, instead of the same folder as the input .jack files"
             
 [<EntryPoint>]
 let main argv =
@@ -22,11 +24,12 @@ let main argv =
         printfn $"%s{parser.PrintUsage()}"
         exit 0
         
-    let inputPath = results.GetResult InputPath    
+    let inputPath = results.GetResult InputPath
+    let outputPathOpt = results.GetResult OutputPath
     printfn "Jack to Virtual Machine IL Compiler"
     printfn $"Processing {inputPath}"
     let files = findInputFiles inputPath
-    let outputPath = computeOutputPath inputPath
+    let outputPath = computeOutputPath inputPath outputPathOpt
     match files, outputPath with
     | [], None ->
         printfn $"Error: specified path \"{inputPath}\" is not a .jack file or a directory containing .jack files"

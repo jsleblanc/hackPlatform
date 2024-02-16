@@ -128,13 +128,13 @@ let rec compileExpression expr =
             let! code = compileExpression expr
             return fold [code; OK ["not"]]
         | J_Constant_Int i -> return OK (compileConstantInt i)    
-        | J_Constant_String str -> return errorMsg context "todo"
+        | J_Constant_String str -> return OK ["//Expression: string constant TODO"]
         | J_Constant_Boolean b -> return OK (compileConstantBoolean b)
         | J_Constant_Null -> return OK compileConstantNull
         | J_Constant_This -> return OK compileConstantThis
         | J_Variable name -> return compileVariable Push context name symbolTable
-        | J_Array_Index(name, expr) -> return errorMsg context "todo"
-        | J_Subroutine_Call(scope, name, expr) -> return errorMsg context "todo"        
+        | J_Array_Index(name, expr) -> return OK ["//Expression: array index TODO"]
+        | J_Subroutine_Call(scope, name, parameters) -> return OK ["//Expression: subroutine call TODO"]
     }
 
 //This is to get around pushing intermediate results back into the state
@@ -175,7 +175,7 @@ and compileStatement statement =
                 let variableAssignment = compileVariable Pop context name symbolTable
                 let! valueToAssign = compileExpression exprRight
                 return fold [valueToAssign; variableAssignment]
-            | J_EQ (J_Array_Index (name, indexExpr), exprRight) -> return errorMsg context "todo"
+            | J_EQ (J_Array_Index (name, indexExpr), exprRight) -> return OK ["//Statement: Let statement assigning value to array position TODO"]
             | _ -> return errorMsg context $"Unsupported expression in \"let\" statement: {expr}"
         | J_If_Else(condExpr, conditionStatements, elseStatements) ->
             let! conditionExpressionCode = compileExpression condExpr
@@ -246,6 +246,11 @@ let compileSubroutine (s:JackSubroutine) =
         ]
     }
 
+let compileConstructor (c:JackClass) (s:JackSubroutine) =
+    state {
+        return OK []
+    }
+
 let compileClassStateful (c:JackClass) =
     state {
         do! setClassSymbols (buildSymbolsForClass c)        
@@ -259,8 +264,7 @@ let compileClassStateful (c:JackClass) =
     }
 
 let compileClass (c:JackClass) =
-    let result,state = run emptyCompilationState (compileClassStateful c)
+    let result,_ = run emptyCompilationState (compileClassStateful c)
     match result with
-    //| OK code -> OK { name = c.name; code = combineStrings code }
-    | OK _ -> errorMsg c.name "todo" 
+    | OK code -> OK { name = c.name; code = combineStrings code }
     | Invalid e -> Invalid e

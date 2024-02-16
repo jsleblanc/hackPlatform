@@ -15,6 +15,7 @@ let findInputFiles inputPath =
     else []
     
 let writeCompiledCodeToDisk path (code:CompiledCode list) =
+    Directory.CreateDirectory(path) |> ignore
     let f c =
         let fileName = Path.Combine(path, Path.ChangeExtension(c.name, ".vm"))
         File.WriteAllText(fileName, c.code)
@@ -31,11 +32,12 @@ let combineStrings (s:string list) =
     let sb = (StringBuilder(), s) ||> List.fold (_.AppendLine)
     sb.ToString()
     
-let computeOutputPath inputPath =
+let computeOutputPath inputPath outputPathOpt =
     let file = FileInfo(inputPath)
     let folder = DirectoryInfo(inputPath)
-    if file.Exists then
-        Some (Path.ChangeExtension(file.FullName, ".vm"))
-    else if folder.Exists then
-        Some (Path.Combine(folder.FullName, "vm"))
-    else None
+    match file.Exists, folder.Exists, outputPathOpt with
+    | true, _, Some path -> Some (Path.Combine(path, Path.ChangeExtension(file.Name, ".vm")))
+    | true, _, None -> Some (Path.ChangeExtension(file.FullName, ".vm"))
+    | false, true, Some path -> Some path
+    | false, true, None -> Some (Path.Combine(folder.FullName, "vm"))
+    | _ -> None
