@@ -14,10 +14,10 @@ let findInputFiles inputPath =
         folder.EnumerateFiles("*.jack", SearchOption.AllDirectories) |> List.ofSeq
     else []
     
-let writeCompiledCodeToDisk path (code:CompiledCode list) =
-    Directory.CreateDirectory(path) |> ignore
+let writeCompiledCodeToDisk (path:string) (code:CompiledCode list) =
+    Directory.CreateDirectory(Path.GetDirectoryName(path)) |> ignore
     let f c =
-        let fileName = Path.Combine(path, Path.ChangeExtension(c.name, ".vm"))
+        let fileName = Path.Combine(Path.GetDirectoryName(path), Path.ChangeExtension(c.name, ".vm"))
         File.WriteAllText(fileName, c.code)
         printfn $"Wrote {fileName}"
     code |> List.iter f
@@ -36,8 +36,8 @@ let computeOutputPath inputPath outputPathOpt =
     let file = FileInfo(inputPath)
     let folder = DirectoryInfo(inputPath)
     match file.Exists, folder.Exists, outputPathOpt with
-    | true, _, Some path -> Some (Path.Combine(path, Path.ChangeExtension(file.Name, ".vm")))
-    | true, _, None -> Some (Path.ChangeExtension(file.FullName, ".vm"))
+    | true, false, Some path -> Some (Path.Combine(path, Path.ChangeExtension(file.Name, ".vm")))
+    | true, false, None -> Some (Path.ChangeExtension(file.FullName, ".vm"))
     | false, true, Some path -> Some path
     | false, true, None -> Some (Path.Combine(folder.FullName, "vm"))
     | _ -> None
