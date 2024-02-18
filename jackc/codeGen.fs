@@ -68,22 +68,51 @@ let compileConstantNull = ["push constant 0"]
 
 let compileConstantThis = ["push pointer 0"]
 
-let compileVariable dir context name symbolTable =
-    match symbolLookup symbolTable name with
-    | Some symbol ->
-        match symbol.segment with
-        | Argument i -> OK [$"{stackDirectionCommand dir} argument {i}"]
-        | This i -> OK [$"{stackDirectionCommand dir} this {i}"]
-        | Static i -> OK [$"{stackDirectionCommand dir} static {i}"]
-        | Local i -> OK [$"{stackDirectionCommand dir} local {i}"]
-    | None -> errorMsg context $"Could not resolve symbol \"{name}\""    
+let mapSymbolToSegment name =
+    state {
+        let! symbolTable = getSubroutineSymbolTable
+        let segmentString = 
+            match symbolLookup symbolTable name with
+            | Some symbol ->
+                match symbol.segment with
+                | Argument i -> Some $"argument {i}"
+                | This i -> Some $"this {i}"
+                | Static i -> Some $"static {i}"
+                | Local i -> Some $"local {i}"
+            | None -> None
+        return segmentString
+    }
+
+let compileVariable dir name =
+    state {
+        let! context = getContext
+        let! segment = mapSymbolToSegment name
+        match segment with
+        | Some segmentString -> return OK [$"{stackDirectionCommand dir} {segmentString}"]
+        | None -> return errorMsg context $"Could not resolve symbol \"{name}\""
+    }
 
 let fold = List.fold validation.MergeLists (OK [])
 
-let rec compileExpression expr =
+//This is to get around pushing intermediate results back into the state
+//I couldn't figure out any other way to have a stateful function (one that
+//needs access to my CompilationState type) process a list of items and return
+//the results from processing each item as one big list.
+//The only approaches I've had work so far are to push the results of each item
+//as its processed into the state object before processing the next one, or
+//this recursive non-sense below
+let rec compileExpressions expressions =
     state {
-        let! context = getContext
-        let! symbolTable = getSubroutineSymbolTable
+        match expressions with
+        | [] -> return []
+        | e::tail ->
+            let! code = compileExpression e
+            let! next = compileExpressions tail
+            return [code] @ next
+    }
+
+and compileExpression expr =
+    state {
         match expr with
         | J_ADD(exprLeft, exprRight) ->
             let! left = compileExpression exprLeft
@@ -132,26 +161,10 @@ let rec compileExpression expr =
         | J_Constant_Boolean b -> return OK (compileConstantBoolean b)
         | J_Constant_Null -> return OK compileConstantNull
         | J_Constant_This -> return OK compileConstantThis
-        | J_Variable name -> return compileVariable Push context name symbolTable
+        | J_Variable name -> return! compileVariable Push name
         | J_Array_Index(name, expr) -> return OK ["//Expression: array index TODO"]
-        | J_Subroutine_Call(scope, name, parameters) -> return OK ["//Expression: subroutine call TODO"]
-    }
-
-//This is to get around pushing intermediate results back into the state
-//I couldn't figure out any other way to have a stateful function (one that
-//needs access to my CompilationState type) process a list of items and return
-//the results from processing each item as one big list.
-//The only approaches I've had work so far are to push the results of each item
-//as its processed into the state object before processing the next one, or
-//this recursive non-sense below
-let rec compileExpressions expressions =
-    state {
-        match expressions with
-        | [] -> return []
-        | e::tail ->
-            let! code = compileExpression e
-            let! next = compileExpressions tail
-            return [code] @ next
+        | J_Subroutine_Call(scope, name, parameters) ->
+            return OK ["//Expression: subroutine call TODO"]
     }
 
 let rec compileStatements statements =
@@ -172,7 +185,7 @@ and compileStatement statement =
         | J_Let expr ->
             match expr with
             | J_EQ (J_Variable name, exprRight) ->
-                let variableAssignment = compileVariable Pop context name symbolTable
+                let! variableAssignment = compileVariable Pop name
                 let! valueToAssign = compileExpression exprRight
                 return fold [valueToAssign; variableAssignment]
             | J_EQ (J_Array_Index (name, indexExpr), exprRight) -> return OK ["//Statement: Let statement assigning value to array position TODO"]
