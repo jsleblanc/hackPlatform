@@ -7,7 +7,7 @@ open jackc.validation
 
 type Arguments =
     | [<MainCommand; ExactlyOnce>] InputPath of path: string
-    | [<Unique; AltCommandLine("-o");>] OutputPath of outputPath: string option
+    | [<Unique; AltCommandLine("-o");>] OutputPath of outputPath: string
     interface IArgParserTemplate with
         member s.Usage =
             match s with
@@ -25,7 +25,7 @@ let main argv =
         exit 0
         
     let inputPath = results.GetResult InputPath
-    let outputPathOpt = results.GetResult OutputPath
+    let outputPathOpt = results.TryGetResult OutputPath
     printfn "Jack to Virtual Machine IL Compiler"
     printfn $"Processing {inputPath}"
     let files = findInputFiles inputPath
