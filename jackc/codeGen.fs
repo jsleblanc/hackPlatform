@@ -15,6 +15,7 @@ let LABEL_WHILE = "WHILE"
 type SymbolTable = Map<string * VariableScope,SymbolEntry>
 
 type CompilationState = {
+    className: string
     context: string
     labelCounter: int
     classSymbols: SymbolTableState
@@ -23,6 +24,7 @@ type CompilationState = {
 }
 
 let emptyCompilationState = {
+    className = ""
     context = ""
     labelCounter = 1
     classSymbols = initSymbolTableState
@@ -30,6 +32,8 @@ let emptyCompilationState = {
     results = []
 }
 
+let setClassName name = Stateful (fun state -> (), { state with className = name })
+let getClassName = Stateful (fun state -> state.className, state)
 let setContext ctx = Stateful (fun state -> (), { state with context = ctx })
 let getContext = Stateful (fun state -> state.context, state)
 let incLabelCounter = Stateful (fun state -> state.labelCounter, { state with labelCounter = state.labelCounter + 1 })
@@ -81,6 +85,16 @@ let mapSymbolToSegment name =
                 | Local i -> Some $"local {i}"
             | None -> None
         return segmentString
+    }
+
+let mapSymbolToType name =
+    state {
+        let! symbolTable = getSubroutineSymbolTable
+        let symbolType =
+            match symbolLookup symbolTable name with
+            | Some symbol -> Some symbol.varType
+            | None -> None
+        return symbolType
     }
 
 let compileVariable dir name =
@@ -164,7 +178,34 @@ and compileExpression expr =
         | J_Variable name -> return! compileVariable Push name
         | J_Array_Index(name, expr) -> return OK ["//Expression: array index TODO"]
         | J_Subroutine_Call(scope, name, parameters) ->
-            return OK ["//Expression: subroutine call TODO"]
+            return! compileSubroutineCall scope name parameters false
+    }
+
+and compileSubroutineCall scope name parameters discardReturn =
+    state {
+        let! localClassName = getClassName
+        let! context = getContext
+        let! parametersCode = compileExpressions parameters
+        let discardReturnInstruction =
+            match discardReturn with
+            | true -> OK ["pop temp 0"]
+            | false -> OK []
+        match scope with
+        | Some obj ->
+            let! segment = mapSymbolToSegment obj
+            let! symbolType = mapSymbolToType obj
+            match segment, symbolType with
+            | Some segmentStr, Some typeValue ->
+                match typeValue with
+                | J_Class targetClassName ->
+                    //we're calling an instance method on another object; Length+1 accounts for implicit THIS passed as argument 0
+                    return fold [OK [$"push {segmentStr}"]; fold parametersCode; OK [$"call {targetClassName}.{name} {parameters.Length+1}"];discardReturnInstruction] 
+                | _ -> return errorMsg context $"Cannot call instance method on given type {typeValue}"
+            | Some _, None -> return errorMsg context $"Cannot determine type of \"{obj}\" to call method \"{name}\""
+            | None, Some _ -> return errorMsg context $"Cannot determine segment of \"obj\" to call method \"{name}\""
+            | None, None -> return fold [fold parametersCode; OK [$"call {obj}.{name} {parameters.Length}";]; discardReturnInstruction] //we're calling a static method
+        | None ->
+            return fold [OK ["push pointer 0"]; fold parametersCode; OK [$"call {localClassName}.{name} {parameters.Length+1}"]; discardReturnInstruction] 
     }
 
 let rec compileStatements statements =
@@ -180,7 +221,6 @@ let rec compileStatements statements =
 and compileStatement statement =
     state {
         let! context = getContext
-        let! symbolTable = getSubroutineSymbolTable
         match statement with
         | J_Let expr ->
             match expr with
@@ -223,13 +263,8 @@ and compileStatement statement =
                 fold statementsCode
                 OK [$"goto {label1}";$"label {label2}"]
             ]
-        | J_Do(scope, name, parameterExpressions) ->            
-            let functionName =
-                match scope with
-                | Some s -> $"{s}.{name}"
-                | None -> name
-            let! code = compileExpressions parameterExpressions
-            return fold [fold code; OK [$"call {functionName} {parameterExpressions.Length}"; "pop temp 0"]]            
+        | J_Do(scope, name, parameterExpressions) ->
+            return! compileSubroutineCall scope name parameterExpressions true
         | J_Return exprOption ->
             match exprOption with
             | Some expr ->
@@ -300,6 +335,7 @@ let compileConstructor (c:JackClass) (s:JackSubroutine) =
 
 let compileClassStateful (c:JackClass) =
     state {
+        do! setClassName c.name
         do! setClassSymbols (buildSymbolsForClass c)        
         let constructors, subroutines = c.subroutines |> List.partition (fun s -> s.subType = J_Constructor)
        

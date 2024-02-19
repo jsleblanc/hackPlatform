@@ -147,7 +147,11 @@ let ``Should compile if-else statement`` () =
    
 [<Fact>]
 let ``Should compile if-else statement with else clause`` () =
-    let statement = J_If_Else (J_EQ (J_Constant_Int 1s, J_Constant_Int 2s), [J_Do (Some "Output", "printInt", [J_Constant_Int 3s; J_Constant_Int 4s])], [J_Do (Some "Output", "printInt", [J_Constant_Int 5s; J_Constant_Int 6s])])
+    let statement = J_If_Else (J_EQ (J_Constant_Int 1s, J_Constant_Int 2s), [
+        J_Return (Some (J_Constant_Int 3s))
+    ], [
+        J_Return (Some (J_Constant_Int 5s))
+    ])
     let code,_ = run emptyCompilationState (compileStatement statement)
     let expected =
         OK [
@@ -157,15 +161,11 @@ let ``Should compile if-else statement with else clause`` () =
             "not"
             "if-goto .IF_ELSE$1"
             "push constant 3"
-            "push constant 4"
-            "call Output.printInt 2"
-            "pop temp 0"
+            "return"
             "goto .IF_ELSE$2"
             "label .IF_ELSE$1"
             "push constant 5"
-            "push constant 6"
-            "call Output.printInt 2"
-            "pop temp 0"
+            "return"
             "label .IF_ELSE$2"
         ]
     Assert.Equal(expected, code)
@@ -176,12 +176,12 @@ let ``Should compile if-else statement with nested if-else statements`` () =
         J_If_Else (J_EQ (J_Constant_Boolean true, J_Constant_Boolean false),
                    [
                        J_If_Else (J_EQ (J_Constant_Int 1s, J_Constant_Int 2s), [
-                          J_Do (None, "printInt", [J_Constant_Int 7s]) 
+                          J_Return (Some (J_Constant_Int 7s))
                        ],[
-                          J_Do (None, "printInt", [J_Constant_Int 8s]) 
+                          J_Return (Some (J_Constant_Int 8s))
                        ])
                    ],
-                   [J_Do (None, "printInt", [J_Constant_Int 9s])])
+                   [J_Return (Some (J_Constant_Int 9s))])
     let code,_ = run emptyCompilationState (compileStatement statement)
     let expected =
         OK [
@@ -196,29 +196,39 @@ let ``Should compile if-else statement with nested if-else statements`` () =
             "eq"
             "not"
             "if-goto .IF_ELSE$2"
-            "push constant 7"            
-            "call printInt 1"
-            "pop temp 0"
+            "push constant 7"
+            "return"
             "goto .IF_ELSE$3"
             "label .IF_ELSE$2"
             "push constant 8"
-            "call printInt 1"
-            "pop temp 0"
+            "return"
             "label .IF_ELSE$3"
             "goto .IF_ELSE$4"
             "label .IF_ELSE$1"
             "push constant 9"
-            "call printInt 1"
-            "pop temp 0"
+            "return"
             "label .IF_ELSE$4"
         ]
     Assert.Equal(expected, code)
 
 [<Fact>]
 let ``Should compile while statement`` () =
-    let statement = J_While (J_EQ (J_Constant_Int 1s, J_Constant_Int 2s), [J_Do (None, "foo", [J_Constant_Int 5s])])
+    let statement = J_While (J_EQ (J_Constant_Int 1s, J_Constant_Int 2s), [
+        J_Return (Some (J_Constant_Int 5s))
+    ])
     let code,_ = run emptyCompilationState (compileStatement statement)
-    let expected = OK ["label .WHILE$1";"push constant 1";"push constant 2";"eq";"not";"if-goto .WHILE$2";"push constant 5";"call foo 1";"pop temp 0";"goto .WHILE$1";"label .WHILE$2"]
+    let expected = OK [
+        "label .WHILE$1"
+        "push constant 1"
+        "push constant 2"
+        "eq"
+        "not"
+        "if-goto .WHILE$2"
+        "push constant 5"
+        "return"
+        "goto .WHILE$1"
+        "label .WHILE$2"
+    ]
     Assert.Equal(expected, code)
         
 [<Fact>]
@@ -329,5 +339,78 @@ return
     match compileString code with
     | OK cc -> Assert.Equal(expected, cc.code)
     | Invalid e -> Assert.Fail(foldErrors e)
+
+[<Fact>]
+let ``Should compile class - calling its own functions`` () =
+    let code = """
+class test1 {
+    method int fooA(int x) {
+        var int j;
+        let j = x + 1;
+        return j;
+    }
+
+    method void fooB() {
+        do fooA(5);
+        return;
+    }
+}
+"""
+    let expected = """function test1.fooA 1
+push argument 0
+pop pointer 0
+push argument 1
+push constant 1
+add
+pop local 0
+push local 0
+return
+function test1.fooB 0
+push argument 0
+pop pointer 0
+push pointer 0
+push constant 5
+call test1.fooA 2
+pop temp 0
+push constant 0
+return
+"""
+    match compileString code with
+    | OK cc -> Assert.Equal(expected, cc.code)
+    | Invalid e -> Assert.Fail(foldErrors e)
     
+[<Fact>]
+let ``Should compile class - calling functions on specific object instances`` () =
+    let code = """
+class Main {
+
+    /** Initializes a Pong game and starts running it. */
+    function void main() {
+        var PongGame game;
+        do PongGame.newInstance();
+        let game = PongGame.getInstance();
+        do game.run();
+        do game.dispose();
+        return;
+    }
+}
+"""
+    let expected = """function Main.main 1
+call PongGame.newInstance 0
+pop temp 0
+call PongGame.getInstance 0
+pop local 0
+push local 0
+call PongGame.run 1
+pop temp 0
+push local 0
+call PongGame.dispose 1
+pop temp 0
+push constant 0
+return
+"""
+    match compileString code with
+    | OK cc -> Assert.Equal(expected, cc.code)
+    | Invalid e -> Assert.Fail(foldErrors e)
     
+     
