@@ -120,7 +120,7 @@ let ``Should use subroutine scoped variable over class scoped variable when name
             }
         ] 
     }
-    let table = buildSymbolsForSubroutine (buildSymbolsForClass c) c.subroutines[0]
+    let table = buildSymbolsForSubroutine (buildSymbolsForClass c) "MyClass" c.subroutines[0]
     let var = symbolLookup table "x"
     match var with
     | Some v ->
@@ -129,4 +129,64 @@ let ``Should use subroutine scoped variable over class scoped variable when name
         Assert.Equal(J_Int, v.varType)
         Assert.Equal(Local 0, v.segment)
     | None -> Assert.Fail("Variable was not in symbol table")
-        
+
+[<Fact>]
+let ``Should include implicit this as first parameter to subroutine`` () =
+    let c = {
+        name = "MyClass"
+        variables = []
+        subroutines = [
+            {
+                name = "main"
+                subType = J_Method
+                returnType = J_Void
+                parameters = [(J_Argument, J_Int, "x")]
+                variables = []
+                body = []
+            }
+        ] 
+    }
+    let table = buildSymbolsForSubroutine (buildSymbolsForClass c) "MyClass" c.subroutines[0]
+    match symbolLookup table "this" with
+    | Some v ->
+        Assert.Equal("this", v.name)
+        Assert.Equal(SubroutineScope, v.scope)
+        Assert.Equal(J_Class "MyClass", v.varType)
+        Assert.Equal(Argument 0, v.segment)
+    | None -> Assert.Fail("Implicit 'this' was not in symbol table")
+    match symbolLookup table "x" with
+    | Some v ->
+        Assert.Equal("x", v.name)
+        Assert.Equal(SubroutineScope, v.scope)
+        Assert.Equal(J_Int, v.varType)
+        Assert.Equal(Argument 1, v.segment)
+    | None -> Assert.Fail("Variable 'x' was not in symbol table")
+    
+[<Fact>]
+let ``Should not include implicit this as first parameter to constructor`` () =
+    let c = {
+        name = "MyClass"
+        variables = []
+        subroutines = [
+            {
+                name = "main"
+                subType = J_Constructor
+                returnType = J_ReturnType (J_Class "MyClass")
+                parameters = [(J_Argument, J_Int, "x")]
+                variables = []
+                body = []
+            }
+        ] 
+    }
+    let table = buildSymbolsForConstructor (buildSymbolsForClass c) c.subroutines[0]
+    match symbolLookup table "this" with
+    | Some _ -> Assert.Fail("Constructor should not have implicit 'this' parameter")
+    | None -> Assert.True(true)
+    match symbolLookup table "x" with
+    | Some v ->
+        Assert.Equal("x", v.name)
+        Assert.Equal(SubroutineScope, v.scope)
+        Assert.Equal(J_Int, v.varType)
+        Assert.Equal(Argument 0, v.segment)
+    | None -> Assert.Fail("Variable 'x' was not in symbol table")
+  

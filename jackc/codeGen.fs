@@ -275,10 +275,11 @@ and compileStatement statement =
 
 let compileSubroutine (s:JackSubroutine) =
     state {
+        let! className = getClassName
         let! context = getContext
         let! classSymbols = getClassSymbols
         do! setContext $"{context}.{s.name}"
-        do! setSubroutineSymbolTable (buildSymbolsForSubroutine classSymbols s)        
+        do! setSubroutineSymbolTable (buildSymbolsForSubroutine classSymbols className s)        
         let! statementsCode = compileStatements s.body
         
         let initCode =
@@ -299,7 +300,7 @@ let compileConstructor (c:JackClass) (s:JackSubroutine) =
         let! context = getContext
         let! classSymbols = getClassSymbols
         do! setContext $"{context}.{s.name}"
-        do! setSubroutineSymbolTable (buildSymbolsForSubroutine classSymbols s)
+        do! setSubroutineSymbolTable (buildSymbolsForConstructor classSymbols s)
         
         let checkReturnType = 
             match s.returnType with

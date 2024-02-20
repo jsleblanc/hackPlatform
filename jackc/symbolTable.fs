@@ -44,7 +44,7 @@ let initSymbolTableState = {
     segThis = This 0
     segStatic = Static 0
     segLocal = Local 0
-    segArgument = Argument 1 //0 is reserved for passing "THIS" pointer to methods 
+    segArgument = Argument 0 
 }
 
 let genClassSymbolTable c =
@@ -93,7 +93,12 @@ let symbolStateToTable state =
 
 let buildSymbolsForClass c = genClassSymbolTable c
 
-let buildSymbolsForSubroutine classSymbols subroutine =
+let buildSymbolsForSubroutine classSymbols className subroutine =
+    let implicitThisParameter = (J_Argument, J_Class className, "this")
+    let newSubroutine = { subroutine with parameters = [implicitThisParameter] @ subroutine.parameters }
+    genSubroutineSymbolTable classSymbols newSubroutine |> symbolStateToTable
+
+let buildSymbolsForConstructor classSymbols subroutine =
     genSubroutineSymbolTable classSymbols subroutine |> symbolStateToTable
     
 let symbolLookup table name =

@@ -413,4 +413,74 @@ return
     | OK cc -> Assert.Equal(expected, cc.code)
     | Invalid e -> Assert.Fail(foldErrors e)
     
-     
+[<Fact>]
+let ``Should compile class - field variables and complex constructor`` () =
+    let code = """
+class test1 {
+    field int x, y;               // the ball's screen location (in pixels)
+    field int lengthx, lengthy;   // distance of last destination (in pixels)
+
+    field int d, straightD, diagonalD;   // used for straight line movement computation
+    field boolean invert, positivex, positivey;   // (same)
+   
+    field int leftWall, rightWall, topWall, bottomWall;  // wall locations
+   
+    field int wall;   // last wall that the ball was bounced off of
+
+    /** Constructs a new ball with the given initial location and wall locations. */
+    constructor test1 new(int Ax, int Ay,
+                         int AleftWall, int ArightWall, int AtopWall, int AbottomWall) {    	
+	    let x = Ax;		
+	    let y = Ay;
+	    let leftWall = AleftWall;
+	    let rightWall = ArightWall - 6;    // -6 for ball size
+	    let topWall = AtopWall; 
+	    let bottomWall = AbottomWall - 6;  // -6 for ball size
+	    let wall = 0;
+        do show();
+        return this;
+    }
+
+    method void show() {
+        //do Screen.setColor(true);
+        //do draw();
+        return;
+    }
+}    
+"""
+    let expected = """function test1.new 0
+push constant 15
+call Memory.alloc 1
+pop pointer 0
+push argument 0
+pop this 0
+push argument 1
+pop this 1
+push argument 2
+pop this 10
+push argument 3
+push constant 6
+sub
+pop this 11
+push argument 4
+pop this 12
+push argument 5
+push constant 6
+sub
+pop this 13
+push constant 0
+pop this 14
+push pointer 0
+call test1.show 1
+pop temp 0
+push pointer 0
+return
+function test1.show 0
+push argument 0
+pop pointer 0
+push constant 0
+return
+"""
+    match compileString code with
+    | OK cc -> Assert.Equal(expected, cc.code)
+    | Invalid e -> Assert.Fail(foldErrors e)     
