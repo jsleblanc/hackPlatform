@@ -442,8 +442,6 @@ class test1 {
     }
 
     method void show() {
-        //do Screen.setColor(true);
-        //do draw();
         return;
     }
 }    

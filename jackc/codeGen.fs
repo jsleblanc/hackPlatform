@@ -280,11 +280,13 @@ let compileSubroutine (s:JackSubroutine) =
         let! classSymbols = getClassSymbols
         do! setContext $"{context}.{s.name}"
         do! setSubroutineSymbolTable (buildSymbolsForSubroutine classSymbols className s)        
+        
+        let! thisCode = compileVariable Push "this" //push implicit THIS argument onto the stack
         let! statementsCode = compileStatements s.body
         
         let initCode =
             match s.subType with
-            | J_Method -> OK ["push argument 0";"pop pointer 0"] //setup THIS pointer
+            | J_Method -> fold [thisCode; OK ["pop pointer 0"]] //setup THIS pointer
             | J_Function -> OK [] //functions are static
             | J_Constructor -> errorMsg context "Internal error: Constructors must be compiled separately from methods and functions"
         
