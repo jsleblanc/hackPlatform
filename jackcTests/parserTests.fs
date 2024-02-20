@@ -60,6 +60,8 @@ type JackExpressionTestCases() =
         [|"(a + a_len)-1"; J_SUB (J_ADD (J_Variable "a", J_Variable "a_len"), J_Constant_Int 1s)|]
         [|"(3 - 2) > (4 + 5)"; J_GT (J_SUB (J_Constant_Int 3s, J_Constant_Int 2s), J_ADD (J_Constant_Int 4s, J_Constant_Int 5s))|]
         [|"3 - 2 > 4 + 5"; J_GT (J_SUB (J_Constant_Int 3s, J_Constant_Int 2s), J_ADD (J_Constant_Int 4s, J_Constant_Int 5s))|]
+        [|"~(y > topWall)"; J_NOT (J_GT(J_Variable "y", J_Variable "topWall"))|]
+        [|"(~(y > topWall))"; J_NOT (J_GT(J_Variable "y", J_Variable "topWall"))|]
     ])
     
 [<Theory>]
