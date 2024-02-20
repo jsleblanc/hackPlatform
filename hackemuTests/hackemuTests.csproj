@@ -23,7 +23,16 @@
     </ItemGroup>
 
     <ItemGroup>
+      <ProjectReference Include="..\assembler\assembler.fsproj" />
       <ProjectReference Include="..\hackemu\hackemu.csproj" />
+      <ProjectReference Include="..\jackc\jackc.fsproj" />
+      <ProjectReference Include="..\vmil2asm\vmil2asm.fsproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <None Update="E2E\ConvertToBin\Main.jack">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </None>
     </ItemGroup>
 
 </Project>
