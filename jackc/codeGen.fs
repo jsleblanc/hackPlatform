@@ -10,7 +10,10 @@ open jackc.util
 let LABEL_IF_ELSE = "IF_ELSE"
 
 [<Literal>]
-let LABEL_WHILE = "WHILE"
+let LABEL_WHILE_EXP = "WHILE_EXP"
+
+[<Literal>]
+let LABEL_WHILE_END = "WHILE_END"
 
 type SymbolTable = Map<string * VariableScope,SymbolEntry>
 
@@ -252,8 +255,8 @@ and compileStatement statement =
                     fold elseStatementsCode
                     OK [$"label {label2}"]]                
         | J_While(condExpr, statements) ->
-            let! label1 = getNextLabel LABEL_WHILE
-            let! label2 = getNextLabel LABEL_WHILE
+            let! label1 = getNextLabel LABEL_WHILE_EXP
+            let! label2 = getNextLabel LABEL_WHILE_END
             let! conditionExpressionCode = compileExpression condExpr
             let! statementsCode = compileStatements statements
             return fold [

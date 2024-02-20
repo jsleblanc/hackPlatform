@@ -218,16 +218,16 @@ let ``Should compile while statement`` () =
     ])
     let code,_ = run emptyCompilationState (compileStatement statement)
     let expected = OK [
-        "label .WHILE$1"
+        "label .WHILE_EXP$1"
         "push constant 1"
         "push constant 2"
         "eq"
         "not"
-        "if-goto .WHILE$2"
+        "if-goto .WHILE_END$2"
         "push constant 5"
         "return"
-        "goto .WHILE$1"
-        "label .WHILE$2"
+        "goto .WHILE_EXP$1"
+        "label .WHILE_END$2"
     ]
     Assert.Equal(expected, code)
         
