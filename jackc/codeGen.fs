@@ -136,6 +136,7 @@ let rec compileExpressions expressions =
 
 and compileExpression expr =
     state {
+        let! context = getContext
         match expr with
         | J_ADD(exprLeft, exprRight) ->
             let! left = compileExpression exprLeft
@@ -180,12 +181,12 @@ and compileExpression expr =
             let! code = compileExpression expr
             return fold [code; OK ["not"]]
         | J_Constant_Int i -> return OK (compileConstantInt i)    
-        | J_Constant_String str -> return OK ["//Expression: string constant TODO"]
+        | J_Constant_String str -> return errorMsg context "Expression: string constant TODO"
         | J_Constant_Boolean b -> return OK (compileConstantBoolean b)
         | J_Constant_Null -> return OK compileConstantNull
         | J_Constant_This -> return OK compileConstantThis
         | J_Variable name -> return! compileVariable Push name
-        | J_Array_Index(name, expr) -> return OK ["//Expression: array index TODO"]
+        | J_Array_Index(name, expr) -> return errorMsg context "Expression: array index TODO"
         | J_Subroutine_Call(scope, name, parameters) ->
             return! compileSubroutineCall scope name parameters false
     }
@@ -237,7 +238,7 @@ and compileStatement statement =
                 let! variableAssignment = compileVariable Pop name
                 let! valueToAssign = compileExpression exprRight
                 return fold [valueToAssign; variableAssignment]
-            | J_EQ (J_Array_Index (name, indexExpr), exprRight) -> return OK ["//Statement: Let statement assigning value to array position TODO"]
+            | J_EQ (J_Array_Index (name, indexExpr), exprRight) -> return errorMsg context "Statement: Let statement assigning value to array position TODO"
             | _ -> return errorMsg context $"Unsupported expression in \"let\" statement: {expr}"
         | J_If_Else(condExpr, conditionStatements, elseStatements) ->
             let! conditionExpressionCode = compileExpression condExpr
@@ -258,16 +259,16 @@ and compileStatement statement =
                 OK [$"label {labelEnd}"]
             ]
         | J_While(condExpr, statements) ->
-            let! label1 = getNextLabel LABEL_WHILE_EXP
-            let! label2 = getNextLabel LABEL_WHILE_END
+            let! labelBegin = getNextLabel LABEL_WHILE_EXP
+            let! labelEnd = getNextLabel LABEL_WHILE_END
             let! conditionExpressionCode = compileExpression condExpr
             let! statementsCode = compileStatements statements
             return fold [
-                OK [$"label {label1}"]
+                OK [$"label {labelBegin}"]
                 conditionExpressionCode
-                OK ["not"; $"if-goto {label2}"]
+                OK ["not"; $"if-goto {labelEnd}"]
                 fold statementsCode
-                OK [$"goto {label1}";$"label {label2}"]
+                OK [$"goto {labelBegin}";$"label {labelEnd}"]
             ]
         | J_Do(scope, name, parameterExpressions) ->
             return! compileSubroutineCall scope name parameterExpressions true
