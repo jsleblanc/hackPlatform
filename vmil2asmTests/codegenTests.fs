@@ -6,6 +6,8 @@ open assembler.api
 open vmil2asm.api
 open hackemu
 
+let fold (asm:string list) = (StringBuilder(), asm) ||> List.fold (_.AppendLine) |> (_.ToString())
+
 [<Fact>]
 let ``Should run fibonacci program on virtual machine`` () =
     let vmil = """
@@ -37,9 +39,9 @@ label END
 	goto END                // loops infinitely
 """
     let asm = vmil2asmString "Main.vm" vmil
-    let input = (StringBuilder(), asm) ||> List.fold (fun sb str -> sb.AppendFormat("{0}\n", str))
-    let code = assemble (input.ToString())
-    let vm = HackVirtualMachine(HackComputer(code.instructions))
+    let input = fold asm 
+    let code = assemble input
+    let vm = HackVirtualMachine(code.instructions)
     vm.ComputeCycles(10000)
     Assert.Equal(int16 13, vm.Memory(uint16 261))
     Assert.Equal(int16 262, vm.SP)
@@ -106,9 +108,9 @@ function Sys.add12 0
 	return
 """
     let asm = vmil2asmString "Main.vm" vmil
-    let input = (StringBuilder(), asm) ||> List.fold (fun sb str -> sb.AppendFormat("{0}\n", str))
-    let code = assemble (input.ToString())
-    let vm = HackVirtualMachine(HackComputer(code.instructions))
+    let input = fold asm 
+    let code = assemble input
+    let vm = HackVirtualMachine(code.instructions)
     vm.ComputeCycles(10000)
     Assert.Equal(int16 261, vm.SP)
     Assert.Equal(int16 261, vm.LCL)
@@ -147,9 +149,9 @@ function SimpleFunction.test 2
 	return
 """
     let asm = vmil2asmString "Main.vm" vmil
-    let input = (StringBuilder(), asm) ||> List.fold (fun sb str -> sb.AppendFormat("{0}\n", str))
-    let code = assemble (input.ToString())
-    let vm = HackVirtualMachine(HackComputer(code.instructions))
+    let input = fold asm
+    let code = assemble input
+    let vm = HackVirtualMachine(code.instructions)
     vm.ComputeCycles(10000)
     Assert.Equal(int16 1196, vm.Memory(uint16 261))
 
@@ -221,10 +223,47 @@ let ``Should run statics-test program on virtual machine`` () =
         {name = "Class2.vm"; input = class2vm }
         {name = "Sys.vm"; input = sysvm }
     ]
-    let input = (StringBuilder(), asm) ||> List.fold (fun sb str -> sb.AppendFormat("{0}\n", str))
-    let code = assemble (input.ToString())
-    let vm = HackVirtualMachine(HackComputer(code.instructions))
+    let input = fold asm 
+    let code = assemble input
+    let vm = HackVirtualMachine(code.instructions)
     vm.ComputeCycles(10000)
     Assert.Equal(int16 263, vm.SP)
     Assert.Equal(int16 -2, vm.Memory(uint16 261))
     Assert.Equal(int16 8, vm.Memory(uint16 262))
+
+[<Fact>]
+let ``Should test temp segment`` () =
+    let vmilCode = """
+function Sys.init 0
+	push constant 8
+	push constant 7
+	push constant 6
+	push constant 5
+	push constant 4
+	push constant 3
+	push constant 2
+	push constant 1
+	pop temp 0
+	pop temp 1
+	pop temp 2
+	pop temp 3
+	pop temp 4
+	pop temp 5
+	pop temp 6
+	pop temp 7
+"""
+    let asmCode = vmil2asmString "foo.vm" vmilCode
+    let binaryCode = assemble (fold asmCode)
+    let vm = HackVirtualMachine(binaryCode.instructions)
+    vm.ComputeCycles(10000)
+    Assert.Equal(1s, vm.R5)
+    Assert.Equal(2s, vm.R6)
+    Assert.Equal(3s, vm.R7)
+    Assert.Equal(4s, vm.R8)
+    Assert.Equal(5s, vm.R9)
+    Assert.Equal(6s, vm.R10)
+    Assert.Equal(7s, vm.R11)
+    Assert.Equal(8s, vm.R12)
+    Assert.Equal(261s, vm.SP)
+    Assert.True(true)
+ 
