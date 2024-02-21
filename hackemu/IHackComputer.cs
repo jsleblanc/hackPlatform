@@ -6,8 +6,8 @@ public interface IHackComputer
     short D { get; }
     short M { get; }
     ushort PC { get; }
-    short Memory(short index);
-    void SetMemory(short index, short value);
+    short Memory(ushort index);
+    void SetMemory(ushort index, short value);
     void ComputeCycles(int count);
 
     /// <summary>

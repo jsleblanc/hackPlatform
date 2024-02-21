@@ -86,9 +86,9 @@ public class HackComputer : IHackComputer
     public short D => _dReg;
     public short M => _ram[_aReg];
     public ushort PC => _pc;
-    public short Memory(short index) => _ram[index];
+    public short Memory(ushort index) => _ram[index];
 
-    public void SetMemory(short index, short value) => _ram[index] = value;
+    public void SetMemory(ushort index, short value) => _ram[index] = value;
     
     public void ComputeCycles(int count)
     {

@@ -41,7 +41,7 @@ label END
     let code = assemble (input.ToString())
     let vm = HackVirtualMachine(HackComputer(code.instructions))
     vm.ComputeCycles(10000)
-    Assert.Equal(int16 13, vm.Memory(int16 261))
+    Assert.Equal(int16 13, vm.Memory(uint16 261))
     Assert.Equal(int16 262, vm.SP)
 
 [<Fact>]
@@ -151,7 +151,7 @@ function SimpleFunction.test 2
     let code = assemble (input.ToString())
     let vm = HackVirtualMachine(HackComputer(code.instructions))
     vm.ComputeCycles(10000)
-    Assert.Equal(int16 1196, vm.Memory(int16 261))
+    Assert.Equal(int16 1196, vm.Memory(uint16 261))
 
 
 
@@ -226,5 +226,5 @@ let ``Should run statics-test program on virtual machine`` () =
     let vm = HackVirtualMachine(HackComputer(code.instructions))
     vm.ComputeCycles(10000)
     Assert.Equal(int16 263, vm.SP)
-    Assert.Equal(int16 -2, vm.Memory(int16 261))
-    Assert.Equal(int16 8, vm.Memory(int16 262))
+    Assert.Equal(int16 -2, vm.Memory(uint16 261))
+    Assert.Equal(int16 8, vm.Memory(uint16 262))
