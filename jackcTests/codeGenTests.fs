@@ -142,7 +142,45 @@ let ``Should compile if-else statement`` () =
         { name = "v"; scope = SubroutineScope; varType = J_Int; segment = Local 2 }
     ]
     let code,_ = run (initStateWithSymbolTable symbolTable) (compileStatement statement)
-    let expected = OK ["push local 0";"push constant 0";"gt";"not";"if-goto .IF_ELSE$1";"push local 1";"pop local 2";"label .IF_ELSE$1"]
+    let expected = OK [
+         "push local 0"
+         "push constant 0"
+         "gt"
+         "if-goto .IF_ELSE_TRUE$1"
+         "goto .IF_ELSE_FALSE$2"
+         "label .IF_ELSE_TRUE$1"
+         "push local 1"
+         "pop local 2"
+         "goto .IF_ELSE_END$3"
+         "label .IF_ELSE_FALSE$2"
+         "label .IF_ELSE_END$3"
+        ]
+    Assert.Equal(expected, code)
+
+[<Fact>]
+let ``Should compile if-else statement 2`` () =
+    let statement = J_If_Else (J_EQ (J_Variable "mask", J_Constant_Int 0s), [J_Return (Some (J_Constant_Int 1s))], [J_Return (Some (J_MUL (J_Variable "mask", J_Constant_Int 2s)))])
+    let symbolTable = buildSymbolTableFromEntries [
+        { name = "mask"; scope = SubroutineScope; varType = J_Int; segment = Argument 0 }
+    ]
+    let code,_ = run (initStateWithSymbolTable symbolTable) (compileStatement statement)
+    let expected = OK [
+        "push argument 0"
+        "push constant 0"
+        "eq"
+        "if-goto .IF_ELSE_TRUE$1"
+        "goto .IF_ELSE_FALSE$2"
+        "label .IF_ELSE_TRUE$1"
+        "push constant 1"
+        "return"
+        "goto .IF_ELSE_END$3"
+        "label .IF_ELSE_FALSE$2"
+        "push argument 0"
+        "push constant 2"
+        "call Math.multiply 2"
+        "return"
+        "label .IF_ELSE_END$3"        
+    ]
     Assert.Equal(expected, code)
    
 [<Fact>]
@@ -158,15 +196,16 @@ let ``Should compile if-else statement with else clause`` () =
             "push constant 1"
             "push constant 2"
             "eq"
-            "not"
-            "if-goto .IF_ELSE$1"
+            "if-goto .IF_ELSE_TRUE$1"
+            "goto .IF_ELSE_FALSE$2"
+            "label .IF_ELSE_TRUE$1"
             "push constant 3"
             "return"
-            "goto .IF_ELSE$2"
-            "label .IF_ELSE$1"
+            "goto .IF_ELSE_END$3"
+            "label .IF_ELSE_FALSE$2"
             "push constant 5"
             "return"
-            "label .IF_ELSE$2"
+            "label .IF_ELSE_END$3"            
         ]
     Assert.Equal(expected, code)
 
@@ -185,29 +224,31 @@ let ``Should compile if-else statement with nested if-else statements`` () =
     let code,_ = run emptyCompilationState (compileStatement statement)
     let expected =
         OK [
-            "push constant 1"
-            "neg"
+            "push constant 0"
+            "not"
             "push constant 0"
             "eq"
-            "not"
-            "if-goto .IF_ELSE$1"
+            "if-goto .IF_ELSE_TRUE$4"
+            "goto .IF_ELSE_FALSE$5"
+            "label .IF_ELSE_TRUE$4"
             "push constant 1"
             "push constant 2"
             "eq"
-            "not"
-            "if-goto .IF_ELSE$2"
+            "if-goto .IF_ELSE_TRUE$1"
+            "goto .IF_ELSE_FALSE$2"
+            "label .IF_ELSE_TRUE$1"
             "push constant 7"
             "return"
-            "goto .IF_ELSE$3"
-            "label .IF_ELSE$2"
+            "goto .IF_ELSE_END$3"
+            "label .IF_ELSE_FALSE$2"
             "push constant 8"
             "return"
-            "label .IF_ELSE$3"
-            "goto .IF_ELSE$4"
-            "label .IF_ELSE$1"
+            "label .IF_ELSE_END$3"
+            "goto .IF_ELSE_END$6"
+            "label .IF_ELSE_FALSE$5"
             "push constant 9"
             "return"
-            "label .IF_ELSE$4"
+            "label .IF_ELSE_END$6"          
         ]
     Assert.Equal(expected, code)
 

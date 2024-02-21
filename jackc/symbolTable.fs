@@ -98,7 +98,7 @@ let buildSymbolsForSubroutine classSymbols className subroutine =
     let newSubroutine = { subroutine with parameters = [implicitThisParameter] @ subroutine.parameters }
     genSubroutineSymbolTable classSymbols newSubroutine |> symbolStateToTable
 
-let buildSymbolsForConstructor classSymbols subroutine =
+let buildSymbolsForStaticSubroutine classSymbols subroutine =
     genSubroutineSymbolTable classSymbols subroutine |> symbolStateToTable
     
 let symbolLookup table name =

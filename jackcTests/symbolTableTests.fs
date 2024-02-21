@@ -178,7 +178,7 @@ let ``Should not include implicit this as first parameter to constructor`` () =
             }
         ] 
     }
-    let table = buildSymbolsForConstructor (buildSymbolsForClass c) c.subroutines[0]
+    let table = buildSymbolsForStaticSubroutine (buildSymbolsForClass c) c.subroutines[0]
     match symbolLookup table "this" with
     | Some _ -> Assert.Fail("Constructor should not have implicit 'this' parameter")
     | None -> Assert.True(true)

@@ -7,7 +7,13 @@ open jackc.validation
 open jackc.util
 
 [<Literal>]
-let LABEL_IF_ELSE = "IF_ELSE"
+let LABEL_IF_ELSE_TRUE = "IF_ELSE_TRUE"
+
+[<Literal>]
+let LABEL_IF_ELSE_FALSE = "IF_ELSE_FALSE"
+
+[<Literal>]
+let LABEL_IF_ELSE_END = "IF_ELSE_END"
 
 [<Literal>]
 let LABEL_WHILE_EXP = "WHILE_EXP"
@@ -68,7 +74,7 @@ let compileConstantInt i = [$"push constant {i}"]
 
 let compileConstantBoolean b =
     match b with
-    | true -> ["push constant 1"; "neg"]
+    | true -> ["push constant 0"; "not"]
     | false -> ["push constant 0"]
 
 let compileConstantNull = ["push constant 0"]
@@ -235,25 +241,22 @@ and compileStatement statement =
             | _ -> return errorMsg context $"Unsupported expression in \"let\" statement: {expr}"
         | J_If_Else(condExpr, conditionStatements, elseStatements) ->
             let! conditionExpressionCode = compileExpression condExpr
-            let! label1 = getNextLabel LABEL_IF_ELSE
-            let! conditionStatementsCode = compileStatements conditionStatements
-            match elseStatements with
-            | [] ->
-                return fold [
-                    conditionExpressionCode
-                    OK ["not";$"if-goto {label1}"]
-                    fold conditionStatementsCode
-                    OK [$"label {label1}"]]
-            | xs ->
-                let! label2 = getNextLabel LABEL_IF_ELSE
-                let! elseStatementsCode = compileStatements xs            
-                return fold [
-                    conditionExpressionCode
-                    OK [ "not"; $"if-goto {label1}"]
-                    fold conditionStatementsCode
-                    OK [$"goto {label2}"; $"label {label1}"]
-                    fold elseStatementsCode
-                    OK [$"label {label2}"]]                
+            let! conditionTrueCode = compileStatements conditionStatements
+            let! conditionFalseCode = compileStatements elseStatements
+            let! labelTrue = getNextLabel LABEL_IF_ELSE_TRUE
+            let! labelFalse = getNextLabel LABEL_IF_ELSE_FALSE
+            let! labelEnd = getNextLabel LABEL_IF_ELSE_END
+            return fold [
+                conditionExpressionCode
+                OK [$"if-goto {labelTrue}"]
+                OK [$"goto {labelFalse}"]
+                OK [$"label {labelTrue}"]
+                fold conditionTrueCode
+                OK [$"goto {labelEnd}"]
+                OK [$"label {labelFalse}"]
+                fold conditionFalseCode
+                OK [$"label {labelEnd}"]
+            ]
         | J_While(condExpr, statements) ->
             let! label1 = getNextLabel LABEL_WHILE_EXP
             let! label2 = getNextLabel LABEL_WHILE_END
@@ -282,7 +285,10 @@ let compileSubroutine (s:JackSubroutine) =
         let! context = getContext
         let! classSymbols = getClassSymbols
         do! setContext $"{context}.{s.name}"
-        do! setSubroutineSymbolTable (buildSymbolsForSubroutine classSymbols className s)        
+        
+        match s.subType with
+        | J_Method -> do! setSubroutineSymbolTable (buildSymbolsForSubroutine classSymbols className s)
+        | J_Function -> do! setSubroutineSymbolTable (buildSymbolsForStaticSubroutine classSymbols s)
         
         let! thisCode = compileVariable Push "this" //push implicit THIS argument onto the stack
         let! statementsCode = compileStatements s.body
@@ -305,7 +311,7 @@ let compileConstructor (c:JackClass) (s:JackSubroutine) =
         let! context = getContext
         let! classSymbols = getClassSymbols
         do! setContext $"{context}.{s.name}"
-        do! setSubroutineSymbolTable (buildSymbolsForConstructor classSymbols s)
+        do! setSubroutineSymbolTable (buildSymbolsForStaticSubroutine classSymbols s)
         
         let checkReturnType = 
             match s.returnType with
