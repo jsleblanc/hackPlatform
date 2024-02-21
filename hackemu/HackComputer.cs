@@ -1,4 +1,5 @@
-﻿using System.Diagnostics.CodeAnalysis;
+﻿using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 
 namespace hackemu;
 
@@ -149,6 +150,7 @@ public class HackComputer : IHackComputer
 
             if (destination.HasFlag(Destination.M))
             {
+                Debug.Assert(_aReg >= 0, "A-Reg cannot be negative when used as a memory address");
                 _ram[_aReg] = compResult;
             }
 
