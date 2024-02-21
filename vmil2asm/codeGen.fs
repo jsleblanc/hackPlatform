@@ -15,8 +15,8 @@ let S_THIS = "@THIS"
 [<Literal>]
 let S_THAT = "@THAT"
 
-let SEGMENT_POINTER_BASE = uint16 0x3
-let SEGMENT_TEMP_BASE = uint16 0x5
+let SEGMENT_POINTER_BASE = 0x3us
+let SEGMENT_TEMP_BASE = 0x5us
 
 let ai = AssemblyInstruction
 let aComment s = ai $"// --- {s} ---"
