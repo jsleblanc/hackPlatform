@@ -226,13 +226,13 @@ let ``Should run statics-test program on virtual machine`` () =
     let input = fold asm 
     let code = assemble input
     let vm = HackVirtualMachine(code.instructions)
-    vm.ComputeCycles(10000)
+    vm.ComputeCycles(10_000)
     Assert.Equal(int16 263, vm.SP)
     Assert.Equal(int16 -2, vm.Memory(uint16 261))
     Assert.Equal(int16 8, vm.Memory(uint16 262))
 
 [<Fact>]
-let ``Should test temp segment`` () =
+let ``Should test writing temp segment`` () =
     let vmilCode = """
 function Sys.init 0
 	push constant 8
@@ -255,7 +255,7 @@ function Sys.init 0
     let asmCode = vmil2asmString "foo.vm" vmilCode
     let binaryCode = assemble (fold asmCode)
     let vm = HackVirtualMachine(binaryCode.instructions)
-    vm.ComputeCycles(10000)
+    vm.ComputeCycles(1_000)
     Assert.Equal(1s, vm.R5)
     Assert.Equal(2s, vm.R6)
     Assert.Equal(3s, vm.R7)
@@ -266,4 +266,237 @@ function Sys.init 0
     Assert.Equal(8s, vm.R12)
     Assert.Equal(261s, vm.SP)
     Assert.True(true)
- 
+
+[<Fact>]
+let ``Should test writing local segment`` () =
+    let vmilCode = """
+function Sys.init 0
+	push constant 8
+	push constant 7
+	push constant 6
+	push constant 5
+	push constant 4
+	push constant 3
+	push constant 2
+	push constant 1
+	pop local 0
+	pop local 1
+	pop local 2
+	pop local 3
+	pop local 4
+	pop local 5
+	pop local 6
+	pop local 7
+"""
+    let asmCode = vmil2asmString "foo.vm" vmilCode
+    let binaryCode = assemble (fold asmCode)
+    let vm = HackVirtualMachine(binaryCode.instructions)
+    vm.SetLocalSegmentBase(1000s)
+    vm.ComputeCycles(1_000)
+    Assert.Equal(1s, vm.LocalSegment(0s))
+    Assert.Equal(2s, vm.LocalSegment(1s))
+    Assert.Equal(3s, vm.LocalSegment(2s))
+    Assert.Equal(4s, vm.LocalSegment(3s))
+    Assert.Equal(5s, vm.LocalSegment(4s))
+    Assert.Equal(6s, vm.LocalSegment(5s))
+    Assert.Equal(7s, vm.LocalSegment(6s))
+    Assert.Equal(8s, vm.LocalSegment(7s))
+    Assert.Equal(261s, vm.SP)
+    Assert.True(true)
+
+[<Fact>]
+let ``Should test writing argument segment`` () =
+    let vmilCode = """
+function Sys.init 0
+	push constant 8
+	push constant 7
+	push constant 6
+	push constant 5
+	push constant 4
+	push constant 3
+	push constant 2
+	push constant 1
+	pop argument 0
+	pop argument 1
+	pop argument 2
+	pop argument 3
+	pop argument 4
+	pop argument 5
+	pop argument 6
+	pop argument 7
+"""
+    let asmCode = vmil2asmString "foo.vm" vmilCode
+    let binaryCode = assemble (fold asmCode)
+    let vm = HackVirtualMachine(binaryCode.instructions)
+    vm.SetArgumentSegmentBase(1000s)
+    vm.ComputeCycles(1_000)
+    Assert.Equal(1s, vm.ArgumentSegment(0s))
+    Assert.Equal(2s, vm.ArgumentSegment(1s))
+    Assert.Equal(3s, vm.ArgumentSegment(2s))
+    Assert.Equal(4s, vm.ArgumentSegment(3s))
+    Assert.Equal(5s, vm.ArgumentSegment(4s))
+    Assert.Equal(6s, vm.ArgumentSegment(5s))
+    Assert.Equal(7s, vm.ArgumentSegment(6s))
+    Assert.Equal(8s, vm.ArgumentSegment(7s))
+    Assert.Equal(261s, vm.SP)
+    Assert.True(true)
+
+[<Fact>]
+let ``Should test writing this segment`` () =
+    let vmilCode = """
+function Sys.init 0
+	push constant 8
+	push constant 7
+	push constant 6
+	push constant 5
+	push constant 4
+	push constant 3
+	push constant 2
+	push constant 1
+	pop this 0
+	pop this 1
+	pop this 2
+	pop this 3
+	pop this 4
+	pop this 5
+	pop this 6
+	pop this 7
+"""
+    let asmCode = vmil2asmString "foo.vm" vmilCode
+    let binaryCode = assemble (fold asmCode)
+    let vm = HackVirtualMachine(binaryCode.instructions)
+    vm.SetThisSegmentBase(1000s)
+    vm.ComputeCycles(1_000)
+    Assert.Equal(1s, vm.ThisSegment(0s))
+    Assert.Equal(2s, vm.ThisSegment(1s))
+    Assert.Equal(3s, vm.ThisSegment(2s))
+    Assert.Equal(4s, vm.ThisSegment(3s))
+    Assert.Equal(5s, vm.ThisSegment(4s))
+    Assert.Equal(6s, vm.ThisSegment(5s))
+    Assert.Equal(7s, vm.ThisSegment(6s))
+    Assert.Equal(8s, vm.ThisSegment(7s))
+    Assert.Equal(261s, vm.SP)
+    Assert.True(true)
+
+[<Fact>]
+let ``Should test writing that segment`` () =
+    let vmilCode = """
+function Sys.init 0
+	push constant 8
+	push constant 7
+	push constant 6
+	push constant 5
+	push constant 4
+	push constant 3
+	push constant 2
+	push constant 1
+	pop that 0
+	pop that 1
+	pop that 2
+	pop that 3
+	pop that 4
+	pop that 5
+	pop that 6
+	pop that 7
+"""
+    let asmCode = vmil2asmString "foo.vm" vmilCode
+    let binaryCode = assemble (fold asmCode)
+    let vm = HackVirtualMachine(binaryCode.instructions)
+    vm.SetThatSegmentBase(1000s)
+    vm.ComputeCycles(1_000)
+    Assert.Equal(1s, vm.ThatSegment(0s))
+    Assert.Equal(2s, vm.ThatSegment(1s))
+    Assert.Equal(3s, vm.ThatSegment(2s))
+    Assert.Equal(4s, vm.ThatSegment(3s))
+    Assert.Equal(5s, vm.ThatSegment(4s))
+    Assert.Equal(6s, vm.ThatSegment(5s))
+    Assert.Equal(7s, vm.ThatSegment(6s))
+    Assert.Equal(8s, vm.ThatSegment(7s))
+    Assert.Equal(261s, vm.SP)
+    Assert.True(true)
+                
+[<Fact>]
+let ``Should test writing static segment`` () =
+    let vmilCode = """
+function Sys.init 0
+	push constant 8
+	push constant 7
+	push constant 6
+	push constant 5
+	push constant 4
+	push constant 3
+	push constant 2
+	push constant 1
+	pop static 0
+	pop static 1
+	pop static 2
+	pop static 3
+	pop static 4
+	pop static 5
+	pop static 6
+	pop static 7
+"""
+    let asmCode = vmil2asmString "foo.vm" vmilCode
+    let binaryCode = assemble (fold asmCode)
+    let vm = HackVirtualMachine(binaryCode.instructions)
+    vm.ComputeCycles(1_000)
+    Assert.Equal(1s, vm.StaticSegment(0s))
+    Assert.Equal(2s, vm.StaticSegment(1s))
+    Assert.Equal(3s, vm.StaticSegment(2s))
+    Assert.Equal(4s, vm.StaticSegment(3s))
+    Assert.Equal(5s, vm.StaticSegment(4s))
+    Assert.Equal(6s, vm.StaticSegment(5s))
+    Assert.Equal(7s, vm.StaticSegment(6s))
+    Assert.Equal(8s, vm.StaticSegment(7s))
+    Assert.Equal(261s, vm.SP)
+    Assert.True(true)
+    
+[<Fact>]
+let ``Should test writing pointer 0 segment`` () =
+    let vmilCode = """
+function Sys.init 0
+	push constant 818
+	pop pointer 0
+"""
+    let asmCode = vmil2asmString "foo.vm" vmilCode
+    let binaryCode = assemble (fold asmCode)
+    let vm = HackVirtualMachine(binaryCode.instructions)
+    vm.SetThisBase(1000s)
+    vm.ComputeCycles(1_000)
+    Assert.Equal(818s, vm.Pointer_0)
+    Assert.Equal(261s, vm.SP)
+    Assert.True(true)
+    
+[<Fact>]
+let ``Should test writing pointer 1 segment`` () =
+    let vmilCode = """
+function Sys.init 0
+	push constant 818
+	pop pointer 1
+"""
+    let asmCode = vmil2asmString "foo.vm" vmilCode
+    let binaryCode = assemble (fold asmCode)
+    let vm = HackVirtualMachine(binaryCode.instructions)
+    vm.SetThatBase(1000s)
+    vm.ComputeCycles(1_000)
+    Assert.Equal(818s, vm.Pointer_1)
+    Assert.Equal(261s, vm.SP)
+    Assert.True(true)
+    
+[<Fact>]
+let ``Should test reading pointer 0 segment`` () =
+    let vmilCode = """
+function Sys.init 0
+	push pointer 0
+"""
+    let asmCode = vmil2asmString "foo.vm" vmilCode
+    let binaryCode = assemble (fold asmCode)
+    let vm = HackVirtualMachine(binaryCode.instructions)
+    vm.SetThisBase(1000s)
+    vm.SetPointer0(818s)
+    vm.ComputeCycles(1_000)
+    Assert.Equal(818s, vm.Pointer_0)
+    Assert.Equal(818s, vm.TopOfStack)
+    Assert.Equal(261s, vm.SP)
+    Assert.True(true)
+    
