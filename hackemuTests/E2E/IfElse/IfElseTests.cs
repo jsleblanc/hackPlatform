@@ -1,3 +1,4 @@
+using FluentAssertions;
 using hackemu;
 
 namespace hackemuTests.E2E.IfElse;
@@ -13,9 +14,9 @@ public class IfElseTests
         var hackComputer = new HackComputer(binaryCode);
         hackComputer.SetMemory(8001, -1);
         hackComputer.SetMemory(8002, -1);
-        hackComputer.ComputeCycles(1000);
+        hackComputer.ComputeCycles(10_000);
 
-        Assert.Equal(1, hackComputer.Memory(8001));
-        Assert.Equal(2, hackComputer.Memory(8002));
+        hackComputer.Memory(8001).Should().Be(1, "Memory address: 8001");
+        hackComputer.Memory(8002).Should().Be(2, "Memory address: 8002");
     }
 }
