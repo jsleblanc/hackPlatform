@@ -31,7 +31,7 @@ public class HackVirtualMachine(HackComputer hackComputer) : IHackComputer
     public short A => _hackComputer.A;
     public short D => _hackComputer.D;
     public short M => _hackComputer.M;
-    public short PC => _hackComputer.PC;
+    public ushort PC => _hackComputer.PC;
     
     public short Memory(short index) => _hackComputer.Memory(index);
     public void SetMemory(short index, short value) => _hackComputer.SetMemory(index, value);

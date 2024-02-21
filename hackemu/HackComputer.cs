@@ -10,7 +10,7 @@ public class HackComputer : IHackComputer
     private readonly short[] _rom = new short[0xFFFF];
     private readonly short[] _ram = new short[0xFFFF];
 
-    private short _pc;
+    private ushort _pc;
     private short _aReg;
     private short _dReg;
 
@@ -85,7 +85,7 @@ public class HackComputer : IHackComputer
     public short A => _aReg;
     public short D => _dReg;
     public short M => _ram[_aReg];
-    public short PC => _pc;
+    public ushort PC => _pc;
     public short Memory(short index) => _ram[index];
 
     public void SetMemory(short index, short value) => _ram[index] = value;
@@ -157,17 +157,17 @@ public class HackComputer : IHackComputer
                 _dReg = compResult;
             }
 
-            var pcNext = (short)(_pc + 1);
+            var pcNext = (ushort)(_pc + 1);
             _pc = jump switch
             {
                 Jump.None => pcNext,
-                Jump.JGT => compResult > 0 ? _aReg : pcNext,
-                Jump.JEQ => compResult == 0 ? _aReg : pcNext,
-                Jump.JGE => compResult >= 0 ? _aReg : pcNext,
-                Jump.JLT => compResult < 0 ? _aReg : pcNext,
-                Jump.JNE => compResult != 0 ? _aReg : pcNext,
-                Jump.JLE => compResult <= 0 ? _aReg : pcNext,
-                Jump.JMP => _aReg,
+                Jump.JGT => compResult > 0 ? (ushort)_aReg : pcNext,
+                Jump.JEQ => compResult == 0 ? (ushort)_aReg : pcNext,
+                Jump.JGE => compResult >= 0 ? (ushort)_aReg : pcNext,
+                Jump.JLT => compResult < 0 ? (ushort)_aReg : pcNext,
+                Jump.JNE => compResult != 0 ? (ushort)_aReg : pcNext,
+                Jump.JLE => compResult <= 0 ? (ushort)_aReg : pcNext,
+                Jump.JMP => (ushort)_aReg,
                 _ => throw new ArgumentOutOfRangeException(nameof(jump))
             };
         }

@@ -5,7 +5,7 @@ public interface IHackComputer
     short A { get; }
     short D { get; }
     short M { get; }
-    short PC { get; }
+    ushort PC { get; }
     short Memory(short index);
     void SetMemory(short index, short value);
     void ComputeCycles(int count);
