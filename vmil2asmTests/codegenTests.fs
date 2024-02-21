@@ -1,6 +1,8 @@
 module vmil2asmTests.codegenTests
 
 open Xunit
+open Faqt
+open Faqt.Operators
 open System.Text
 open assembler.api
 open vmil2asm.api
@@ -43,8 +45,8 @@ label END
     let code = assemble input
     let vm = HackVirtualMachine(code.instructions)
     vm.ComputeCycles(10000)
-    Assert.Equal(int16 13, vm.Memory(uint16 261))
-    Assert.Equal(int16 262, vm.SP)
+    Assert.Equal(13s, vm.Memory(261us))
+    Assert.Equal(262s, vm.SP)
 
 [<Fact>]
 let ``Should run nested-call program on virtual machine`` () =
@@ -112,13 +114,13 @@ function Sys.add12 0
     let code = assemble input
     let vm = HackVirtualMachine(code.instructions)
     vm.ComputeCycles(10000)
-    Assert.Equal(int16 261, vm.SP)
-    Assert.Equal(int16 261, vm.LCL)
-    Assert.Equal(int16 256, vm.ARG)
-    Assert.Equal(int16 4000, vm.THIS)
-    Assert.Equal(int16 5000, vm.THAT)
-    Assert.Equal(int16 135, vm.R5)
-    Assert.Equal(int16 246, vm.R6)
+    Assert.Equal(261s, vm.SP)
+    Assert.Equal(261s, vm.LCL)
+    Assert.Equal(256s, vm.ARG)
+    Assert.Equal(4000s, vm.THIS)
+    Assert.Equal(5000s, vm.THAT)
+    Assert.Equal(135s, vm.R5)
+    Assert.Equal(246s, vm.R6)
 
 [<Fact>]
 let ``Should run simple-function program on virtual machine`` () =
@@ -152,8 +154,8 @@ function SimpleFunction.test 2
     let input = fold asm
     let code = assemble input
     let vm = HackVirtualMachine(code.instructions)
-    vm.ComputeCycles(10000)
-    Assert.Equal(int16 1196, vm.Memory(uint16 261))
+    vm.ComputeCycles(10_000)
+    Assert.Equal(1196s, vm.Memory(261us))
 
 
 
@@ -227,12 +229,12 @@ let ``Should run statics-test program on virtual machine`` () =
     let code = assemble input
     let vm = HackVirtualMachine(code.instructions)
     vm.ComputeCycles(10_000)
-    Assert.Equal(int16 263, vm.SP)
-    Assert.Equal(int16 -2, vm.Memory(uint16 261))
-    Assert.Equal(int16 8, vm.Memory(uint16 262))
+    Assert.Equal(263s, vm.SP)
+    Assert.Equal(-2s, vm.Memory(261us))
+    Assert.Equal(8s, vm.Memory(262us))
 
 [<Fact>]
-let ``Should test writing temp segment`` () =
+let ``Should test temp segment - writing`` () =
     let vmilCode = """
 function Sys.init 0
 	push constant 8
@@ -256,19 +258,54 @@ function Sys.init 0
     let binaryCode = assemble (fold asmCode)
     let vm = HackVirtualMachine(binaryCode.instructions)
     vm.ComputeCycles(1_000)
-    Assert.Equal(1s, vm.R5)
-    Assert.Equal(2s, vm.R6)
-    Assert.Equal(3s, vm.R7)
-    Assert.Equal(4s, vm.R8)
-    Assert.Equal(5s, vm.R9)
-    Assert.Equal(6s, vm.R10)
-    Assert.Equal(7s, vm.R11)
-    Assert.Equal(8s, vm.R12)
-    Assert.Equal(261s, vm.SP)
-    Assert.True(true)
+    %vm.R5.Should().Be(1s, "segment offset 0")
+    %vm.R6.Should().Be(2s, "segment offset 1")
+    %vm.R7.Should().Be(3s, "segment offset 2")
+    %vm.R8.Should().Be(4s, "segment offset 3")
+    %vm.R9.Should().Be(5s, "segment offset 4")
+    %vm.R10.Should().Be(6s, "segment offset 5")
+    %vm.R11.Should().Be(7s, "segment offset 6")
+    %vm.R12.Should().Be(8s, "segment offset 7")
+    %vm.SP.Should().Be(261s, "stack pointer should be expected value")
 
 [<Fact>]
-let ``Should test writing local segment`` () =
+let ``Should test temp segment - reading`` () =
+    let vmilCode = """
+function Sys.init 0
+	push temp 0
+	push temp 1
+	push temp 2
+	push temp 3
+	push temp 4
+	push temp 5
+	push temp 6
+	push temp 7
+"""
+    let asmCode = vmil2asmString "foo.vm" vmilCode
+    let binaryCode = assemble (fold asmCode)
+    let vm = HackVirtualMachine(binaryCode.instructions)
+    vm.SetMemory(5us, 805s)
+    vm.SetMemory(6us, 806s)
+    vm.SetMemory(7us, 807s)
+    vm.SetMemory(8us, 808s)
+    vm.SetMemory(9us, 809s)
+    vm.SetMemory(10us, 810s)
+    vm.SetMemory(11us, 811s)
+    vm.SetMemory(12us, 812s)
+    vm.ComputeCycles(1_000)
+    %vm.TopOfStack.Should().Be(812s)
+    %vm.Stack(1s).Should().Be(811s, "2nd on the stack")
+    %vm.Stack(2s).Should().Be(810s, "3rd on the stack")
+    %vm.Stack(3s).Should().Be(809s, "4th on the stack")
+    %vm.Stack(4s).Should().Be(808s, "5th on the stack")
+    %vm.Stack(5s).Should().Be(807s, "6th on the stack")
+    %vm.Stack(6s).Should().Be(806s, "7th on the stack")
+    %vm.Stack(7s).Should().Be(805s, "8th on the stack")
+    %vm.SP.Should().Be(269s, "stack pointer should be expected value")
+        
+
+[<Fact>]
+let ``Should test local segment - writing`` () =
     let vmilCode = """
 function Sys.init 0
 	push constant 8
@@ -293,19 +330,54 @@ function Sys.init 0
     let vm = HackVirtualMachine(binaryCode.instructions)
     vm.SetLocalSegmentBase(1000s)
     vm.ComputeCycles(1_000)
-    Assert.Equal(1s, vm.LocalSegment(0s))
-    Assert.Equal(2s, vm.LocalSegment(1s))
-    Assert.Equal(3s, vm.LocalSegment(2s))
-    Assert.Equal(4s, vm.LocalSegment(3s))
-    Assert.Equal(5s, vm.LocalSegment(4s))
-    Assert.Equal(6s, vm.LocalSegment(5s))
-    Assert.Equal(7s, vm.LocalSegment(6s))
-    Assert.Equal(8s, vm.LocalSegment(7s))
-    Assert.Equal(261s, vm.SP)
-    Assert.True(true)
+    %vm.LocalSegment(0s).Should().Be(1s, "segment offset 0")
+    %vm.LocalSegment(1s).Should().Be(2s, "segment offset 1")
+    %vm.LocalSegment(2s).Should().Be(3s, "segment offset 2")
+    %vm.LocalSegment(3s).Should().Be(4s, "segment offset 3")
+    %vm.LocalSegment(4s).Should().Be(5s, "segment offset 4")
+    %vm.LocalSegment(5s).Should().Be(6s, "segment offset 5")
+    %vm.LocalSegment(6s).Should().Be(7s, "segment offset 6")
+    %vm.LocalSegment(7s).Should().Be(8s, "segment offset 7")
+    %vm.SP.Should().Be(261s, "stack pointer should be expected value")
 
 [<Fact>]
-let ``Should test writing argument segment`` () =
+let ``Should test local segment - reading`` () =
+    let vmilCode = """
+function Sys.init 0
+	push local 0
+	push local 1
+	push local 2
+	push local 3
+	push local 4
+	push local 5
+	push local 6
+	push local 7
+"""
+    let asmCode = vmil2asmString "foo.vm" vmilCode
+    let binaryCode = assemble (fold asmCode)
+    let vm = HackVirtualMachine(binaryCode.instructions)
+    vm.SetLocalSegmentBase(1000s)
+    vm.SetMemory(1000us, 800s)
+    vm.SetMemory(1001us, 801s)
+    vm.SetMemory(1002us, 802s)
+    vm.SetMemory(1003us, 803s)
+    vm.SetMemory(1004us, 804s)
+    vm.SetMemory(1005us, 805s)
+    vm.SetMemory(1006us, 806s)
+    vm.SetMemory(1007us, 807s)
+    vm.ComputeCycles(1_000)
+    %vm.TopOfStack.Should().Be(807s)
+    %vm.Stack(1s).Should().Be(806s, "2nd on the stack")
+    %vm.Stack(2s).Should().Be(805s, "3rd on the stack")
+    %vm.Stack(3s).Should().Be(804s, "4th on the stack")
+    %vm.Stack(4s).Should().Be(803s, "5th on the stack")
+    %vm.Stack(5s).Should().Be(802s, "6th on the stack")
+    %vm.Stack(6s).Should().Be(801s, "7th on the stack")
+    %vm.Stack(7s).Should().Be(800s, "8th on the stack")
+    %vm.SP.Should().Be(269s, "stack pointer should be expected value")
+
+[<Fact>]
+let ``Should test argument segment - writing`` () =
     let vmilCode = """
 function Sys.init 0
 	push constant 8
@@ -330,19 +402,54 @@ function Sys.init 0
     let vm = HackVirtualMachine(binaryCode.instructions)
     vm.SetArgumentSegmentBase(1000s)
     vm.ComputeCycles(1_000)
-    Assert.Equal(1s, vm.ArgumentSegment(0s))
-    Assert.Equal(2s, vm.ArgumentSegment(1s))
-    Assert.Equal(3s, vm.ArgumentSegment(2s))
-    Assert.Equal(4s, vm.ArgumentSegment(3s))
-    Assert.Equal(5s, vm.ArgumentSegment(4s))
-    Assert.Equal(6s, vm.ArgumentSegment(5s))
-    Assert.Equal(7s, vm.ArgumentSegment(6s))
-    Assert.Equal(8s, vm.ArgumentSegment(7s))
-    Assert.Equal(261s, vm.SP)
-    Assert.True(true)
+    %vm.ArgumentSegment(0s).Should().Be(1s, "segment offset 0")
+    %vm.ArgumentSegment(1s).Should().Be(2s, "segment offset 1")
+    %vm.ArgumentSegment(2s).Should().Be(3s, "segment offset 2")
+    %vm.ArgumentSegment(3s).Should().Be(4s, "segment offset 3")
+    %vm.ArgumentSegment(4s).Should().Be(5s, "segment offset 4")
+    %vm.ArgumentSegment(5s).Should().Be(6s, "segment offset 5")
+    %vm.ArgumentSegment(6s).Should().Be(7s, "segment offset 6")
+    %vm.ArgumentSegment(7s).Should().Be(8s, "segment offset 7")
+    %vm.SP.Should().Be(261s, "stack pointer should be expected value")
 
 [<Fact>]
-let ``Should test writing this segment`` () =
+let ``Should test argument segment - reading`` () =
+    let vmilCode = """
+function Sys.init 0
+	push argument 0
+	push argument 1
+	push argument 2
+	push argument 3
+	push argument 4
+	push argument 5
+	push argument 6
+	push argument 7
+"""
+    let asmCode = vmil2asmString "foo.vm" vmilCode
+    let binaryCode = assemble (fold asmCode)
+    let vm = HackVirtualMachine(binaryCode.instructions)
+    vm.SetArgumentSegmentBase(1000s)
+    vm.SetMemory(1000us, 800s)
+    vm.SetMemory(1001us, 801s)
+    vm.SetMemory(1002us, 802s)
+    vm.SetMemory(1003us, 803s)
+    vm.SetMemory(1004us, 804s)
+    vm.SetMemory(1005us, 805s)
+    vm.SetMemory(1006us, 806s)
+    vm.SetMemory(1007us, 807s)
+    vm.ComputeCycles(1_000)
+    %vm.TopOfStack.Should().Be(807s)
+    %vm.Stack(1s).Should().Be(806s, "2nd on the stack")
+    %vm.Stack(2s).Should().Be(805s, "3rd on the stack")
+    %vm.Stack(3s).Should().Be(804s, "4th on the stack")
+    %vm.Stack(4s).Should().Be(803s, "5th on the stack")
+    %vm.Stack(5s).Should().Be(802s, "6th on the stack")
+    %vm.Stack(6s).Should().Be(801s, "7th on the stack")
+    %vm.Stack(7s).Should().Be(800s, "8th on the stack")
+    %vm.SP.Should().Be(269s, "stack pointer should be expected value")
+
+[<Fact>]
+let ``Should test THIS segment - writing`` () =
     let vmilCode = """
 function Sys.init 0
 	push constant 8
@@ -367,19 +474,54 @@ function Sys.init 0
     let vm = HackVirtualMachine(binaryCode.instructions)
     vm.SetThisSegmentBase(1000s)
     vm.ComputeCycles(1_000)
-    Assert.Equal(1s, vm.ThisSegment(0s))
-    Assert.Equal(2s, vm.ThisSegment(1s))
-    Assert.Equal(3s, vm.ThisSegment(2s))
-    Assert.Equal(4s, vm.ThisSegment(3s))
-    Assert.Equal(5s, vm.ThisSegment(4s))
-    Assert.Equal(6s, vm.ThisSegment(5s))
-    Assert.Equal(7s, vm.ThisSegment(6s))
-    Assert.Equal(8s, vm.ThisSegment(7s))
-    Assert.Equal(261s, vm.SP)
-    Assert.True(true)
+    %vm.ThisSegment(0s).Should().Be(1s, "segment offset 0")
+    %vm.ThisSegment(1s).Should().Be(2s, "segment offset 1")
+    %vm.ThisSegment(2s).Should().Be(3s, "segment offset 2")
+    %vm.ThisSegment(3s).Should().Be(4s, "segment offset 3")
+    %vm.ThisSegment(4s).Should().Be(5s, "segment offset 4")
+    %vm.ThisSegment(5s).Should().Be(6s, "segment offset 5")
+    %vm.ThisSegment(6s).Should().Be(7s, "segment offset 6")
+    %vm.ThisSegment(7s).Should().Be(8s, "segment offset 7")
+    %vm.SP.Should().Be(261s, "stack pointer should be expected value")
 
 [<Fact>]
-let ``Should test writing that segment`` () =
+let ``Should test THIS segment - reading`` () =
+    let vmilCode = """
+function Sys.init 0
+	push this 0
+	push this 1
+	push this 2
+	push this 3
+	push this 4
+	push this 5
+	push this 6
+	push this 7
+"""
+    let asmCode = vmil2asmString "foo.vm" vmilCode
+    let binaryCode = assemble (fold asmCode)
+    let vm = HackVirtualMachine(binaryCode.instructions)
+    vm.SetThisSegmentBase(1000s)
+    vm.SetMemory(1000us, 800s)
+    vm.SetMemory(1001us, 801s)
+    vm.SetMemory(1002us, 802s)
+    vm.SetMemory(1003us, 803s)
+    vm.SetMemory(1004us, 804s)
+    vm.SetMemory(1005us, 805s)
+    vm.SetMemory(1006us, 806s)
+    vm.SetMemory(1007us, 807s)
+    vm.ComputeCycles(1_000)
+    %vm.TopOfStack.Should().Be(807s)
+    %vm.Stack(1s).Should().Be(806s, "2nd on the stack")
+    %vm.Stack(2s).Should().Be(805s, "3rd on the stack")
+    %vm.Stack(3s).Should().Be(804s, "4th on the stack")
+    %vm.Stack(4s).Should().Be(803s, "5th on the stack")
+    %vm.Stack(5s).Should().Be(802s, "6th on the stack")
+    %vm.Stack(6s).Should().Be(801s, "7th on the stack")
+    %vm.Stack(7s).Should().Be(800s, "8th on the stack")
+    %vm.SP.Should().Be(269s, "stack pointer should be expected value")
+
+[<Fact>]
+let ``Should test THAT segment - writing`` () =
     let vmilCode = """
 function Sys.init 0
 	push constant 8
@@ -404,19 +546,54 @@ function Sys.init 0
     let vm = HackVirtualMachine(binaryCode.instructions)
     vm.SetThatSegmentBase(1000s)
     vm.ComputeCycles(1_000)
-    Assert.Equal(1s, vm.ThatSegment(0s))
-    Assert.Equal(2s, vm.ThatSegment(1s))
-    Assert.Equal(3s, vm.ThatSegment(2s))
-    Assert.Equal(4s, vm.ThatSegment(3s))
-    Assert.Equal(5s, vm.ThatSegment(4s))
-    Assert.Equal(6s, vm.ThatSegment(5s))
-    Assert.Equal(7s, vm.ThatSegment(6s))
-    Assert.Equal(8s, vm.ThatSegment(7s))
-    Assert.Equal(261s, vm.SP)
-    Assert.True(true)
+    %vm.ThatSegment(0s).Should().Be(1s, "segment offset 0")
+    %vm.ThatSegment(1s).Should().Be(2s, "segment offset 1")
+    %vm.ThatSegment(2s).Should().Be(3s, "segment offset 2")
+    %vm.ThatSegment(3s).Should().Be(4s, "segment offset 3")
+    %vm.ThatSegment(4s).Should().Be(5s, "segment offset 4")
+    %vm.ThatSegment(5s).Should().Be(6s, "segment offset 5")
+    %vm.ThatSegment(6s).Should().Be(7s, "segment offset 6")
+    %vm.ThatSegment(7s).Should().Be(8s, "segment offset 7")
+    %vm.SP.Should().Be(261s, "stack pointer should be expected value")
+
+[<Fact>]
+let ``Should test THAT segment - reading`` () =
+    let vmilCode = """
+function Sys.init 0
+	push that 0
+	push that 1
+	push that 2
+	push that 3
+	push that 4
+	push that 5
+	push that 6
+	push that 7
+"""
+    let asmCode = vmil2asmString "foo.vm" vmilCode
+    let binaryCode = assemble (fold asmCode)
+    let vm = HackVirtualMachine(binaryCode.instructions)
+    vm.SetThatSegmentBase(1000s)
+    vm.SetMemory(1000us, 800s)
+    vm.SetMemory(1001us, 801s)
+    vm.SetMemory(1002us, 802s)
+    vm.SetMemory(1003us, 803s)
+    vm.SetMemory(1004us, 804s)
+    vm.SetMemory(1005us, 805s)
+    vm.SetMemory(1006us, 806s)
+    vm.SetMemory(1007us, 807s)
+    vm.ComputeCycles(1_000)
+    %vm.TopOfStack.Should().Be(807s)
+    %vm.Stack(1s).Should().Be(806s, "2nd on the stack")
+    %vm.Stack(2s).Should().Be(805s, "3rd on the stack")
+    %vm.Stack(3s).Should().Be(804s, "4th on the stack")
+    %vm.Stack(4s).Should().Be(803s, "5th on the stack")
+    %vm.Stack(5s).Should().Be(802s, "6th on the stack")
+    %vm.Stack(6s).Should().Be(801s, "7th on the stack")
+    %vm.Stack(7s).Should().Be(800s, "8th on the stack")
+    %vm.SP.Should().Be(269s, "stack pointer should be expected value")
                 
 [<Fact>]
-let ``Should test writing static segment`` () =
+let ``Should test static segment - writing`` () =
     let vmilCode = """
 function Sys.init 0
 	push constant 8
@@ -440,19 +617,53 @@ function Sys.init 0
     let binaryCode = assemble (fold asmCode)
     let vm = HackVirtualMachine(binaryCode.instructions)
     vm.ComputeCycles(1_000)
-    Assert.Equal(1s, vm.StaticSegment(0s))
-    Assert.Equal(2s, vm.StaticSegment(1s))
-    Assert.Equal(3s, vm.StaticSegment(2s))
-    Assert.Equal(4s, vm.StaticSegment(3s))
-    Assert.Equal(5s, vm.StaticSegment(4s))
-    Assert.Equal(6s, vm.StaticSegment(5s))
-    Assert.Equal(7s, vm.StaticSegment(6s))
-    Assert.Equal(8s, vm.StaticSegment(7s))
-    Assert.Equal(261s, vm.SP)
-    Assert.True(true)
+    %vm.StaticSegment(0s).Should().Be(1s, "segment offset 0")
+    %vm.StaticSegment(1s).Should().Be(2s, "segment offset 1")
+    %vm.StaticSegment(2s).Should().Be(3s, "segment offset 2")
+    %vm.StaticSegment(3s).Should().Be(4s, "segment offset 3")
+    %vm.StaticSegment(4s).Should().Be(5s, "segment offset 4")
+    %vm.StaticSegment(5s).Should().Be(6s, "segment offset 5")
+    %vm.StaticSegment(6s).Should().Be(7s, "segment offset 6")
+    %vm.StaticSegment(7s).Should().Be(8s, "segment offset 7")
+    %vm.SP.Should().Be(261s, "stack pointer should be expected value")
+
+[<Fact>]
+let ``Should test static segment - reading`` () =
+    let vmilCode = """
+function Sys.init 0
+	push static 0
+	push static 1
+	push static 2
+	push static 3
+	push static 4
+	push static 5
+	push static 6
+	push static 7
+"""
+    let asmCode = vmil2asmString "foo.vm" vmilCode
+    let binaryCode = assemble (fold asmCode)
+    let vm = HackVirtualMachine(binaryCode.instructions)
+    vm.SetStaticSegment(0s, 800s)
+    vm.SetStaticSegment(1s, 801s)
+    vm.SetStaticSegment(2s, 802s)
+    vm.SetStaticSegment(3s, 803s)
+    vm.SetStaticSegment(4s, 804s)
+    vm.SetStaticSegment(5s, 805s)
+    vm.SetStaticSegment(6s, 806s)
+    vm.SetStaticSegment(7s, 807s)
+    vm.ComputeCycles(1_000)
+    %vm.TopOfStack.Should().Be(807s)
+    %vm.Stack(1s).Should().Be(806s, "2nd on the stack")
+    %vm.Stack(2s).Should().Be(805s, "3rd on the stack")
+    %vm.Stack(3s).Should().Be(804s, "4th on the stack")
+    %vm.Stack(4s).Should().Be(803s, "5th on the stack")
+    %vm.Stack(5s).Should().Be(802s, "6th on the stack")
+    %vm.Stack(6s).Should().Be(801s, "7th on the stack")
+    %vm.Stack(7s).Should().Be(800s, "8th on the stack")
+    %vm.SP.Should().Be(269s, "stack pointer should be expected value")
     
 [<Fact>]
-let ``Should test writing pointer 0 segment`` () =
+let ``Should test pointer 0 segment - writing`` () =
     let vmilCode = """
 function Sys.init 0
 	push constant 818
@@ -463,12 +674,11 @@ function Sys.init 0
     let vm = HackVirtualMachine(binaryCode.instructions)
     vm.SetThisBase(1000s)
     vm.ComputeCycles(1_000)
-    Assert.Equal(818s, vm.Pointer_0)
-    Assert.Equal(261s, vm.SP)
-    Assert.True(true)
+    %vm.Pointer_0.Should().Be(818s, "pointer 0 should contain the value we set")
+    %vm.SP.Should().Be(261s, "stack pointer should be expected value")
     
 [<Fact>]
-let ``Should test writing pointer 1 segment`` () =
+let ``Should test pointer 1 segment - writing`` () =
     let vmilCode = """
 function Sys.init 0
 	push constant 818
@@ -479,12 +689,11 @@ function Sys.init 0
     let vm = HackVirtualMachine(binaryCode.instructions)
     vm.SetThatBase(1000s)
     vm.ComputeCycles(1_000)
-    Assert.Equal(818s, vm.Pointer_1)
-    Assert.Equal(261s, vm.SP)
-    Assert.True(true)
+    %vm.Pointer_1.Should().Be(818s, "pointer 1 should contain the value we set")
+    %vm.SP.Should().Be(261s, "stack pointer should be expected value")
     
 [<Fact>]
-let ``Should test reading pointer 0 segment`` () =
+let ``Should test pointer 0 segment - reading`` () =
     let vmilCode = """
 function Sys.init 0
 	push pointer 0
@@ -495,8 +704,23 @@ function Sys.init 0
     vm.SetThisBase(1000s)
     vm.SetPointer0(818s)
     vm.ComputeCycles(1_000)
-    Assert.Equal(818s, vm.Pointer_0)
-    Assert.Equal(818s, vm.TopOfStack)
-    Assert.Equal(261s, vm.SP)
-    Assert.True(true)
-    
+    %vm.Pointer_0.Should().Be(818s, "pointer 0 should contain the value we set")
+    %vm.TopOfStack.Should().Be(818s, "value from pointer 0 should be at the top of the stack")
+    %vm.SP.Should().Be(261s, "stack pointer should be expected value")
+   
+[<Fact>]
+let ``Should test pointer 1 segment - reading`` () =
+    let vmilCode = """
+function Sys.init 0
+	push pointer 1
+"""
+    let asmCode = vmil2asmString "foo.vm" vmilCode
+    let binaryCode = assemble (fold asmCode)
+    let vm = HackVirtualMachine(binaryCode.instructions)
+    vm.SetThatBase(1000s)
+    vm.SetPointer1(818s)
+    vm.ComputeCycles(1_000)
+    %vm.Pointer_1.Should().Be(818s, "pointer 1 should contain the value we set")
+    %vm.TopOfStack.Should().Be(818s, "value from pointer 1 should be at the top of the stack")
+    %vm.SP.Should().Be(261s, "stack pointer should be expected value")
+        

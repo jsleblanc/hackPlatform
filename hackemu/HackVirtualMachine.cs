@@ -38,6 +38,7 @@ public class HackVirtualMachine(IHackComputer computer) : IHackComputer
     public short R15 => _computer.Memory(0xF);
 
     public short TopOfStack => _computer.Memory((ushort)(SP - 1));
+    public short Stack(short offset) => _computer.Memory((ushort)(SP - 1 - offset));
     
     public void SetThisBase(short address) => _computer.SetMemory(SEGMENT_THIS, address);
     public void SetThatBase(short address) => _computer.SetMemory(SEGMENT_THAT, address);
@@ -57,6 +58,7 @@ public class HackVirtualMachine(IHackComputer computer) : IHackComputer
     public void SetThatSegmentBase(short address) => _computer.SetMemory(SEGMENT_THAT, address);
     public short ThatSegment(short index) => _computer.Memory((ushort)(THAT + index));
 
+    public void SetStaticSegment(short index, short value) => _computer.SetMemory((ushort)(SEGMENT_STATIC_BASE + index), value);
     public short StaticSegment(short index) => _computer.Memory((ushort)(SEGMENT_STATIC_BASE + index));
     
     public short A => _computer.A;
