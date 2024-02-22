@@ -40,6 +40,7 @@ let pushDIntoStack =
         ai "M=D"
         ai "@SP"
         ai "M=M+1"
+        ai "// --"
     ]
 
 //can be used with fake "registers" R0 through R15, or any direct memory address
@@ -62,34 +63,58 @@ let pushConstantOntoStack c =
         ai "D=A" //Copy A-reg into D-reg
     ] @ pushDIntoStack
 
+let popStackIntoSegment seg =
+    [aComment "POP STACK INTO THIS"]
+    @ popStackIntoD
+    @ [
+        ai seg
+        ai "M=D"
+    ]
+
+let pushSegmentOntoStack seg =
+    [aComment "PUSH SEGMENT ONTO STACK"]
+    @ [
+        ai seg
+        ai "D=M"
+    ] @ pushDIntoStack
+
 //to be used with segment base registers LCL, ARG, THIS, THAT
 let popStackIntoRelativeSegment seg idx =
     [aComment $"POP STACK INTO ({seg} + {idx})"]
     @ popStackIntoAddress "@R13"
     @ [
-        ai $"@{idx}" //load offset constant into D
-        ai "D=A"
         ai seg
-        ai "A=M" //load segment base into A
-        ai "D=D+A" //compute segment address
+        ai "D=M"
+        ai $"@{idx}"
+        ai "D=D+A"
         ai "@R14"
-        ai "M=D" //store segment address in R14
+        ai "M=D" //segment base+idx address stored in R14        
         ai "@R13"
-        ai "D=M" //load value we popped from R13 into D
-        ai "@R14" 
-        ai "A=M" //load segment address from R14 into A
+        ai "D=M"
+        ai "@R14"
+        ai "A=M"
+        ai "M=D"
+    ]
+
+let setRelativeSegmentToZero seg idx =
+    [aComment $"SET SEGMENT ({seg} + {idx}) TO 0"]
+    @ [        
+        ai seg
+        ai "D=M"
+        ai $"@{idx}"
+        ai "A=D+A"
+        ai "D=0"
         ai "M=D"
     ]
 
 let pushRelativeSegmentOntoStack seg idx =
     [aComment $"PUSH SEGMENT ({seg} + {idx}) ONTO STACK"]
     @ [
-        ai $"@{idx}"
-        ai "D=A"
         ai seg
-        ai "A=M"
+        ai "D=M"
+        ai $"@{idx}"
         ai "A=D+A"
-        ai "D=M" //load from memory into D
+        ai "D=M"
     ] @ pushDIntoStack
 
 //for temp and pointer segments that do not use a relative base address but a fixed one
@@ -264,12 +289,12 @@ let callFunction context fn i f args =
         ai $"({context}.{fn}.RETURN${i})"
     ]
 
-let defineFunction context fn args =
-    [aComment $"DEFINE FUNCTION {fn} ARGS {args}"]
+let defineFunction context fn vars =
+    [aComment $"DEFINE FUNCTION {fn} VARS {vars}"]
     @ [
         ai $"({fn})"
         ai "D=0"
-    ] @ (List.init args (fun _ -> pushDIntoStack) |> List.collect id)
+    ] @ (List.init vars (fun _ -> pushDIntoStack) |> List.collect id)
     
 let returnFunction =
     [aComment "RETURN"]
@@ -379,21 +404,23 @@ let codeGenInstruction context fn i cmd  =
     | PUSH (Local, SegmentIndex idx) -> pushRelativeSegmentOntoStack S_LCL idx
     | PUSH (This, SegmentIndex idx) -> pushRelativeSegmentOntoStack S_THIS idx
     | PUSH (That, SegmentIndex idx) -> pushRelativeSegmentOntoStack S_THAT idx
-    | PUSH (Pointer, SegmentIndex idx) -> pushFixedSegmentOntoStack SEGMENT_POINTER_BASE idx
+    | PUSH (Pointer, SegmentIndex 0us) -> pushSegmentOntoStack S_THIS
+    | PUSH (Pointer, SegmentIndex 1us) -> pushSegmentOntoStack S_THAT
     | PUSH (Temp, SegmentIndex idx) -> pushFixedSegmentOntoStack SEGMENT_TEMP_BASE idx
     | PUSH (Static, SegmentIndex idx) -> pushStaticSegmentOntoStack context idx
     | POP (Local, SegmentIndex idx) -> popStackIntoRelativeSegment S_LCL idx
     | POP (Argument, SegmentIndex idx) -> popStackIntoRelativeSegment S_ARG idx
     | POP (This, SegmentIndex idx) -> popStackIntoRelativeSegment S_THIS idx
     | POP (That, SegmentIndex idx) -> popStackIntoRelativeSegment S_THAT idx
-    | POP (Pointer, SegmentIndex idx) -> popStackIntoFixedSegment SEGMENT_POINTER_BASE idx
+    | POP (Pointer, SegmentIndex 0us) -> popStackIntoSegment S_THIS
+    | POP (Pointer, SegmentIndex 1us) -> popStackIntoSegment S_THAT
     | POP (Temp, SegmentIndex idx) -> popStackIntoFixedSegment SEGMENT_TEMP_BASE idx
     | POP (Static, SegmentIndex idx) -> popStackIntoStaticSegment context idx
     | Label l -> labelInstruction fn l
     | Goto l -> gotoInstruction fn l
     | If_Goto l -> ifGotoInstruction fn l
     | Call (f, args) -> callFunction context fn i f args
-    | Function (f, args) -> defineFunction context f args
+    | Function (f, vars) -> defineFunction context f vars
     | Return -> returnFunction
     | x -> failwith $"\"{x}\" is not a supported operation"
 
