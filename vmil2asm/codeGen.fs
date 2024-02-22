@@ -444,10 +444,14 @@ let codeGenInstructionsForFunction context fn commands =
     |> List.map (fun (idx, cmd) -> codeGenInstruction context fn idx cmd)
     |> List.collect id
     
-let codeGenInstructions context commands =
+let codeGenInstructions context commands includeInitCode =
+    let initCode =
+        match includeInitCode with
+        | true -> initVm
+        | false -> []
     groupCodeIntoFunctions commands
     |> List.map (fun (fn, c) -> codeGenInstructionsForFunction context fn c)
     |> List.collect id
-    |> List.insertManyAt 0 initVm
+    |> List.insertManyAt 0 initCode
     
     

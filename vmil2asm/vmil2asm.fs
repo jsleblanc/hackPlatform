@@ -22,14 +22,22 @@ let vmil2asmFile (file:FileInfo) =
     match parseFile file.FullName with
     | Success(results, _, _) ->
         let code = filterOutComments results
-        codeGenInstructions file.Name code
+        codeGenInstructions file.Name code true
     | Failure(msg, _, _) -> failwith msg
 
 let vmil2asmString name input =
     match parseString input with
     | Success(results, _, _) ->
         let code = filterOutComments results
-        codeGenInstructions name code
+        codeGenInstructions name code true
+        |> List.map assemblyInstructionToString
+    | Failure(msg, _, _) -> failwith msg
+
+let vmil2asmStringWithoutInitCode name input =
+    match parseString input with
+    | Success(results, _, _) ->
+        let code = filterOutComments results
+        codeGenInstructions name code false
         |> List.map assemblyInstructionToString
     | Failure(msg, _, _) -> failwith msg
 

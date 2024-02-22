@@ -174,12 +174,57 @@ function SimpleFunction.test 2
 
 
 
+[<Fact>]
+let ``Should run simple-function program on virtual machine (without VM init code)`` () =
+    let vmil = """
+// This file is part of www.nand2tetris.org
+// and the book "The Elements of Computing Systems"
+// by Nisan and Schocken, MIT Press.
+// File name: projects/08/FunctionCalls/SimpleFunction/SimpleFunction.vm
+
+// Performs a simple calculation and returns the result.
+// argument[0] and argument[1] must be set by the caller of this code.
+function SimpleFunction.test 2
+	push local 0
+	push local 1
+	add
+	not
+	push argument 0
+	add
+	push argument 1
+	sub
+	return
+"""
+    let asm = vmil2asmStringWithoutInitCode "Main.vm" vmil
+    let input = fold asm
+    let code = assemble input
+    let vm = HackVirtualMachine(code.instructions)
+    vm.SetMemory(0us, 317s)
+    vm.SetMemory(1us, 317s)
+    vm.SetArgumentSegmentBase(310s)
+    vm.SetThisSegmentBase(3000s)
+    vm.SetThatSegmentBase(4000s)
+    vm.SetArgumentSegment(0s, 1234s)
+    vm.SetArgumentSegment(1s, 37s)
+    vm.SetArgumentSegment(2s, 9s)
+    vm.SetArgumentSegment(3s, 305s)
+    vm.SetArgumentSegment(4s, 300s)
+    vm.SetArgumentSegment(5s, 3010s)
+    vm.SetArgumentSegment(6s, 4010s)
+    vm.ComputeCycles(1_000)
+    %vm.SP.Should().Be(311s)
+    %vm.LCL.Should().Be(305s)
+    %vm.ARG.Should().Be(300s)
+    %vm.THIS.Should().Be(3010s)
+    %vm.THAT.Should().Be(4010s)
+    %vm.Memory(310us).Should().Be(1196s)
 
 
 
 
 
-let class1vm = """
+
+let staticsTestClass1vm = """
 // Stores two supplied arguments in static[0] and static[1].
 function Class1.set 0
 	push argument 0
@@ -197,7 +242,7 @@ function Class1.get 0
 	return
 """
 
-let class2vm = """
+let staticsTestClass2vm = """
 // Stores two supplied arguments in static[0] and static[1].
 function Class2.set 0
 	push argument 0
@@ -215,7 +260,7 @@ function Class2.get 0
 	return
 """
 
-let sysvm = """
+let staticsTestSysvm = """
 // Tests that different functions, stored in two different 
 // class files, manipulate the static segment correctly. 
 function Sys.init 0
@@ -236,17 +281,17 @@ label END
 [<Fact>]
 let ``Should run statics-test program on virtual machine`` () =    
     let asm = vmil2asmStrings [
-        {name = "Class1.vm"; input = class1vm }
-        {name = "Class2.vm"; input = class2vm }
-        {name = "Sys.vm"; input = sysvm }
+        {name = "Class1.vm"; input = staticsTestClass1vm }
+        {name = "Class2.vm"; input = staticsTestClass2vm }
+        {name = "Sys.vm"; input = staticsTestSysvm }
     ]
     let input = fold asm 
     let code = assemble input
     let vm = HackVirtualMachine(code.instructions)
     vm.ComputeCycles(10_000)
-    Assert.Equal(263s, vm.SP)
-    Assert.Equal(-2s, vm.Memory(261us))
-    Assert.Equal(8s, vm.Memory(262us))
+    %vm.SP.Should().Be(263s)
+    %vm.Stack(0s).Should().Be(8s)
+    %vm.Stack(1s).Should().Be(-2s)
 
 [<Fact>]
 let ``Should test temp segment - writing`` () =
@@ -771,6 +816,41 @@ function Sys.init 0
 	push that 0
  label END
  goto END
+"""
+    let asmCode = vmil2asmString "foo.vm" vmilCode
+    let binaryCode = assemble (fold asmCode)
+    let vm = HackVirtualMachine(binaryCode.instructions)
+    vm.ComputeCycles(1_000)
+    %vm.THAT.Should().Be(4001s)
+    %vm.Pointer_1.Should().Be(5001s)
+    %vm.TopOfStack.Should().Be(5001s)
+    
+[<Fact>]
+let ``Should run program with conditional branching`` () =
+    let vmilCode = """
+function Main.main 1
+	push constant 1
+	call Main.test1 1
+	pop local 0
+	push constant 0
+	call Main.test1 1
+	pop local 0
+	push constant 0
+	return
+function Main.test1 0
+	push argument 0
+	push constant 1
+	eq
+	if-goto Main.test1.IF_ELSE_TRUE$1
+	goto Main.test1.IF_ELSE_FALSE$2
+label Main.test1.IF_ELSE_TRUE$1
+	push constant 567
+	return
+	goto Main.test1.IF_ELSE_END$3
+label Main.test1.IF_ELSE_FALSE$2
+	push constant 123
+	return
+label Main.test1.IF_ELSE_END$3
 """
     let asmCode = vmil2asmString "foo.vm" vmilCode
     let binaryCode = assemble (fold asmCode)
