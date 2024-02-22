@@ -11,7 +11,7 @@ public class IfElseTests
         var binaryCode =
             CompilerWorkflow.CompileFiles(new[] { new FileInfo("E2E/IfElse/Main.jack") });
         
-        var hackComputer = new HackComputer(binaryCode);
+        var hackComputer = new HackVirtualMachine(binaryCode);
         hackComputer.SetMemory(8001, -1);
         hackComputer.SetMemory(8002, -1);
         hackComputer.ComputeCycles(10_000);

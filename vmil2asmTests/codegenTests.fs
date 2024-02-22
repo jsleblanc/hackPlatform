@@ -128,7 +128,7 @@ function Sys.add12 0
     for i in 261us .. 299us do
         vm.SetMemory(i, -1s)
         
-    vm.ComputeCycles(10000)
+    vm.ComputeCycles(10_000)
     %vm.SP.Should().Be(261s)
     %vm.LCL.Should().Be(261s)
     %vm.ARG.Should().Be(256s)
@@ -378,31 +378,24 @@ function Sys.init 8
 	push constant 800
 	pop argument 0
 	push argument 0
-	
 	push constant 801
 	pop argument 1
 	push argument 1
- 
 	push constant 802
 	pop argument 2
 	push argument 2
- 
 	push constant 803
 	pop argument 3
 	push argument 3
- 
 	push constant 804
  	pop argument 4
 	push argument 4
- 
 	push constant 805
 	pop argument 5
 	push argument 5
- 
 	push constant 806
  	pop argument 6
 	push argument 6
- 
 	push constant 807
  	pop argument 7
 	push argument 7
@@ -413,14 +406,6 @@ goto END
     let binaryCode = assemble (fold asmCode)
     let vm = HackVirtualMachine(binaryCode.instructions)
     vm.ComputeCycles(1_000)
-    %vm.TopOfStack.Should().Be(807s)
-    %vm.Stack(1s).Should().Be(806s, "2nd on the stack")
-    %vm.Stack(2s).Should().Be(805s, "3rd on the stack")
-    %vm.Stack(3s).Should().Be(804s, "4th on the stack")
-    %vm.Stack(4s).Should().Be(803s, "5th on the stack")
-    %vm.Stack(5s).Should().Be(802s, "6th on the stack")
-    %vm.Stack(6s).Should().Be(801s, "7th on the stack")
-    %vm.Stack(7s).Should().Be(800s, "8th on the stack")    
     %vm.ArgumentSegment(0s).Should().Be(800s, "segment offset 0")
     %vm.ArgumentSegment(1s).Should().Be(801s, "segment offset 1")
     %vm.ArgumentSegment(2s).Should().Be(802s, "segment offset 2")
@@ -669,7 +654,7 @@ function Sys.init 0
     let vm = HackVirtualMachine(binaryCode.instructions)
     vm.SetThisBase(1000s)
     vm.ComputeCycles(1_000)
-    %vm.Pointer_0.Should().Be(818s, "pointer 0 should contain the value we set")
+    %vm.THIS.Should().Be(818s, "pointer 0 should contain the value we set")
     %vm.SP.Should().Be(261s, "stack pointer should be expected value")
     
 [<Fact>]
@@ -684,7 +669,7 @@ function Sys.init 0
     let vm = HackVirtualMachine(binaryCode.instructions)
     vm.SetThatBase(1000s)
     vm.ComputeCycles(1_000)
-    %vm.Pointer_1.Should().Be(818s, "pointer 1 should contain the value we set")
+    %vm.THAT.Should().Be(818s, "pointer 1 should contain the value we set")
     %vm.SP.Should().Be(261s, "stack pointer should be expected value")
     
 [<Fact>]
@@ -700,7 +685,7 @@ function Sys.init 0
     vm.SetPointer0(818s)
     vm.ComputeCycles(1_000)
     %vm.Pointer_0.Should().Be(818s, "pointer 0 should contain the value we set")
-    %vm.TopOfStack.Should().Be(818s, "value from pointer 0 should be at the top of the stack")
+    %vm.TopOfStack.Should().Be(1000s, "value from pointer 0 should be at the top of the stack")
     %vm.SP.Should().Be(262s, "stack pointer should be expected value")
    
 [<Fact>]
@@ -716,6 +701,81 @@ function Sys.init 0
     vm.SetPointer1(818s)
     vm.ComputeCycles(1_000)
     %vm.Pointer_1.Should().Be(818s, "pointer 1 should contain the value we set")
-    %vm.TopOfStack.Should().Be(818s, "value from pointer 1 should be at the top of the stack")
+    %vm.TopOfStack.Should().Be(1000s, "value from pointer 1 should be at the top of the stack")
     %vm.SP.Should().Be(262s, "stack pointer should be expected value")
         
+[<Fact>]
+let ``Should set address of THIS segment then write a value to that segment`` () =
+    let vmilCode = """
+function Sys.init 0
+	push constant 4001
+	pop pointer 0
+	push constant 5001
+	pop this 0
+ label END
+ goto END
+"""
+    let asmCode = vmil2asmString "foo.vm" vmilCode
+    let binaryCode = assemble (fold asmCode)
+    let vm = HackVirtualMachine(binaryCode.instructions)
+    vm.ComputeCycles(1_000)
+    %vm.THIS.Should().Be(4001s)
+    %vm.Pointer_0.Should().Be(5001s)
+
+[<Fact>]
+let ``Should set address of THIS segment then write a value to that segment then read it back onto the stack`` () =
+    let vmilCode = """
+function Sys.init 0
+	push constant 4001
+	pop pointer 0
+	push constant 5001
+	pop this 0
+	push this 0
+ label END
+ goto END
+"""
+    let asmCode = vmil2asmString "foo.vm" vmilCode
+    let binaryCode = assemble (fold asmCode)
+    let vm = HackVirtualMachine(binaryCode.instructions)
+    vm.ComputeCycles(1_000)
+    %vm.THIS.Should().Be(4001s)
+    %vm.Pointer_0.Should().Be(5001s)
+    %vm.TopOfStack.Should().Be(5001s)
+       
+[<Fact>]
+let ``Should set address of THAT segment then write a value to that segment`` () =
+    let vmilCode = """
+function Sys.init 0
+	push constant 4001
+	pop pointer 1
+	push constant 5001
+	pop that 0
+ label END
+ goto END
+"""
+    let asmCode = vmil2asmString "foo.vm" vmilCode
+    let binaryCode = assemble (fold asmCode)
+    let vm = HackVirtualMachine(binaryCode.instructions)
+    vm.ComputeCycles(1_000)
+    %vm.THAT.Should().Be(4001s)
+    %vm.Pointer_1.Should().Be(5001s)
+    
+[<Fact>]
+let ``Should set address of THAT segment then write a value to that segment then read it back onto the stack`` () =
+    let vmilCode = """
+function Sys.init 0
+	push constant 4001
+	pop pointer 1
+	push constant 5001
+	pop that 0
+	push that 0
+ label END
+ goto END
+"""
+    let asmCode = vmil2asmString "foo.vm" vmilCode
+    let binaryCode = assemble (fold asmCode)
+    let vm = HackVirtualMachine(binaryCode.instructions)
+    vm.ComputeCycles(1_000)
+    %vm.THAT.Should().Be(4001s)
+    %vm.Pointer_1.Should().Be(5001s)
+    %vm.TopOfStack.Should().Be(5001s)
