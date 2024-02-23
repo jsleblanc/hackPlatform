@@ -6,50 +6,62 @@ open vmil2asm.types
 open vmil2asm.parser
 open vmil2asm.codeGen
 
-let filterOutComments instructions =
+let private filterOutComments instructions =
     let filter i =
         match i with
         | Code c -> Some c
         | Comment _ -> None
     instructions |> List.map filter |> List.choose id
 
-let assemblyInstructionToString ai =
+let private assemblyInstructionToString ai =
     match ai with
     | AssemblyInstruction a -> a    
 
-let vmil2asmFile initVm (file:FileInfo) =
+let private internal_vmil2asmFile (file:FileInfo) =
     printfn $"\tProcessing {file}"
     match parseFile file.FullName with
     | Success(results, _, _) ->
         let code = filterOutComments results
-        codeGenInstructions file.Name code initVm
+        codeGenInstructions file.Name code
     | Failure(msg, _, _) -> failwith msg
 
-let vmil2asmString name input =
+let private internal_vmil2asmString name input =
+    printfn $"\tProcessing string {name}"
     match parseString input with
     | Success(results, _, _) ->
         let code = filterOutComments results
-        codeGenInstructions name code true
-        |> List.map assemblyInstructionToString
+        codeGenInstructions name code
     | Failure(msg, _, _) -> failwith msg
 
-let vmil2asmStringWithoutInitCode name input =
-    match parseString input with
-    | Success(results, _, _) ->
-        let code = filterOutComments results
-        codeGenInstructions name code false
-        |> List.map assemblyInstructionToString
-    | Failure(msg, _, _) -> failwith msg
-
-let vmil2asmStrings (inputs: StringRequest list) =
-    inputs
-    |> List.map (fun req -> vmil2asmString req.name req.input)
+let vmil2asmStrings (req: ProcessStringsRequest) =
+    let initCode =
+        match req.initVm with
+        | true -> initVm
+        | false -> []    
+    req.inputs
+    |> List.map (fun (name,code) -> internal_vmil2asmString name code)
     |> List.collect id
-    
-let vmil2asmRequest req =
+    |> List.insertManyAt 0 initCode
+    |> List.map assemblyInstructionToString    
+
+let vmil2asmString name input = 
+    let req = { inputs = [(name, input)]; initVm = true; }
+    vmil2asmStrings req
+
+let vmil2asmStringWithoutInitCode name input = 
+    let req = { inputs = [(name, input)]; initVm = false; }
+    vmil2asmStrings req
+       
+let vmil2asmFiles (req: ProcessFilesRequest) =
+    let initCode =
+        match req.initVm with
+        | true -> initVm
+        | false -> []
     let x =
         req.inputFiles
-        |> List.map (vmil2asmFile req.initVm)
+        |> List.map internal_vmil2asmFile
         |> List.collect id
-        |> List.map assemblyInstructionToString
+        |> List.insertManyAt 0 initCode
+        |> List.map assemblyInstructionToString        
     File.WriteAllLines(req.outputName, x)
+    

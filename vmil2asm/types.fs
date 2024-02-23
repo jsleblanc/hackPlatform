@@ -47,7 +47,7 @@ type ProcessFilesRequest = {
     initVm: bool 
 }
 
-type StringRequest = {
-    name: string
-    input: string
+type ProcessStringsRequest = {
+    inputs: (string * string) list //name + code pairs
+    initVm: bool
 }

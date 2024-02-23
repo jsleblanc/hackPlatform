@@ -39,7 +39,7 @@ let main argv =
     match requestOpt with
     | Some req ->
         let outputFileName = overrideOutputName req.outputName outputFileNameArg
-        vmil2asmRequest { req with outputName = outputFileName; initVm = initVmArg }
+        vmil2asmFiles { req with outputName = outputFileName; initVm = initVmArg }
         printfn $"Code written to {outputFileName}"
         0
     | None ->

@@ -280,11 +280,14 @@ label END
 
 [<Fact>]
 let ``Should run statics-test program on virtual machine`` () =    
-    let asm = vmil2asmStrings [
-        {name = "Class1.vm"; input = staticsTestClass1vm }
-        {name = "Class2.vm"; input = staticsTestClass2vm }
-        {name = "Sys.vm"; input = staticsTestSysvm }
-    ]
+    let asm = vmil2asmStrings {
+        inputs = [
+            ("Class1.vm",staticsTestClass1vm)
+            ("Class2.vm",staticsTestClass2vm)
+            ("Sys.vm",staticsTestSysvm)
+        ]
+        initVm = true 
+    }
     let input = fold asm 
     let code = assemble input
     let vm = HackVirtualMachine(code.instructions)
@@ -867,10 +870,13 @@ label Main.test1.IF_ELSE_END$3
 
 [<Fact>]
 let ``Should only call Sys.init once when compiling multiple files`` () =
-    let asm = vmil2asmStrings [
-        {name = "Class1.vm"; input = staticsTestClass1vm }
-        {name = "Class2.vm"; input = staticsTestClass2vm }
-        {name = "Sys.vm"; input = staticsTestSysvm }
-    ]
+    let asm = vmil2asmStrings {
+        inputs = [
+            ("Class1.vm",staticsTestClass1vm)
+            ("Class2.vm",staticsTestClass2vm)
+            ("Sys.vm",staticsTestSysvm)
+        ]
+        initVm = true 
+    }
     let timesSysInitCalled = asm |> List.filter (fun s -> s = "@Sys.init")
     %timesSysInitCalled.Length.Should().Be(1)
