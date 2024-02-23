@@ -33,6 +33,8 @@ let builtInSymbolToString s =
     | R15 -> "R15"
     | SCREEN -> "SCREEN"
     | KBD -> "KBD"
+    | FRAME -> "FRAME"
+    | RET -> "RET"
 
 let jump2Bin j =
     let x = 
@@ -104,6 +106,8 @@ let seedSymbolMap =
         (f R13), u 0xD
         (f R14), u 0xE
         (f R15), u 0xF
+        (f FRAME), u 0xE
+        (f RET), u 0xF
         (f SCREEN), u 0x4000
         (f KBD), u 0x6000
     ]

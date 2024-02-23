@@ -11,6 +11,7 @@ type ParseResult =
 let ws = spaces // skips any whitespace
 
 let str s = pstring s
+let stringReturn_ws s t = stringReturn s t .>> ws
 
 let pComment = str "//" >>. ws >>. restOfLine true |>> function c -> Comment c
 
@@ -41,29 +42,31 @@ let allowedSymbolChar c =
 let pLabel = between (pchar '(' .>> ws) (ws >>. pchar ')') (many1Satisfy2L allowedSymbolFirstChar allowedSymbolChar "label") .>> ws |>> function l -> Label l
 let pVariable = pchar '@' >>. many1Satisfy2L allowedSymbolFirstChar allowedSymbolChar "variable" .>> ws |>> function v -> Variable v 
 
-let bBuiltInSymbol_SP = str "SP" .>> ws |>> function _ -> SP
-let bBuiltInSymbol_LCL = str "LCL" .>> ws |>> function _ -> LCL
-let bBuiltInSymbol_ARG = str "ARG" .>> ws |>> function _ -> ARG
-let bBuiltInSymbol_THIS = str "THIS" .>> ws |>> function _ -> THIS
-let bBuiltInSymbol_THAT = str "THAT" .>> ws |>> function _ -> THAT
-let bBuiltInSymbol_R0 = str "R0" .>> ws |>> function _ -> R0
-let bBuiltInSymbol_R1 = str "R1" .>> ws |>> function _ -> R1
-let bBuiltInSymbol_R2 = str "R2" .>> ws |>> function _ -> R2
-let bBuiltInSymbol_R3 = str "R3" .>> ws |>> function _ -> R3
-let bBuiltInSymbol_R4 = str "R4P" .>> ws |>> function _ -> R4
-let bBuiltInSymbol_R5 = str "R5" .>> ws |>> function _ -> R5
-let bBuiltInSymbol_R6 = str "R6" .>> ws |>> function _ -> R6
-let bBuiltInSymbol_R7 = str "R7" .>> ws |>> function _ -> R7
-let bBuiltInSymbol_R8 = str "R8" .>> ws |>> function _ -> R8
-let bBuiltInSymbol_R9 = str "R9" .>> ws |>> function _ -> R9
-let bBuiltInSymbol_R10 = str "R10" .>> ws |>> function _ -> R10
-let bBuiltInSymbol_R11 = str "R11" .>> ws |>> function _ -> R11
-let bBuiltInSymbol_R12 = str "R12" .>> ws |>> function _ -> R12
-let bBuiltInSymbol_R13 = str "R13" .>> ws |>> function _ -> R13
-let bBuiltInSymbol_R14 = str "R14" .>> ws |>> function _ -> R14
-let bBuiltInSymbol_R15 = str "R15" .>> ws |>> function _ -> R15
-let bBuiltInSymbol_SCREEN = str "SCREEN" .>> ws |>> function _ -> SCREEN
-let bBuiltInSymbol_KBD = str "KBD" .>> ws |>> function _ -> KBD
+let bBuiltInSymbol_SP = stringReturn_ws "SP" SP
+let bBuiltInSymbol_LCL = stringReturn_ws "LCL" LCL
+let bBuiltInSymbol_ARG = stringReturn_ws "ARG" ARG
+let bBuiltInSymbol_THIS = stringReturn_ws "THIS" THIS
+let bBuiltInSymbol_THAT = stringReturn_ws "THAT" THAT
+let bBuiltInSymbol_R0 = stringReturn_ws "R0" R0
+let bBuiltInSymbol_R1 = stringReturn_ws "R1" R1
+let bBuiltInSymbol_R2 = stringReturn_ws "R2" R2
+let bBuiltInSymbol_R3 = stringReturn_ws "R3" R3
+let bBuiltInSymbol_R4 = stringReturn_ws "R4" R4
+let bBuiltInSymbol_R5 = stringReturn_ws "R5" R5
+let bBuiltInSymbol_R6 = stringReturn_ws "R6" R6
+let bBuiltInSymbol_R7 = stringReturn_ws "R7" R7
+let bBuiltInSymbol_R8 = stringReturn_ws "R8" R8
+let bBuiltInSymbol_R9 = stringReturn_ws "R9" R9
+let bBuiltInSymbol_R10 = stringReturn_ws "R10" R10
+let bBuiltInSymbol_R11 = stringReturn_ws "R11" R11
+let bBuiltInSymbol_R12 = stringReturn_ws "R12" R12
+let bBuiltInSymbol_R13 = stringReturn_ws "R13" R13
+let bBuiltInSymbol_R14 = stringReturn_ws "R14" R14
+let bBuiltInSymbol_R15 = stringReturn_ws "R15" R15
+let bBuiltInSymbol_SCREEN = stringReturn_ws "SCREEN" SCREEN
+let bBuiltInSymbol_KBD = stringReturn_ws "KBD" KBD
+let bBuiltInSymbol_RET = stringReturn_ws "RET" RET
+let bBuiltInSymbol_FRAME = stringReturn_ws "FRAME" FRAME
 
 let pBuiltInSymbol = pchar '@' >>. choice [
     bBuiltInSymbol_SP
@@ -89,6 +92,8 @@ let pBuiltInSymbol = pchar '@' >>. choice [
     bBuiltInSymbol_R9 
     bBuiltInSymbol_SCREEN
     bBuiltInSymbol_KBD
+    bBuiltInSymbol_RET
+    bBuiltInSymbol_FRAME
 ]
 
 let pPredefinedSymbol = pBuiltInSymbol |>> function s -> Predefined s

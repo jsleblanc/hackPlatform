@@ -386,6 +386,44 @@ let ``Should Parse Built In Registers when parsing whole assembly`` s =
     match run pInput s with
     | Success(i, _, _) -> Assert.True(true)
     | Failure(msg, _, _) -> Assert.Fail(msg)
+
+type PredefinedSymbolTestCases() =
+    inherit ClassDataBase([
+        [| "@SP"; SP |]
+        [| "@LCL"; LCL |]
+        [| "@ARG"; ARG |]
+        [| "@THIS"; THIS |]
+        [| "@THAT"; THAT |]        
+        [| "@R1"; R1 |]
+        [| "@R2"; R2 |]
+        [| "@R3"; R3 |]
+        [| "@R4"; R4 |]
+        [| "@R5"; R5 |]
+        [| "@R6"; R6 |]
+        [| "@R7"; R7 |]
+        [| "@R8"; R8 |]
+        [| "@R9"; R9 |]
+        [| "@R10"; R10 |]
+        [| "@R11"; R11 |]
+        [| "@R12"; R12 |]
+        [| "@R13"; R13 |]
+        [| "@R14"; R14 |]
+        [| "@R15"; R15 |]
+        [| "@KBD"; KBD |]
+        [| "@SCREEN"; SCREEN |]
+        [| "@RET"; RET |]
+        [| "@FRAME"; FRAME |]
+    ])
+
+[<Theory>]
+[<ClassData(typeof<PredefinedSymbolTestCases>)>]
+let ``Should Parse Predefined symbols`` s exp =
+    match run pSymbol s with
+    | Success(i, _, _) ->
+        match i with
+        | Predefined s -> Assert.Equal(exp, s)
+        | _ -> Assert.Fail($"Should have parsed as predefined symbol: {s}")
+    | Failure(msg, _, _) -> Assert.Fail(msg)
     
 [<Fact>]
 let ``Should Parse Multiline Input`` () =

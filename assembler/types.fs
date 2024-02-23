@@ -24,6 +24,8 @@ type BuiltInSymbol =
     | R13
     | R14
     | R15
+    | FRAME //alias for R14
+    | RET //alias for R15
     | SCREEN
     | KBD
 
