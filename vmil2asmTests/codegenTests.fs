@@ -711,7 +711,7 @@ function Sys.init 0
 """
     let asmCode = vmil2asmString "foo.vm" vmilCode
     let input = fold asmCode
-    let binaryCode = assemble (fold asmCode)
+    let binaryCode = assemble input
     let vm = HackVirtualMachine(binaryCode.instructions)
     vm.SetThatBase(1000s)
     vm.ComputeCycles(1_000)
@@ -815,8 +815,8 @@ function Sys.init 0
 	push constant 5001
 	pop that 0
 	push that 0
- label END
- goto END
+	label END
+	goto END
 """
     let asmCode = vmil2asmString "foo.vm" vmilCode
     let binaryCode = assemble (fold asmCode)
@@ -829,13 +829,17 @@ function Sys.init 0
 [<Fact>]
 let ``Should run program with conditional branching`` () =
     let vmilCode = """
+function Sys.init 0
+	call Main.main 0
+	label END
+	goto END
 function Main.main 1
 	push constant 1
 	call Main.test1 1
-	pop local 0
+	pop static 0
 	push constant 0
 	call Main.test1 1
-	pop local 0
+	pop static 1
 	push constant 0
 	return
 function Main.test1 0
@@ -858,6 +862,6 @@ label Main.test1.IF_ELSE_END$3
     let binaryCode = assemble input
     let vm = HackVirtualMachine(binaryCode.instructions)
     vm.ComputeCycles(1_000)
-    %vm.THAT.Should().Be(4001s)
-    %vm.Pointer_1.Should().Be(5001s)
-    %vm.TopOfStack.Should().Be(5001s)
+    %vm.StaticSegment(0s).Should().Be(567s)
+    %vm.StaticSegment(1s).Should().Be(123s)
+    
