@@ -206,7 +206,7 @@ function SimpleFunction.test 2
     vm.SetThatSegmentBase(4000s)
     vm.SetArgumentSegment(0s, 1234s)
     vm.SetArgumentSegment(1s, 37s)
-    vm.SetArgumentSegment(2s, 9s)
+    vm.SetArgumentSegment(2s, 1000s)
     vm.SetArgumentSegment(3s, 305s)
     vm.SetArgumentSegment(4s, 300s)
     vm.SetArgumentSegment(5s, 3010s)
@@ -710,6 +710,7 @@ function Sys.init 0
 	pop pointer 1
 """
     let asmCode = vmil2asmString "foo.vm" vmilCode
+    let input = fold asmCode
     let binaryCode = assemble (fold asmCode)
     let vm = HackVirtualMachine(binaryCode.instructions)
     vm.SetThatBase(1000s)
@@ -853,7 +854,8 @@ label Main.test1.IF_ELSE_FALSE$2
 label Main.test1.IF_ELSE_END$3
 """
     let asmCode = vmil2asmString "foo.vm" vmilCode
-    let binaryCode = assemble (fold asmCode)
+    let input = fold asmCode
+    let binaryCode = assemble input
     let vm = HackVirtualMachine(binaryCode.instructions)
     vm.ComputeCycles(1_000)
     %vm.THAT.Should().Be(4001s)
