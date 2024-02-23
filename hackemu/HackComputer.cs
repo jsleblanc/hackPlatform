@@ -142,18 +142,18 @@ public class HackComputer : IHackComputer
                 OpCode.OP_D_OR_M => (short)(_dReg | _ram[_aReg]),
                 _ => throw new ArgumentOutOfRangeException(nameof(opCode))
             };
-
-            if (destination.HasFlag(Destination.A))
-            {
-                _aReg = compResult;
-            }
-
+            
             if (destination.HasFlag(Destination.M))
             {
                 Debug.Assert(_aReg >= 0, "A-Reg cannot be negative when used as a memory address");
                 _ram[_aReg] = compResult;
             }
-
+            
+            if (destination.HasFlag(Destination.A))
+            {
+                _aReg = compResult;
+            }
+            
             if (destination.HasFlag(Destination.D))
             {
                 _dReg = compResult;
