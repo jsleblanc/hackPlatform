@@ -8,13 +8,13 @@ let findInputFiles inputPath =
     let folder = DirectoryInfo(inputPath)
     if file.Exists = true then
        let outputName = Path.ChangeExtension(file.FullName, ".asm")
-       Some { outputName = outputName; inputFiles = [file] }
+       Some { outputName = outputName; inputFiles = [file]; initVm = true }
     else if folder.Exists then
         let files = folder.EnumerateFiles("*.vm", SearchOption.AllDirectories) |> List.ofSeq
         let outputName = Path.Combine(folder.FullName, Path.ChangeExtension(folder.Name, ".asm"))
         match files with
         | [] -> None
-        | xs -> Some { outputName = outputName; inputFiles = xs }
+        | xs -> Some { outputName = outputName; inputFiles = xs; initVm = true }
     else None
     
 let overrideOutputName name overriddenName =

@@ -44,6 +44,7 @@ type AssemblyInstruction = AssemblyInstruction of string
 type ProcessFilesRequest = {
     inputFiles: FileInfo list
     outputName: string
+    initVm: bool 
 }
 
 type StringRequest = {
