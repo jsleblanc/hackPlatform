@@ -26,9 +26,7 @@ let popStackIntoD =
     [
         bComment "POP STACK INTO D-Reg"
         ai "@SP"
-        ai "M=M-1"
-        ai "@SP"
-        ai "A=M"
+        ai "AM=M-1"
         ai "D=M"
     ]
 
@@ -40,7 +38,6 @@ let pushDIntoStack =
         ai "M=D"
         ai "@SP"
         ai "M=M+1"
-        ai "// --"
     ]
 
 //can be used with fake "registers" R0 through R15, or any direct memory address
@@ -244,9 +241,10 @@ let ifGotoInstruction context name =
     ]
 
 let callFunction context fn i f args =
+    let returnLabel = $"{context}.{fn}.RETURN${i}" 
     [aComment $"FUNCTION CALL {f} ARGS {args}"]
     @ [
-        ai $"@{context}.{fn}.RETURN${i}" 
+        ai $"@{returnLabel}" 
         ai "D=A"
     ] @ pushDIntoStack //push return address onto stack
     @ [
@@ -286,7 +284,7 @@ let callFunction context fn i f args =
         ai $"@{f}"
         ai "0;JMP"
     ] @ [
-        ai $"({context}.{fn}.RETURN${i})"
+        ai $"({returnLabel})"
     ]
 
 let defineFunction context fn vars =
@@ -298,14 +296,15 @@ let defineFunction context fn vars =
     
 let returnFunction =
     [aComment "RETURN"]
+    @ [bComment "FRAME = LCL"]
     @ [
         //FRAME = LCL
         ai "@LCL"
-        ai "A=M"
-        ai "D=A"
+        ai "D=M"
         ai "@FRAME"
         ai "M=D"
-    ] @ [
+    ] @ [bComment "RET = *(FRAME-5)"]
+      @ [
         //RET = *(FRAME-5)
         ai "@FRAME"
         ai "A=M"
@@ -317,20 +316,23 @@ let returnFunction =
         ai "D=M"
         ai "@RET"
         ai "M=D"
-    ] @ popStackIntoD
+    ] @ [bComment "*ARG = pop()"]
+    @ popStackIntoD
     @ [
         //*ARG = pop()
         ai "@ARG"
         ai "A=M"
         ai "M=D"
-    ] @ [
+    ] @ [bComment "SP = ARG + 1"]
+      @ [
         //SP = ARG + 1
         ai "@ARG"
         ai "A=M"
         ai "D=A+1"
         ai "@SP"
         ai "M=D"
-    ] @ [
+    ] @ [bComment "THAT = *(FRAME-1)"]
+      @ [
         //THAT = *(FRAME-1)
         ai "@FRAME"
         ai "A=M"
@@ -338,7 +340,8 @@ let returnFunction =
         ai "D=M"
         ai "@THAT"
         ai "M=D"
-    ] @ [
+    ] @ [bComment "THIS = *(FRAME-2)"]
+      @ [
         //THIS = *(FRAME-2)
         ai "@FRAME"
         ai "A=M"
@@ -347,7 +350,8 @@ let returnFunction =
         ai "D=M"
         ai "@THIS"
         ai "M=D"
-    ] @ [
+    ] @ [bComment "ARG = *(FRAME-3)"]
+      @ [
         //ARG = *(FRAME-3)
         ai "@FRAME"
         ai "A=M"
@@ -357,7 +361,8 @@ let returnFunction =
         ai "D=M"
         ai "@ARG"
         ai "M=D"
-    ] @ [
+    ] @ [bComment "LCL = *(FRAME-4)"]
+      @ [
         //LCL = *(FRAME-4)
         ai "@FRAME"
         ai "A=M"
@@ -368,7 +373,8 @@ let returnFunction =
         ai "D=M"
         ai "@LCL"
         ai "M=D"
-    ] @ [
+    ] @ [bComment "GOTO RET"]
+      @ [
         //goto RET
         ai "@RET"
         ai "A=M"
