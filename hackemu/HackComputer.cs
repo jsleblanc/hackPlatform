@@ -16,7 +16,7 @@ public class HackComputer : IHackComputer
     private short _dReg;
 
     [Flags]
-    private enum Destination
+    public enum Destination
     {
         None = 0,
         M = 1,
@@ -25,7 +25,7 @@ public class HackComputer : IHackComputer
     }
 
     [SuppressMessage("ReSharper", "InconsistentNaming")]
-    private enum Jump
+    public enum Jump
     {
         None = 0,
         JGT = 1,
@@ -38,7 +38,7 @@ public class HackComputer : IHackComputer
     }
 
     [SuppressMessage("ReSharper", "InconsistentNaming")]
-    private enum OpCode
+    public enum OpCode
     {
         OP_ZERO = 0b0_101010,
         OP_ONE = 0b0_111111,
@@ -180,14 +180,14 @@ public class HackComputer : IHackComputer
         }
     }
 
-    private static bool Is_C_Instruction(short instruction)
+    public static bool Is_C_Instruction(short instruction)
     {
-        const ushort cInstructionMask = 0b111_0000000000000;
+        const ushort cInstructionMask = 0b1000000000000000;
         var x = instruction & cInstructionMask;
         return x == cInstructionMask;
     }
 
-    private static (Destination, OpCode, Jump) Decode_C_Instruction(short instruction)
+    public static (Destination, OpCode, Jump) Decode_C_Instruction(short instruction)
     {
         const ushort opCodeMask = 0b0001111111000000;
         const ushort destinationMask = 0b0000000000111000;

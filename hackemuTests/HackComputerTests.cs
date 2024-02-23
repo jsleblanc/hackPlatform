@@ -1,4 +1,6 @@
+using FluentAssertions;
 using hackemu;
+using static hackemu.HackComputer;
 
 namespace hackemuTests;
 
@@ -162,5 +164,24 @@ public class HackComputerTests
         hc.ComputeCycles(100);
 
         Assert.Equal(expected, hc.Memory(2));
+    }
+
+    [Theory]
+    [InlineData(0b1110111111001000, Destination.M, OpCode.OP_ONE, Jump.None)]
+    [InlineData(0b1111110010101000, Destination.A | Destination.M, OpCode.OP_M_MINUS_ONE, Jump.None)]
+    public void ShouldDecodeInstruction(ushort instruction, Destination dest, OpCode code, Jump jmp)
+    {
+        var (destination, opCode, jump) = Decode_C_Instruction((short)instruction);
+        destination.Should().Be(dest);
+        opCode.Should().Be(code);
+        jump.Should().Be(jmp);
+    }
+
+    [Theory]
+    [InlineData(0b1110111111001000)]
+    [InlineData(0b1111110010101000)]
+    public void ShouldBeComputationInstructions(ushort instruction)
+    {
+        Is_C_Instruction((short)instruction).Should().BeTrue();
     }
 }

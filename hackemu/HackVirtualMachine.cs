@@ -1,10 +1,10 @@
 // ReSharper disable InconsistentNaming
 namespace hackemu;
 
-public class HackVirtualMachine(IHackComputer computer) : IHackComputer
+public class HackVirtualMachine(HackComputer computer) : IHackComputer
 {
     //for debugging    
-    private readonly IHackComputer _computer = computer;
+    private readonly HackComputer _computer = computer;
     
     private const ushort SEGMENT_LOCAL = 1;
     private const ushort SEGMENT_ARG = 2;
@@ -50,6 +50,7 @@ public class HackVirtualMachine(IHackComputer computer) : IHackComputer
     public short LocalSegment(short index) => _computer.Memory((ushort)(LCL + index));
     
     public void SetArgumentSegmentBase(short address) => _computer.SetMemory(SEGMENT_ARG, address);
+    public void SetArgumentSegment(short index, short value) => _computer.SetMemory((ushort)(ARG + index), value);
     public short ArgumentSegment(short index) => _computer.Memory((ushort)(ARG + index));
 
     public void SetThisSegmentBase(short address) => _computer.SetMemory(SEGMENT_THIS, address);
