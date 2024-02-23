@@ -864,4 +864,13 @@ label Main.test1.IF_ELSE_END$3
     vm.ComputeCycles(1_000)
     %vm.StaticSegment(0s).Should().Be(567s)
     %vm.StaticSegment(1s).Should().Be(123s)
-    
+
+[<Fact>]
+let ``Should only call Sys.init once when compiling multiple files`` () =
+    let asm = vmil2asmStrings [
+        {name = "Class1.vm"; input = staticsTestClass1vm }
+        {name = "Class2.vm"; input = staticsTestClass2vm }
+        {name = "Sys.vm"; input = staticsTestSysvm }
+    ]
+    let timesSysInitCalled = asm |> List.filter (fun s -> s = "@Sys.init")
+    %timesSysInitCalled.Length.Should().Be(1)
