@@ -1,7 +1,7 @@
 // ReSharper disable InconsistentNaming
 namespace hackemu;
 
-public class HackVirtualMachine(HackComputer computer) : IHackComputer
+public class HackVirtualMachine(HackComputer computer)
 {
     //for debugging    
     private readonly HackComputer _computer = computer;
