@@ -93,17 +93,6 @@ let popStackIntoRelativeSegment seg idx =
         ai "M=D"
     ]
 
-let setRelativeSegmentToZero seg idx =
-    [aComment $"SET SEGMENT ({seg} + {idx}) TO 0"]
-    @ [        
-        ai seg
-        ai "D=M"
-        ai $"@{idx}"
-        ai "A=D+A"
-        ai "D=0"
-        ai "M=D"
-    ]
-
 let pushRelativeSegmentOntoStack seg idx =
     [aComment $"PUSH SEGMENT ({seg} + {idx}) ONTO STACK"]
     @ [
@@ -143,60 +132,61 @@ let popStackIntoStaticSegment name idx =
 
 let aAdd =
     [aComment "ADD"]
-    @ popStackIntoAddress "@R13" //y
-    @ popStackIntoD //x
+    @ popStackIntoD //y
     @ [
-        bComment "ADD LOGIC"
-        ai "@R13"
-        ai "D=D+M"
-    ] @ pushDIntoStack
+        //top of stack is x
+        ai "@SP"
+        ai "A=M-1"
+        ai "M=D+M"
+    ]
 
 let aSub =
     [aComment "SUB"]
-    @ popStackIntoAddress "@R13" //y
-    @ popStackIntoD //x    
+    @ popStackIntoD //y
     @ [
-        bComment "SUB LOGIC"
-        ai "@R13"
-        ai "D=D-M"
-    ] @ pushDIntoStack
+        //top of stack is x
+        ai "@SP"
+        ai "A=M-1"
+        ai "M=M-D"
+    ]
 
 let aAnd =
     [aComment "AND"]
-    @ popStackIntoAddress "@R13" //y
-    @ popStackIntoD //x        
+    @ popStackIntoD //y
     @ [
-        bComment "AND LOGIC"
-        ai "@R13"
-        ai "D=D&M"
-    ] @ pushDIntoStack
+        //top of stack is x
+        ai "@SP"
+        ai "A=M-1"
+        ai "M=D&M"
+    ]
     
 let aOr =
     [aComment "OR"]
-    @ popStackIntoAddress "@R13" //y
-    @ popStackIntoD //x        
+    @ popStackIntoD //y
     @ [
-        bComment "OR LOGIC"
-        ai "@R13"
-        ai "D=D|M"
-    ] @ pushDIntoStack
+        //top of stack is x
+        ai "@SP"
+        ai "A=M-1"
+        ai "M=D|M"
+    ]
 
 let aNot =
     [aComment "NOT"]
-    @ popStackIntoAddress "@R13"
     @ [
-        bComment "NOT LOGIC"
-        ai "@R13"
-        ai "D=!M"
-    ] @ pushDIntoStack
+        //modify top of stack in-place
+        ai "@SP"
+        ai "A=M-1"
+        ai "M=!M"
+    ]
 
 let aNeg =
     [aComment "NEG"]
-    @ popStackIntoD
     @ [
-        bComment "NEG LOGIC"
-        ai "D=-D"
-    ] @ pushDIntoStack
+        //modify top of stack in-place
+        ai "@SP"
+        ai "A=M-1"
+        ai "M=-M"
+    ]
 
 //logic is all the same, only the jump conditions change for eq, lt, gt
 let equalityTesting jmp fn i =
@@ -267,9 +257,7 @@ let callFunction context fn i f args =
         //ARG = @SP-n-5
         ai "@SP"
         ai "D=M"
-        ai $"@{args}"
-        ai "D=D-A"
-        ai "@5"
+        ai $"@{args+5}"
         ai "D=D-A"
         ai "@ARG"
         ai "M=D"
@@ -306,13 +294,10 @@ let returnFunction =
     ] @ [bComment "RET = *(FRAME-5)"]
       @ [
         //RET = *(FRAME-5)
+        ai "@5"
+        ai "D=A"
         ai "@FRAME"
-        ai "A=M"
-        ai "A=A-1"
-        ai "A=A-1"
-        ai "A=A-1"
-        ai "A=A-1"
-        ai "A=A-1"        
+        ai "A=M-D"
         ai "D=M"
         ai "@RET"
         ai "M=D"
@@ -327,16 +312,14 @@ let returnFunction =
       @ [
         //SP = ARG + 1
         ai "@ARG"
-        ai "A=M"
-        ai "D=A+1"
+        ai "D=M+1"
         ai "@SP"
         ai "M=D"
     ] @ [bComment "THAT = *(FRAME-1)"]
       @ [
         //THAT = *(FRAME-1)
         ai "@FRAME"
-        ai "A=M"
-        ai "A=A-1"
+        ai "A=M-1"
         ai "D=M"
         ai "@THAT"
         ai "M=D"
@@ -344,8 +327,7 @@ let returnFunction =
       @ [
         //THIS = *(FRAME-2)
         ai "@FRAME"
-        ai "A=M"
-        ai "A=A-1"
+        ai "A=M-1"
         ai "A=A-1"
         ai "D=M"
         ai "@THIS"
@@ -353,23 +335,20 @@ let returnFunction =
     ] @ [bComment "ARG = *(FRAME-3)"]
       @ [
         //ARG = *(FRAME-3)
+        ai "@3"
+        ai "D=A"
         ai "@FRAME"
-        ai "A=M"
-        ai "A=A-1"
-        ai "A=A-1"
-        ai "A=A-1"
+        ai "A=M-D"
         ai "D=M"
         ai "@ARG"
         ai "M=D"
     ] @ [bComment "LCL = *(FRAME-4)"]
       @ [
         //LCL = *(FRAME-4)
+        ai "@4"
+        ai "D=A"
         ai "@FRAME"
-        ai "A=M"
-        ai "A=A-1"
-        ai "A=A-1"
-        ai "A=A-1"
-        ai "A=A-1"
+        ai "A=M-D"
         ai "D=M"
         ai "@LCL"
         ai "M=D"
