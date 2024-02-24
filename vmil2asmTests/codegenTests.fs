@@ -3,12 +3,10 @@ module vmil2asmTests.codegenTests
 open Xunit
 open Faqt
 open Faqt.Operators
-open System.Text
 open assembler.api
 open vmil2asm.api
 open hackemu
-
-let fold (asm:string list) = (StringBuilder(), asm) ||> List.fold (_.AppendLine) |> (_.ToString())
+open vmil2asmTests.util
 
 [<Fact>]
 let ``Should run fibonacci program on virtual machine`` () =
@@ -881,102 +879,5 @@ let ``Should only call Sys.init once when compiling multiple files`` () =
     let timesSysInitCalled = asm |> List.filter (fun s -> s = "@Sys.init")
     %timesSysInitCalled.Length.Should().Be(1)
     
-[<Fact>]
-let ``Should test negate instruction`` () =
-    let vmilCode = """
-function Sys.init 0
-	push constant 10
-	neg
-	label END
-	goto END
-"""
-    let asmCode = vmil2asmString "foo.vm" vmilCode
-    let input = fold asmCode
-    let binaryCode = assemble input
-    let vm = HackVirtualMachine(binaryCode.instructions)
-    vm.ComputeCycles(2_00)
-    %vm.TopOfStack.Should().Be(-10s)
+
     
-[<Fact>]
-let ``Should test not instruction`` () =
-    let vmilCode = """
-function Sys.init 0
-	push constant 10
-	not
-	label END
-	goto END
-"""
-    let asmCode = vmil2asmString "foo.vm" vmilCode
-    let input = fold asmCode
-    let binaryCode = assemble input
-    let vm = HackVirtualMachine(binaryCode.instructions)
-    vm.ComputeCycles(2_00)
-    %vm.TopOfStack.Should().Be(~~~10s)
-    
-[<Fact>]
-let ``Should test or instruction`` () =
-    let vmilCode = """
-function Sys.init 0
-	push constant 10
-	push constant 20
-	or
-	label END
-	goto END
-"""
-    let asmCode = vmil2asmString "foo.vm" vmilCode
-    let input = fold asmCode
-    let binaryCode = assemble input
-    let vm = HackVirtualMachine(binaryCode.instructions)
-    vm.ComputeCycles(2_00)
-    %vm.TopOfStack.Should().Be(10s ||| 20s)
-    
-[<Fact>]
-let ``Should test and instruction`` () =
-    let vmilCode = """
-function Sys.init 0
-	push constant 240
-	push constant 160
-	and
-	label END
-	goto END
-"""
-    let asmCode = vmil2asmString "foo.vm" vmilCode
-    let input = fold asmCode
-    let binaryCode = assemble input
-    let vm = HackVirtualMachine(binaryCode.instructions)
-    vm.ComputeCycles(2_00)
-    %vm.TopOfStack.Should().Be(240s &&& 160s)
-            
-[<Fact>]
-let ``Should test subtraction instruction`` () =
-    let vmilCode = """
-function Sys.init 0
-	push constant 240
-	push constant 160
-	sub
-	label END
-	goto END
-"""
-    let asmCode = vmil2asmString "foo.vm" vmilCode
-    let input = fold asmCode
-    let binaryCode = assemble input
-    let vm = HackVirtualMachine(binaryCode.instructions)
-    vm.ComputeCycles(2_00)
-    %vm.TopOfStack.Should().Be(80s)
-    
-[<Fact>]
-let ``Should test addition instruction`` () =
-    let vmilCode = """
-function Sys.init 0
-	push constant 240
-	push constant 160
-	add
-	label END
-	goto END
-"""
-    let asmCode = vmil2asmString "foo.vm" vmilCode
-    let input = fold asmCode
-    let binaryCode = assemble input
-    let vm = HackVirtualMachine(binaryCode.instructions)
-    vm.ComputeCycles(2_00)
-    %vm.TopOfStack.Should().Be(400s)             
