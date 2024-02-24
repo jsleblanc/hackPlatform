@@ -111,6 +111,13 @@ let seedSymbolMap =
         (f SCREEN), u 0x4000
         (f KBD), u 0x6000
     ]
+
+//Anything larger than this value will be interpreted as a computation instruction and not a program address
+[<Literal>]
+let SYMBOL_LABEL_LIMIT = 0b1000000000000000us
+
+let checkSymbolsObeyLimit (t:Map<string, uint16>) =
+    t |> Map.forall (fun _ v -> v < SYMBOL_LABEL_LIMIT)
     
 let buildSymbolTable instructions =
     let mutable pc = u 0
@@ -129,14 +136,8 @@ let buildSymbolTable instructions =
                 table.Add(v, vc)
                 vc <- vc + (u 1)
         | _ -> ()
-
-    //this code is broken - each line runs through the entire list of instructions
-    //and when it encounters a symbol it has already seen, it increments the program counter
-    //and we do that twice, so PC is getting so high that symbol addresses are being interpretted
-    //as instructions and crashing the emulator. need to re-write this function.
     instructions |> List.iter processLabels
     instructions |> List.iter processVariables
-    
     let seedItems = seedSymbolMap |> Map.toList
     let mappedSymbols = table |> Seq.map (|KeyValue|) |> Seq.toList
     seedItems @ mappedSymbols |> Map.ofList
@@ -173,6 +174,8 @@ let translateInstructionBuiltinSymbolTable i =
 
 let translate (instructions: Instruction list) =
     let symbolTable = buildSymbolTable instructions
+    let symbolsValid = checkSymbolsObeyLimit symbolTable
+    if symbolsValid = false then failwith "The ROM address of one or more symbols exceeds the valid range for the HACK computer platform. Values above a certain size will be interpreted as computation instructions instead of program addresses, resulting in program crashes."
     {
         instructions = instructions |> List.map (translateInstruction symbolTable) |> List.choose id
         symbolTable = symbolTable
