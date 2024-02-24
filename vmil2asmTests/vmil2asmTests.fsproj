@@ -11,7 +11,7 @@
     <ItemGroup>
         <Compile Include="util.fs" />
         <Compile Include="parserTests.fs" />
-        <Compile Include="codegenTests.fs" />
+        <Compile Include="codeGenTests.fs" />
         <Compile Include="codeGenPropertyTests.fs" />
         <Compile Include="Program.fs"/>
     </ItemGroup>
