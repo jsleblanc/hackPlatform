@@ -6,9 +6,17 @@ namespace hackemuTests.E2E;
 
 public static class CompilerWorkflow
 {
-    private static IEnumerable<FileInfo> SystemFiles() => Directory
-        .EnumerateFiles("/Users/josephleblanc/Documents/Code/nand2tetris/tools/OS", "*.vm")
-        .Select(f => new FileInfo(f));
+    private static IEnumerable<FileInfo> SystemFiles() => new[]
+    {
+        new FileInfo("E2E/OSVM/Sys.vm"),
+        new FileInfo("E2E/OSVM/Memory.vm"),
+        new FileInfo("E2E/OSVM/Math.vm"),
+        new FileInfo("E2E/OSVM/Output.vm"),
+        new FileInfo("E2E/OSVM/Array.vm"),
+        new FileInfo("E2E/OSVM/String.vm"),
+        new FileInfo("E2E/OSVM/Screen.vm"),
+        new FileInfo("E2E/OSVM/Keyboard.vm")
+    };
 
     private static IEnumerable<Tuple<string, string>> ReadSystemFiles() =>
         SystemFiles().Select(f => new Tuple<string, string>(f.Name, File.ReadAllText(f.FullName)));
