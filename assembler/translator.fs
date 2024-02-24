@@ -129,8 +129,14 @@ let buildSymbolTable instructions =
                 table.Add(v, vc)
                 vc <- vc + (u 1)
         | _ -> ()
+
+    //this code is broken - each line runs through the entire list of instructions
+    //and when it encounters a symbol it has already seen, it increments the program counter
+    //and we do that twice, so PC is getting so high that symbol addresses are being interpretted
+    //as instructions and crashing the emulator. need to re-write this function.
     instructions |> List.iter processLabels
     instructions |> List.iter processVariables
+    
     let seedItems = seedSymbolMap |> Map.toList
     let mappedSymbols = table |> Seq.map (|KeyValue|) |> Seq.toList
     seedItems @ mappedSymbols |> Map.ofList

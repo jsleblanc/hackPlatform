@@ -76,8 +76,8 @@ public class HackComputer
 
     public HackComputer(short[] programCode)
     {
-        foreach (var instruction in programCode)
-            ValidateInstruction(instruction);
+        for (var index = 0; index < programCode.Length; index++)
+            ValidateInstruction(index, programCode[index]);
         
         programCode.CopyTo(_rom, 0);
         _ram.Initialize();
@@ -203,19 +203,22 @@ public class HackComputer
         return ((Destination)dest, (OpCode)opCode, (Jump)jump);
     }
 
-    private static void ValidateInstruction(short instruction)
+    private static void ValidateInstruction(int index, short instruction)
     {
         if (!Is_C_Instruction(instruction)) return;
 
         var (destination, opCode, jump) = Decode_C_Instruction(instruction);
         if (!IsValid(destination))
-            throw new InvalidOperationException("Instruction is invalid: destination");
+            throw new ArgumentOutOfRangeException(nameof(instruction), 
+                $"Instruction is invalid: destination. Position {index}; Value {instruction:x4}");
 
         if (!IsValid(opCode))
-            throw new InvalidOperationException("Instruction is invalid: opCode");
+            throw new ArgumentOutOfRangeException(nameof(instruction), 
+                $"Instruction is invalid: opCode. Position {index}; Value {instruction:x4}");
 
         if (!IsValid(jump))
-            throw new InvalidOperationException("Instruction is invalid: jump");
+            throw new ArgumentOutOfRangeException(nameof(instruction), 
+                $"Instruction is invalid: jump. Position {index}; Value {instruction:x4}");
     }
 
     //I hate enums in C# so much
