@@ -76,6 +76,9 @@ public class HackComputer
 
     public HackComputer(short[] programCode)
     {
+        foreach (var instruction in programCode)
+            ValidateInstruction(instruction);
+        
         programCode.CopyTo(_rom, 0);
         _ram.Initialize();
         _pc = 0;
@@ -198,5 +201,29 @@ public class HackComputer
         var opCode = (instruction & opCodeMask) >>> 6;
 
         return ((Destination)dest, (OpCode)opCode, (Jump)jump);
+    }
+
+    private static void ValidateInstruction(short instruction)
+    {
+        if (!Is_C_Instruction(instruction)) return;
+
+        var (destination, opCode, jump) = Decode_C_Instruction(instruction);
+        if (!IsValid(destination))
+            throw new InvalidOperationException("Instruction is invalid: destination");
+
+        if (!IsValid(opCode))
+            throw new InvalidOperationException("Instruction is invalid: opCode");
+
+        if (!IsValid(jump))
+            throw new InvalidOperationException("Instruction is invalid: jump");
+    }
+
+    //I hate enums in C# so much
+    //https://stackoverflow.com/questions/2674730/is-there-a-way-to-check-if-int-is-legal-enum-in-c
+    private static bool IsValid<TEnum>(TEnum enumValue)
+        where TEnum : struct
+    {
+        var firstChar = enumValue.ToString()[0];
+        return (firstChar < '0' || firstChar > '9') && firstChar != '-';
     }
 }
