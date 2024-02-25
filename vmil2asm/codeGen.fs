@@ -188,30 +188,31 @@ let aNeg =
         ai "M=-M"
     ]
 
-//logic is all the same, only the jump conditions change for eq, lt, gt
-let equalityTesting jmp fn i =
-    popStackIntoAddress "@R13" //y
-    @ popStackIntoD //x
+//two operands, one is popped off the stack, the second is overwritten with the result
+let aEquality jmp fn i =
+    popStackIntoD //y
     @ [
-        ai "@R13"
-        ai "D=D-M"
+        ai "@SP"
+        ai "A=M-1" //x
+        ai "D=M-D" //x - y
         ai $"@{fn}$TRUE_{i}"
         ai $"D;{jmp}"
-        ai "D=0" //false
+        ai "D=0"
         ai $"@{fn}$DONE_{i}"
         ai "0;JMP"
         ai $"({fn}$TRUE_{i})"
-        ai "D=-1" //true
-        ai $"@{fn}$DONE_{i}"
-        ai "0;JMP"
+        ai "D=-1" 
         ai $"({fn}$DONE_{i})"
-    ] @ pushDIntoStack
+        ai "@SP"
+        ai "A=M-1"
+        ai "M=D"
+    ]
 
-let aEq fn i = [aComment "EQ"] @ equalityTesting "JEQ" fn i
+let aEq fn i = [aComment "EQ"] @ aEquality "JEQ" fn i
     
-let aLt fn i = [aComment "LT"] @ equalityTesting "JLT" fn i
+let aLt fn i = [aComment "LT"] @ aEquality "JLT" fn i
 
-let aGt fn i = [aComment "GT"] @ equalityTesting "JGT" fn i
+let aGt fn i = [aComment "GT"] @ aEquality "JGT" fn i
 
 let labelInstruction context name = [ai $"({context}${name})"]
 
