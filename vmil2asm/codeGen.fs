@@ -78,21 +78,20 @@ let pushSegmentOntoStack seg =
 //to be used with segment base registers LCL, ARG, THIS, THAT
 let popStackIntoRelativeSegment seg idx =
     [aComment $"POP STACK INTO ({seg} + {idx})"]
-    @ popStackIntoAddress "@R13"
     @ [
         ai seg
         ai "D=M"
         ai $"@{idx}"
         ai "D=D+A"
         ai "@R14"
-        ai "M=D" //segment base+idx address stored in R14        
-        ai "@R13"
-        ai "D=M"
+        ai "M=D" //segment base+idx address stored in R14
+    ] @ popStackIntoD
+    @ [
         ai "@R14"
         ai "A=M"
         ai "M=D"
     ]
-
+ 
 let pushRelativeSegmentOntoStack seg idx =
     [aComment $"PUSH SEGMENT ({seg} + {idx}) ONTO STACK"]
     @ [
