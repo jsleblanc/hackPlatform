@@ -13,7 +13,7 @@ public class ConvertToBinTest
         
         var hackComputer = new HackComputer(binaryCode);
         hackComputer.SetMemory(8000, 0);
-        hackComputer.ComputeCycles(10_000);
+        hackComputer.ComputeCycles(1_000_000);
         
         for (ushort x = 8001; x <= 8016; x++)
         {
@@ -29,11 +29,12 @@ public class ConvertToBinTest
         
         var hackComputer = new HackComputer(binaryCode);
         hackComputer.SetMemory(8000, short.MaxValue);
-        hackComputer.ComputeCycles(10_000);
+        hackComputer.ComputeCycles(1_000_000);
         
-        for (ushort x = 8001; x <= 8016; x++)
+        for (ushort x = 8001; x <= 8015; x++)
         {
             hackComputer.Memory(x).Should().Be(1, $"Memory address: {x}");
         }
+        hackComputer.Memory(8016).Should().Be(0, "Memory address: 8016");
     }    
 }
