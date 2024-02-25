@@ -16,6 +16,8 @@ let negativeInt16 = Gen.elements [int Int16.MinValue..0] |> Gen.map int16
 
 let positiveInt16UniquePair = positiveInt16Pair |> Gen.filter (fun (a,b) -> not (a = b))
 
+let positiveInt16List = positiveInt16 |> Gen.nonEmptyListOf
+
 [<Property>]
 let ``Should test addition instruction`` () =
     positiveInt16Pair
@@ -144,7 +146,7 @@ let ``Should test equality (always equal) instruction`` () =
     function Sys.init 0
         push constant {a}
         push constant {a}
-        eq
+        eq        
         label END
         goto END
         """
@@ -215,4 +217,65 @@ let ``Should test greater-than instruction`` () =
         let vm = HackVirtualMachine(binaryCode.instructions)
         vm.ComputeCycles(2_00)
         let expected = if (a > b) then -1s else 0s
-        vm.TopOfStack = expected        
+        vm.TopOfStack = expected
+        
+[<Property>]
+let ``Should push values onto this segment`` () =
+    positiveInt16List
+    |> Arb.fromGen
+    |> Prop.forAll <| fun a ->
+        let code = a |> List.mapi (fun i x -> [$"push constant {x}";$"pop this {i}"]) |> List.collect id |> fold
+        let vmilCode = $"""
+        function Sys.init 0
+            push constant 1000
+            pop pointer 0
+            {code}
+            label END
+            goto END
+        """
+        let asmCode = vmil2asmString "foo.vm" vmilCode
+        let input = fold asmCode
+        let binaryCode = assemble input
+        let vm = HackVirtualMachine(binaryCode.instructions)
+        vm.ComputeCycles(a.Length * 20 + 1_000)
+        a |> List.mapi (fun i x -> vm.ThisSegment(int16 i) = x) |> List.forall (fun b -> b = true)
+        
+[<Property>]
+let ``Should push values onto that segment`` () =
+    positiveInt16List
+    |> Arb.fromGen
+    |> Prop.forAll <| fun a ->
+        let code = a |> List.mapi (fun i x -> [$"push constant {x}";$"pop that {i}"]) |> List.collect id |> fold
+        let vmilCode = $"""
+        function Sys.init 0
+            push constant 1000
+            pop pointer 1
+            {code}
+            label END
+            goto END
+        """
+        let asmCode = vmil2asmString "foo.vm" vmilCode
+        let input = fold asmCode
+        let binaryCode = assemble input
+        let vm = HackVirtualMachine(binaryCode.instructions)
+        vm.ComputeCycles(a.Length * 20 + 1_000)
+        a |> List.mapi (fun i x -> vm.ThatSegment(int16 i) = x) |> List.forall (fun b -> b = true)
+        
+[<Property>]
+let ``Should push values onto local segment`` () =
+    positiveInt16List
+    |> Arb.fromGen
+    |> Prop.forAll <| fun a ->
+        let code = a |> List.mapi (fun i x -> [$"push constant {x}";$"pop local {i}"]) |> List.collect id |> fold
+        let vmilCode = $"""
+        function Sys.init {a.Length}
+            {code}
+            label END
+            goto END
+        """
+        let asmCode = vmil2asmString "foo.vm" vmilCode
+        let input = fold asmCode
+        let binaryCode = assemble input
+        let vm = HackVirtualMachine(binaryCode.instructions)
+        vm.ComputeCycles(a.Length * 20 + 1_000)
+        a |> List.mapi (fun i x -> vm.LocalSegment(int16 i) = x) |> List.forall (fun b -> b = true)                
