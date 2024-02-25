@@ -11,11 +11,11 @@ public static class CompilerWorkflow
         new FileInfo("E2E/OSVM/Sys.vm"),
         new FileInfo("E2E/OSVM/Memory.vm"),
         new FileInfo("E2E/OSVM/Math.vm"),
-        new FileInfo("E2E/OSVM/Output.vm"),
+        //new FileInfo("E2E/OSVM/Output.vm"),
         new FileInfo("E2E/OSVM/Array.vm"),
         new FileInfo("E2E/OSVM/String.vm"),
-        new FileInfo("E2E/OSVM/Screen.vm"),
-        new FileInfo("E2E/OSVM/Keyboard.vm")
+        //new FileInfo("E2E/OSVM/Screen.vm"),
+        //new FileInfo("E2E/OSVM/Keyboard.vm")
     };
 
     private static IEnumerable<Tuple<string, string>> ReadSystemFiles() =>
@@ -34,10 +34,12 @@ public static class CompilerWorkflow
         
         var systemCode = ReadSystemFiles();
         var userCode = vmilCode.Select(c => new Tuple<string, string>(c.name, c.code));
-        var allCode = systemCode.Concat(userCode).ToList();
+        var allCode = userCode.Concat(systemCode).ToList();
 
         var stringReq = new types.ProcessStringsRequest(ListModule.OfSeq(allCode), true);
-        var assemblyCode = api.vmil2asmStrings(stringReq).Aggregate(new StringBuilder(),
+        var assemblyInstructions = api.vmil2asmStrings(stringReq);
+
+        var assemblyCode = assemblyInstructions.Aggregate(new StringBuilder(),
             (builder, s) => builder.AppendLine(s), sb => sb.ToString());
 
         var binaryCode = assembler.api.assemble(assemblyCode);
