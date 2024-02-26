@@ -61,6 +61,9 @@
       <None Update="E2E\OSVM\Sys.vm">
         <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       </None>
+      <None Update="E2E\ComplexArrays\Main.jack">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </None>
     </ItemGroup>
 
     <ItemGroup>

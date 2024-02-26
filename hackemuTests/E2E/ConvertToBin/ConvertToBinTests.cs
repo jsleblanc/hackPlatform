@@ -3,7 +3,7 @@ using FluentAssertions;
 
 namespace hackemuTests.E2E.ConvertToBin;
 
-public class ConvertToBinTest
+public class ConvertToBinTests
 {
     [Fact]
     public void ConvertToBinProgramTest_Zero()
