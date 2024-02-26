@@ -64,10 +64,9 @@
       <None Update="E2E\ComplexArrays\Main.jack">
         <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       </None>
-    </ItemGroup>
-
-    <ItemGroup>
-      <Folder Include="E2E\OSVM\" />
+      <None Update="E2E\Strings\Main.jack">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </None>
     </ItemGroup>
 
 </Project>

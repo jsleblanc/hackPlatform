@@ -1,5 +1,6 @@
 module jackc.codeGen
 
+open System.Text
 open jackc.state
 open jackc.types
 open jackc.symbolTable
@@ -181,7 +182,17 @@ and compileExpression expr =
             let! code = compileExpression expr
             return fold [code; OK ["not"]]
         | J_Constant_Int i -> return OK (compileConstantInt i)    
-        | J_Constant_String str -> return errorMsg context "Expression: string constant TODO"
+        | J_Constant_String str ->
+            let bytes = Encoding.ASCII.GetBytes(str) |> Array.toList
+            let length = bytes.Length
+            let pushCharsCode = (bytes |> List.map (fun b -> OK [$"push constant {b}";"call String.appendChar 2"]))
+            return fold [
+                OK [
+                    $"push constant {length}"
+                    "call String.new 1"
+                ]
+                fold pushCharsCode
+            ]
         | J_Constant_Boolean b -> return OK (compileConstantBoolean b)
         | J_Constant_Null -> return OK compileConstantNull
         | J_Constant_This -> return OK compileConstantThis

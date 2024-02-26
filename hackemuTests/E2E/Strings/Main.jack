@@ -1,0 +1,13 @@
+class Main {
+    function void main() {
+        var String str1, str2;
+        
+        let str1 = "Hello, world!";
+        do Memory.poke(8001, str1);
+       
+        let str2 = "You didn't say the magic word";
+        do Memory.poke(8002, str2);       
+        
+        return;
+    }
+}
