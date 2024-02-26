@@ -74,6 +74,22 @@ let ``Should add two local variable together`` () =
     let code,_ = run (initStateWithSymbolTable symbolTable) (compileExpression expr)
     let expected = OK ["push local 0"; "push local 1"; "add"]
     Assert.Equal(expected, code)
+
+[<Fact>]
+let ``Should read value from array expression`` () =
+    let expr = J_Array_Index ("foo", J_Constant_Int 10s)
+    let symbolTable = buildSymbolTableFromEntries [
+        { name = "foo"; scope = SubroutineScope; varType = J_Class "Array"; segment = Local 0 }
+    ]
+    let code,_ = run (initStateWithSymbolTable symbolTable) (compileExpression expr)
+    let expected = OK [
+        "push local 0"
+        "push constant 10"
+        "add"
+        "pop pointer 1"
+        "push that 0"
+    ]
+    Assert.Equal(expected, code)
     
 [<Fact>]
 let ``Should fail to compile expression that references variable missing from symbol table`` () =
@@ -269,6 +285,25 @@ let ``Should compile while statement`` () =
         "return"
         "goto .WHILE_EXP$1"
         "label .WHILE_END$2"
+    ]
+    Assert.Equal(expected, code)
+
+[<Fact>]
+let ``Should compile array assignment statement`` () =
+    let statement = J_Let (J_EQ (J_Array_Index ("foo", J_Constant_Int 5s), J_Constant_Int 25s))
+    let symbolTable = buildSymbolTableFromEntries [
+        { name = "foo"; scope = SubroutineScope; varType = J_Class "Array"; segment = Argument 0 }
+    ]    
+    let code,_ = run (initStateWithSymbolTable symbolTable) (compileStatement statement)
+    let expected = OK [
+        "push argument 0"
+        "push constant 5"
+        "add"
+        "push constant 25"
+        "pop temp 0"
+        "pop pointer 1"
+        "push temp 0"
+        "pop that 0"
     ]
     Assert.Equal(expected, code)
         

@@ -186,7 +186,18 @@ and compileExpression expr =
         | J_Constant_Null -> return OK compileConstantNull
         | J_Constant_This -> return OK compileConstantThis
         | J_Variable name -> return! compileVariable Push name
-        | J_Array_Index(name, expr) -> return errorMsg context "Expression: array index TODO"
+        | J_Array_Index(name, expr) ->
+            let! variable = compileVariable Push name
+            let! exprCode = compileExpression expr
+            return fold [
+                variable
+                exprCode
+                OK [
+                    "add"
+                    "pop pointer 1"
+                    "push that 0"
+                ]
+            ]
         | J_Subroutine_Call(scope, name, parameters) ->
             return! compileSubroutineCall scope name parameters false
     }
@@ -238,7 +249,22 @@ and compileStatement statement =
                 let! variableAssignment = compileVariable Pop name
                 let! valueToAssign = compileExpression exprRight
                 return fold [valueToAssign; variableAssignment]
-            | J_EQ (J_Array_Index (name, indexExpr), exprRight) -> return errorMsg context "Statement: Let statement assigning value to array position TODO"
+            | J_EQ (J_Array_Index (name, indexExpr), exprRight) ->
+                let! variable = compileVariable Push name
+                let! indexExpCode = compileExpression indexExpr
+                let! rightExpCode = compileExpression exprRight
+                return fold [
+                    variable
+                    indexExpCode
+                    OK ["add"]
+                    rightExpCode
+                    OK [
+                        "pop temp 0"
+                        "pop pointer 1"
+                        "push temp 0"
+                        "pop that 0"
+                    ]
+                ]
             | _ -> return errorMsg context $"Unsupported expression in \"let\" statement: {expr}"
         | J_If_Else(condExpr, conditionStatements, elseStatements) ->
             let! conditionExpressionCode = compileExpression condExpr
