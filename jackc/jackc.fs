@@ -27,5 +27,6 @@ let private compileBcl =
     [sysJack; memoryJack] |> List.map compileString
 
 let compileFiles files =
-    let bcl = compileBcl
+    //let bcl = compileBcl
+    let bcl = [] //TODO BCL not fully implemented/functional yet
     files |> List.map compileFile |> List.insertManyAt 0 bcl |> validation.Traverse
