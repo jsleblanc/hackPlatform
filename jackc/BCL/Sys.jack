@@ -1,0 +1,28 @@
+class Sys {
+    function void init() {
+        do Memory.init();
+
+        do Main.main();
+        do halt();
+        
+        return;
+    }
+    
+    function void halt() {
+        do Memory.poke(32767, 31255);
+        while (true) {
+            //infinite loop
+        }
+        return;
+    }
+    
+    function void error(int errorCode) {
+        do Memory.poke(32766, errorCode);
+        do halt();
+        return;
+    }
+    
+    function void wait(int duration) {
+        return;
+    }
+}

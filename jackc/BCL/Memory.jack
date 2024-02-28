@@ -1,0 +1,33 @@
+class Memory {
+    field int heapBaseAddress;
+    field int freeBase;
+
+    function void init() {
+        let heapBaseAddress = 2048;
+        let freeBase = heapBaseAddress;
+        return;
+    }
+    
+    function int peek(int address) {
+        var Array memory;
+        let memory = 0;
+        return memory[address];
+    }
+    
+    function void poke(int address, int value) {
+        var Array memory;
+        let memory = 0;
+        let memory[address] = value;
+        return;
+    }
+    
+    function Array alloc(int size) {
+        var int pointer;
+        let pointer = freeBase;
+        let freeBase = freeBase + size;
+        return pointer;
+    }
+    
+    function void deAlloc(Array o) {
+    }
+}

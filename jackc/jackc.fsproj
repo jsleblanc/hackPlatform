@@ -13,8 +13,11 @@
         <Compile Include="parser.fs" />
         <Compile Include="symbolTable.fs" />
         <Compile Include="codeGen.fs" />
+        <Compile Include="bcl.fs" />
         <Compile Include="jackc.fs" />
         <Compile Include="Program.fs" />
+        <EmbeddedResource Include="BCL\Sys.jack" />
+        <EmbeddedResource Include="BCL\Memory.jack" />
     </ItemGroup>
 
     <ItemGroup>
