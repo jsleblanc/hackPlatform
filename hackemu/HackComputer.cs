@@ -99,6 +99,7 @@ public class HackComputer
         for (var x = 0; x < count; x++)
         {
             ComputeNext();
+            if (CheckHalted()) break;
         }
     }
 
@@ -229,4 +230,6 @@ public class HackComputer
         var firstChar = enumValue.ToString()[0];
         return (firstChar < '0' || firstChar > '9') && firstChar != '-';
     }
+
+    private bool CheckHalted() => _ram[0x7FF] == 0x7A17;
 }
