@@ -8,11 +8,11 @@ type BuiltInSymbol =
     | ARG
     | THIS
     | THAT
-    | R0
-    | R1
-    | R2
-    | R3
-    | R4
+    | R0 //alias for SP
+    | R1 //alias for LCL
+    | R2 //alias for ARG
+    | R3 //alias for THIS
+    | R4 //alias for THAT
     | R5
     | R6
     | R7
