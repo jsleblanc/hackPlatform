@@ -15,7 +15,7 @@ let S_THIS = "@THIS"
 [<Literal>]
 let S_THAT = "@THAT"
 
-let SEGMENT_POINTER_BASE = 0x3us
+[<Literal>]
 let SEGMENT_TEMP_BASE = 0x5us
 
 let ai = AssemblyInstruction
