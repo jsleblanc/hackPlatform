@@ -418,7 +418,14 @@ let codeGenInstruction context fn i cmd  =
     | PUSH (That, SegmentIndex idx) -> pushRelativeSegmentOntoStack S_THAT idx
     | PUSH (Pointer, SegmentIndex 0us) -> pushSegmentOntoStack S_THIS
     | PUSH (Pointer, SegmentIndex 1us) -> pushSegmentOntoStack S_THAT
-    | PUSH (Temp, SegmentIndex idx) -> pushFixedSegmentOntoStack SEGMENT_TEMP_BASE idx
+    | PUSH (Temp, SegmentIndex 0us) -> pushFixedSegmentOntoStack SEGMENT_TEMP_BASE 0us
+    | PUSH (Temp, SegmentIndex 1us) -> pushFixedSegmentOntoStack SEGMENT_TEMP_BASE 1us
+    | PUSH (Temp, SegmentIndex 2us) -> pushFixedSegmentOntoStack SEGMENT_TEMP_BASE 2us
+    | PUSH (Temp, SegmentIndex 3us) -> pushFixedSegmentOntoStack SEGMENT_TEMP_BASE 3us
+    | PUSH (Temp, SegmentIndex 4us) -> pushFixedSegmentOntoStack SEGMENT_TEMP_BASE 4us
+    | PUSH (Temp, SegmentIndex 5us) -> pushFixedSegmentOntoStack SEGMENT_TEMP_BASE 5us
+    | PUSH (Temp, SegmentIndex 6us) -> pushFixedSegmentOntoStack SEGMENT_TEMP_BASE 6us
+    | PUSH (Temp, SegmentIndex 7us) -> pushFixedSegmentOntoStack SEGMENT_TEMP_BASE 7us
     | PUSH (Static, SegmentIndex idx) -> pushStaticSegmentOntoStack context idx
     | POP (Local, SegmentIndex idx) -> popStackIntoRelativeSegment S_LCL idx
     | POP (Argument, SegmentIndex idx) -> popStackIntoRelativeSegment S_ARG idx
@@ -426,7 +433,14 @@ let codeGenInstruction context fn i cmd  =
     | POP (That, SegmentIndex idx) -> popStackIntoRelativeSegment S_THAT idx
     | POP (Pointer, SegmentIndex 0us) -> popStackIntoSegment S_THIS
     | POP (Pointer, SegmentIndex 1us) -> popStackIntoSegment S_THAT
-    | POP (Temp, SegmentIndex idx) -> popStackIntoFixedSegment SEGMENT_TEMP_BASE idx
+    | POP (Temp, SegmentIndex 0us) -> popStackIntoFixedSegment SEGMENT_TEMP_BASE 0us
+    | POP (Temp, SegmentIndex 1us) -> popStackIntoFixedSegment SEGMENT_TEMP_BASE 1us
+    | POP (Temp, SegmentIndex 2us) -> popStackIntoFixedSegment SEGMENT_TEMP_BASE 2us
+    | POP (Temp, SegmentIndex 3us) -> popStackIntoFixedSegment SEGMENT_TEMP_BASE 3us
+    | POP (Temp, SegmentIndex 4us) -> popStackIntoFixedSegment SEGMENT_TEMP_BASE 4us
+    | POP (Temp, SegmentIndex 5us) -> popStackIntoFixedSegment SEGMENT_TEMP_BASE 5us
+    | POP (Temp, SegmentIndex 6us) -> popStackIntoFixedSegment SEGMENT_TEMP_BASE 6us
+    | POP (Temp, SegmentIndex 7us) -> popStackIntoFixedSegment SEGMENT_TEMP_BASE 7us
     | POP (Static, SegmentIndex idx) -> popStackIntoStaticSegment context idx
     | Label l -> labelInstruction fn l
     | Goto l -> gotoInstruction fn l
