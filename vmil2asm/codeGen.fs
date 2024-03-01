@@ -238,6 +238,23 @@ let callFunction context fn i f args =
         ai "D=A"
     ] @ pushDIntoStack //push return address onto stack
     @ [
+        ai $"@{args}"
+        ai "D=A"
+        ai "@R13"
+        ai "M=D"
+        ai $"@{f}"
+        ai "D=A"
+        ai "@R14"
+        ai "M=D"        
+        ai "@CALL_FUNCTION_COMMON"
+        ai "0;JMP"
+        ai $"({returnLabel})"
+    ]
+
+//common code when calling a VM function; this code only needs to be included once
+let callFunctionCommon =
+    [
+        ai "(CALL_FUNCTION_COMMON)"
         ai "@LCL"
         ai "D=M"
     ] @ pushDIntoStack //push LCL onto stack
@@ -257,8 +274,10 @@ let callFunction context fn i f args =
         //ARG = @SP-n-5
         ai "@SP"
         ai "D=M"
-        ai $"@{args+5}"
+        ai "@5"
         ai "D=D-A"
+        ai "@R13"
+        ai "D=D-M"
         ai "@ARG"
         ai "M=D"
     ] @ [
@@ -269,10 +288,9 @@ let callFunction context fn i f args =
         ai "M=D"
     ] @ [
         //GOTO f
-        ai $"@{f}"
+        ai "@R14"
+        ai "A=M"
         ai "0;JMP"
-    ] @ [
-        ai $"({returnLabel})"
     ]
 
 let defineFunction context fn vars =
@@ -288,7 +306,8 @@ let returnFunction =
         ai "@FUNCTION_RETURN_COMMON"
         ai "0;JMP"
     ]
-    
+
+//common code when returning from a VM function; this code only needs to be included once    
 let returnFunctionCommon =
     [aComment "RETURN COMMON"]
     @ [bComment "FRAME = LCL"]
@@ -441,7 +460,7 @@ let codeGenInstructions context commands =
     let flip f x y = f y x
     groupCodeIntoFunctions commands
     |> List.map (fun (fn, c) -> codeGenInstructionsForFunction context fn c)
-    |> flip List.append [returnFunctionCommon]
+    |> flip List.append [returnFunctionCommon; callFunctionCommon]
     |> List.collect id
 
     
