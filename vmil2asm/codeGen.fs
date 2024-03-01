@@ -281,10 +281,18 @@ let defineFunction context fn vars =
         ai $"({fn})"
         ai "D=0"
     ] @ (List.init vars (fun _ -> pushDIntoStack) |> List.collect id)
-    
+
 let returnFunction =
-    [aComment "RETURN"]
+    [
+        //jump to the common return-function code so we don't have to duplicate it for every single return
+        ai "@FUNCTION_RETURN_COMMON"
+        ai "0;JMP"
+    ]
+    
+let returnFunctionCommon =
+    [aComment "RETURN COMMON"]
     @ [bComment "FRAME = LCL"]
+    @ [ ai "(FUNCTION_RETURN_COMMON)" ]
     @ [
         //FRAME = LCL
         ai "@LCL"
@@ -430,8 +438,10 @@ let codeGenInstructionsForFunction context fn commands =
     |> List.collect id
     
 let codeGenInstructions context commands =
+    let flip f x y = f y x
     groupCodeIntoFunctions commands
     |> List.map (fun (fn, c) -> codeGenInstructionsForFunction context fn c)
+    |> flip List.append [returnFunctionCommon]
     |> List.collect id
 
     
