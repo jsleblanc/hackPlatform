@@ -314,6 +314,8 @@ function Sys.init 0
 	pop temp 5
 	pop temp 6
 	pop temp 7
+	label END //returning from Sys.init is undefined
+	goto END 
 """
     let asmCode = vmil2asmString "foo.vm" vmilCode
     let binaryCode = assemble (fold asmCode)
@@ -341,6 +343,8 @@ function Sys.init 0
 	push temp 5
 	push temp 6
 	push temp 7
+	label END //returning from Sys.init is undefined
+	goto END 
 """
     let asmCode = vmil2asmString "foo.vm" vmilCode
     let binaryCode = assemble (fold asmCode)
@@ -694,6 +698,8 @@ let ``Should test pointer 0 segment - writing`` () =
 function Sys.init 0
 	push constant 818
 	pop pointer 0
+	label END //returning from Sys.init is undefined
+	goto END 
 """
     let asmCode = vmil2asmString "foo.vm" vmilCode
     let binaryCode = assemble (fold asmCode)
@@ -709,6 +715,8 @@ let ``Should test pointer 1 segment - writing`` () =
 function Sys.init 0
 	push constant 818
 	pop pointer 1
+	label END //returning from Sys.init is undefined
+	goto END 
 """
     let asmCode = vmil2asmString "foo.vm" vmilCode
     let input = fold asmCode
@@ -724,6 +732,8 @@ let ``Should test pointer 0 segment - reading`` () =
     let vmilCode = """
 function Sys.init 0
 	push pointer 0
+	label END //returning from Sys.init is undefined
+	goto END
 """
     let asmCode = vmil2asmString "foo.vm" vmilCode
     let binaryCode = assemble (fold asmCode)
@@ -740,6 +750,8 @@ let ``Should test pointer 1 segment - reading`` () =
     let vmilCode = """
 function Sys.init 0
 	push pointer 1
+	label END //returning from Sys.init is undefined
+	goto END 
 """
     let asmCode = vmil2asmString "foo.vm" vmilCode
     let binaryCode = assemble (fold asmCode)
