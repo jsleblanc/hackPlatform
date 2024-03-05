@@ -18,15 +18,6 @@ let ``Should Parse Comments`` s =
         | Success _ -> true
         | _ -> false
     Assert.True(success)
-    
-[<Theory>]
-[<InlineData("not a comment")>]
-let ``Should Not Parse as Comments`` s =
-    let success = 
-        match run pComment s with
-        | Success _ -> false
-        | _ -> true
-    Assert.True(success)      
    
 [<Fact>]
 let ``Should Parse Jump - JGT`` () =
@@ -327,7 +318,7 @@ let ``Should Parse as A Instruction`` s =
 [<Fact>]
 let ``Should Parse Line as C Instruction`` () =
     match run pLine "AM=D+1;JEQ" with
-    | Success(Code (C_Instruction (d,c,j)), _, _) ->
+    | Success(C_Instruction (d,c,j), _, _) ->
         Assert.Equal(Some (Destination.A ||| Destination.M), d)
         Assert.Equal(OP_D_PLUS_ONE, c)
         Assert.Equal(Some JEQ, j)
@@ -337,7 +328,7 @@ let ``Should Parse Line as C Instruction`` () =
 [<Fact>]
 let ``Should Parse Line as C Instruction ignoring comment`` () =
     match run pLine "AM=D+1;JEQ //comment" with
-    | Success(Code (C_Instruction (d,c,j)), _, _) ->
+    | Success(C_Instruction (d,c,j), _, _) ->
         Assert.Equal(Some (Destination.A ||| Destination.M), d)
         Assert.Equal(OP_D_PLUS_ONE, c)
         Assert.Equal(Some JEQ, j)
@@ -350,21 +341,21 @@ let ``Should Parse Line as C Instruction ignoring comment`` () =
 [<InlineData(" (FOO)", "FOO")>]
 let ``Should Parse Line as Label`` s exp =
     match run pLine s with
-    | Success(Code (Label l), _, _) -> Assert.Equal(exp, l)
+    | Success(Label l, _, _) -> Assert.Equal(exp, l)
     | Failure(msg, _, _) -> Assert.Fail(msg)
     | _ -> Assert.Fail("Parsing failed")
 
 [<Theory>]
-[<InlineData("//comment")>]
-[<InlineData("// comment")>]
-[<InlineData("//  comment")>]
-[<InlineData("//   comment")>]
-[<InlineData(" // comment")>]
-let ``Should Parse Line as Comment`` s =
+[<InlineData("@R0 //comment")>]
+[<InlineData("@R0 // comment")>]
+[<InlineData("@R0//  comment")>]
+[<InlineData("@R0//   comment")>]
+[<InlineData("@R0 // comment")>]
+[<InlineData("@R0 // @R13")>]
+let ``Should Ignore comments when Parsing Line`` s =
     match run pLine s with
-    | Success (Comment c, _, _) -> Assert.True(true)
+    | Success (c, _, _) -> Assert.Equal(A_Instruction (Predefined R0), c)
     | Failure(msg, _,_) -> Assert.Fail(msg)
-    | _ -> Assert.Fail("Parsing failed")
 
 [<Theory>]
 [<InlineData("@R1")>]
@@ -488,5 +479,5 @@ let ``Should Parse Multiline Input with Comments`` () =
    0;JMP
 """
     match run pInput s with
-    | Success(p, _, _) -> Assert.Equal(28, p.Length)
+    | Success(p, _, _) -> Assert.Equal(20, p.Length)
     | Failure(msg, _, _) -> Assert.Fail(msg)    

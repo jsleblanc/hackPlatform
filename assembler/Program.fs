@@ -37,11 +37,6 @@ let main argv =
         printfn $"Error: specified file \"{fileName}\" does not exist"
         exit -1
     
-    let filterInstructions pr =
-        match pr with
-        | Code i -> Some i
-        | Comment _ -> None
-    
     let outputFileName =
         match outputFileNameArg with
         | Some name -> name
@@ -51,8 +46,7 @@ let main argv =
     let retCode =
         match parsedAssemblyFileResult with
         | Success (results, _, _) ->
-            let code = results |> List.map filterInstructions |> List.choose id
-            let translated = translate code
+            let translated = translate results
             File.WriteAllLines(outputFileName, translated.instructions)
             printfn $"Assembled program written to \"{outputFileName}\""
             match dumpSymbolTableArg with
