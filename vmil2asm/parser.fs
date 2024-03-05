@@ -4,16 +4,34 @@ open System
 open FParsec
 open vmil2asm.types
 
-type ParseResult =
-    | Code of Command
-    | Comment of string
-
 let ws = spaces // skips any whitespace
 
 let str s = pstring s
 let stringReturn_ws s t = stringReturn s t .>> ws
 
-let pComment = str "//" >>. ws >>. restOfLine true |>> function c -> Comment c
+/// Comment parsing help from https://stackoverflow.com/a/24073060/125882
+/// Type abbreviation for parsers without user state.
+type Parser<'a> = Parser<'a, Unit>
+
+/// Skips C-style multiline comment /*...*/ with arbitrary nesting depth.
+let (pCommentImpl : Parser<_>), pCommentRef = createParserForwardedToRef ()
+
+/// Skips any character not beginning of comment end marker */.
+let skipCommentChar : Parser<_> = 
+    notFollowedBy (skipString "*/") >>. skipAnyChar
+
+/// Skips anx mix of nested comments or comment characters.
+let commentContent : Parser<_> =
+    skipMany (choice [ pCommentImpl; skipCommentChar ])
+
+// Skips C-style multiline comment /*...*/ with arbitrary nesting depth.
+do pCommentRef :=
+       choiceL [                  
+           between (skipString "/*") (skipString "*/") commentContent
+           str "//" .>> ws >>. restOfLine true |>> function _ -> ()
+       ] "comment" .>> ws
+
+let pComment = optional (many pCommentImpl)
 
 //arithmetic commands
 let pA_add = stringReturn_ws "add" ADD
@@ -99,16 +117,15 @@ let pCommand =
         pC_Pop
         pBranching
         pFunctions
-    ] "command"
+    ] "command" .>> pComment
 
 let pCode =
     choice [
         pArithmeticCommand
         pCommand        
-    ] |>> function c -> Code c
+    ]
     
-let pLine = ws >>. choice [pCode; pComment]
-
+let pLine = ws >>. pComment >>. pCode
 let pInput = many pLine .>> eof
 
 let pInputP = many (getPosition .>>. pLine) .>> eof

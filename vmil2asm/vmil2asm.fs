@@ -6,13 +6,6 @@ open vmil2asm.types
 open vmil2asm.parser
 open vmil2asm.codeGen
 
-let private filterOutComments instructions =
-    let filter i =
-        match i with
-        | Code c -> Some c
-        | Comment _ -> None
-    instructions |> List.map filter |> List.choose id
-
 let private assemblyInstructionToString ai =
     match ai with
     | AssemblyInstruction a -> a    
@@ -20,16 +13,14 @@ let private assemblyInstructionToString ai =
 let private internal_vmil2asmFile (file:FileInfo) =
     printfn $"\tProcessing {file}"
     match parseFile file.FullName with
-    | Success(results, _, _) ->
-        let code = filterOutComments results
+    | Success(code, _, _) ->
         codeGenInstructions file.Name code
     | Failure(msg, _, _) -> failwith msg
 
 let private internal_vmil2asmString name input =
     printfn $"\tProcessing string {name}"
     match parseString input with
-    | Success(results, _, _) ->
-        let code = filterOutComments results
+    | Success(code, _, _) ->
         codeGenInstructions name code
     | Failure(msg, _, _) -> failwith msg
 

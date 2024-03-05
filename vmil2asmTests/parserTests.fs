@@ -84,14 +84,13 @@ let ``Should parse pop command`` s exp =
     | Failure(msg, _,_) -> Assert.Fail(msg)
     
 [<Theory>]
-[<InlineData("//comment", "comment")>]
-[<InlineData(" //comment", "comment")>]
-[<InlineData("  //  comment", "comment")>]
-let ``Should parse comment`` s exp =
+[<InlineData("add //comment")>]
+[<InlineData("add //comment")>]
+[<InlineData("add  //  comment")>]
+let ``Should Ignore comments when parsing line`` s =
     match run pLine s with
-    | Success(Comment c, _, _) -> Assert.Equal(exp, c)
+    | Success(c, _, _) -> Assert.Equal(Arithmetic ADD, c)
     | Failure(msg, _,_) -> Assert.Fail(msg)
-    | _ -> Assert.Fail("Parsing failed")
 
 [<Fact>]
 let ``Should parse multiline input with comments`` () =
@@ -120,7 +119,7 @@ push that 6
 add
 """
     match run pInput s with
-    | Success(p, _, _) -> Assert.Equal(21, p.Length)
+    | Success(p, _, _) -> Assert.Equal(15, p.Length)
     | Failure(msg, _, _) -> Assert.Fail(msg)
     
     
@@ -207,5 +206,5 @@ label END
 	goto END
 """
     match run pInput s with
-    | Success (cmds, _, _) -> Assert.Equal(15, cmds.Length)
+    | Success (cmds, _, _) -> Assert.Equal(13, cmds.Length)
     | Failure(msg, _, _) -> Assert.Fail(msg)
